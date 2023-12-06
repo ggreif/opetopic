@@ -1,0 +1,53 @@
+<script lang="ts">
+
+import Unitright from "./svgs/unitright.svelte"
+
+//export let userOpt: Option<User>
+
+//function greeting(uo: Option<User>): string {
+function greeting() {
+  /*(for {
+    user <- uo
+    fn <- user.firstName
+  } yield { "Welcome to Opetopic, " + fn + "!" }).getOrElse {
+    "Welcome to Opetopic!"
+  }*/
+    return "Welcome to Opetopic!"
+}
+</script>
+
+  <style>
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+  </style>
+
+  <div class="main">
+    <div class="ui container" style="margin-top: 60px;">
+
+      <div class="ui segment raised">
+
+	<h2 class="ui dividing header">{greeting(/*userOpt*/)}</h2>
+
+	<p>
+	  Opetopic is an experimental graphical proof assistant for 
+	  higher category theory. 
+	</p>
+
+	<div class="ui basic center aligned segment">
+	  <Unitright/>
+	</div>
+
+	<p>
+	  The above diagram is a diagrammatic proof of the right unit
+	  law for morphisms in a higher category.  For an explanation
+	  of what this means, see
+	  the <a href="/docs">documentation</a>.
+	</p>
+
+      </div>
+
+    </div>
+  </div>
+

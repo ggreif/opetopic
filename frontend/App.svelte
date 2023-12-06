@@ -1,5 +1,6 @@
 <script lang="ts">
   import logo from "./assets/dfinity.svg"
+import Home from "./components/Home.svelte"
   /*
    * Connect2ic provides essential utilities for IC app development
    */
@@ -47,12 +48,15 @@
       Examples
     </p>
     <div class="examples">
-      <Counter />
+    <!--  <Counter />
       <Profile />
-      <Transfer />
+      <Transfer /> -->
     </div>
   </div>
 </Connect2ICProvider>
+
+<Home/>
+
 
 <style global>
     body {
