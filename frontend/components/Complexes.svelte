@@ -10,7 +10,7 @@ import Newzoomreveal from "./svgs/newzoomreveal.svelte"
 import Bigcomplex from "./svgs/bigcomplex.svelte"
 import BigcomplexFirst from "./svgs/bigcomplex-first.svelte"
 import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
-BigcomplexSecond
+
 </script>
 
   <div class="ui raised segment">
