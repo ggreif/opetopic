@@ -5,6 +5,8 @@ import Boxtree3d from "./svgs/3dboxtree.svelte"
 import Nesting from "./svgs/nesting.svelte"
 import Nesting3d from "./svgs/3dnesting.svelte"
 import Badnesting from "./svgs/badnesting.svelte"
+import Newzoom from "./svgs/newzoom.svelte"
+import Newzoomreveal from "./svgs/newzoomreveal.svelte"
 
 </script>
 
@@ -173,9 +175,11 @@ import Badnesting from "./svgs/badnesting.svelte"
 
     <div class="ui basic center aligned segment">
       <div id="atoms" style="opacity:1.0">
+        <Newzoom/>
 	<!-- <object type="image/svg+xml" id="atoms" data="/assets/svgs/newzoom.svg"></object> -->
       </div>
       <div id="bond" style="opacity:0.0; position: relative; top:-317px; margin-bottom:-317px;">
+        <Newzoomreveal/>
 	<!-- <object type="image/svg+xml" id="bond" data="/assets/svgs/newzoomreveal.svg"></object> -->
       </div>
     </div>
