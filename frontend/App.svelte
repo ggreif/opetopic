@@ -3,6 +3,8 @@
 import Home from "./components/Home.svelte"
 import Intro from "./components/Intro.svelte"
 import Complexes from "./components/Complexes.svelte"
+import Opetopes from "./components/Opetopes.svelte"
+
   /*
    * Connect2ic provides essential utilities for IC app development
    */
@@ -62,6 +64,8 @@ import Complexes from "./components/Complexes.svelte"
 <Intro/>
 <hr/>
 <Complexes/>
+<hr/>
+<Opetopes/>
 
 
 <style global>
