@@ -1,0 +1,36 @@
+@(signInForm: Form[forms.SignInForm.Data], socialProviders: com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry)(implicit request: RequestHeader, messages: Messages, userOpt: Option[User])
+
+@import semantic.semantic._
+
+@main(Messages("sign.in.title")) {
+
+  <div class="ui container" style="padding-top: 60px">
+    <div class="ui grid">
+      <div class="two wide column"></div>
+      <div class="twelve wide column">
+
+	<div class="ui segment">
+	  <h3 class="ui dividing header">Sign In</h3>
+
+	  @helper.form(action = routes.CredentialsAuthController.authenticate(), args = 'class -> "ui form") {
+	  
+          @helper.CSRF.formField
+          @helper.inputText(signInForm("email"), '_label -> "Email")
+          @helper.inputPassword(signInForm("password"), '_label -> "Password")
+
+          <p>
+	    Don't have an account?  You can sign up <a href="/signUp">here</a>.
+	  </p>
+
+          <button id="submit" type="submit" value="submit" class="ui green button">Sign In!</button>
+
+	  }
+
+	</div>
+
+      </div>
+      <div class="two wide column"></div>
+    </div>
+  </div>
+
+}

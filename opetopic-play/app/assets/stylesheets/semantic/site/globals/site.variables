@@ -1,0 +1,16 @@
+/*******************************
+     User Global Variables
+*******************************/
+
+/*-------------------
+        Page
+--------------------*/
+
+@pageBackground      : @lightGrey; 
+
+/*-------------------
+        Paths
+--------------------*/
+
+@imagePath : 'semantic/themes/default/assets/images';
+@fontPath  : 'semantic/themes/default/assets/fonts';

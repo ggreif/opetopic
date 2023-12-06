@@ -1,0 +1,48 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET         /                                controllers.ApplicationController.index
+GET         /signIn                          controllers.ApplicationController.signIn
+GET         /signUp                          controllers.ApplicationController.signUp
+GET         /signOut                         controllers.ApplicationController.signOut
+GET         /authenticate/:provider          controllers.SocialAuthController.authenticate(provider)
+POST        /authenticate/credentials        controllers.CredentialsAuthController.authenticate
+POST        /signUp                          controllers.SignUpController.signUp
+
+# Prover
+GET         /prover                          controllers.ProverController.prover
+POST        /saveModule                      controllers.ProverController.saveModule
+POST        /getModule                       controllers.ProverController.getModule
+POST        /deleteModule                    controllers.ProverController.deleteModule
+
+# Auxillary
+GET         /multiedit                       controllers.ApplicationController.multiedit
+GET         /coloredit                       controllers.ApplicationController.coloredit
+GET         /addrexplorer                    controllers.ApplicationController.addrexplorer
+GET	    /mtt			     controllers.ApplicationController.mtt
+GET         /playground                      controllers.ApplicationController.playground
+
+# Sketchpad 
+GET         /sketchpad                       controllers.SketchController.sketchpad
+POST        /saveSketch                      controllers.SketchController.saveSketch
+POST        /getSketch                       controllers.SketchController.getSketch
+POST        /renderSketch                    controllers.SketchController.renderSketch
+POST        /deleteSketch                    controllers.SketchController.deleteSketch
+POST        /renderAddrProof                 controllers.SketchController.renderAddrProof
+
+# Stable Editor
+GET         /stable                          controllers.ApplicationController.stable
+
+# Documentation
+GET         /docs                            controllers.DocsController.showDoc(page = "intro")
+GET         /docs/*page                      controllers.DocsController.showDoc(page)
+GET         /tutorial                        controllers.DocsController.tutorial
+
+# Map static resources from the /public folder to the /assets URL path
+GET         /assets/*file                    controllers.Assets.at(path="/public", file)
+GET         /webjars/*file                   controllers.WebJarAssets.at(file)
+
+
+

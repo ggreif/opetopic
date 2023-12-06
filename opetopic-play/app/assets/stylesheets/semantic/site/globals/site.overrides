@@ -1,0 +1,47 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+.cell { fill: @white; }
+.cell.hovered { fill: @darkWhite }
+.cell.selected { fill: @midWhite }
+
+.polarized { fill: @lightGrey }
+
+.variable { fill: @lightYellow }
+.variable.hovered { fill: @lightYellowHover }
+.variable.selected { fill: @lightYellowFocus }
+
+.composite { fill: @lightOrange }
+.composite.hovered { fill: @lightOrangeHover }
+.composite.selected { fill: @lightOrangeFocus }
+
+.left-extension { fill: @lightBlue }
+.left-extension.hovered { fill: @lightBlueHover }
+.left-extension.selected { fill: @lightBlueFocus }
+
+.right-extension { fill: @lightRed }
+.right-extension.hovered { fill: @lightRedHover }
+.right-extension.selected { fill: @lightRedFocus }
+
+.dual-extension { fill: @lightViolet }
+.dual-extension.hovered { fill: @lightVioletHover }
+.dual-extension.selected { fill: @lightVioletFocus }
+
+/*
+ *  Cell colors
+ */
+
+.sketch-cell-red { fill: @red }
+.sketch-cell-orange { fill: @orange }
+.sketch-cell-yellow { fill: @yellow }
+.sketch-cell-green { fill: @green }
+.sketch-cell-teal { fill: @teal }
+.sketch-cell-blue { fill: @blue }
+.sketch-cell-violet { fill: @violet }
+.sketch-cell-purple { fill: @purple }
+.sketch-cell-pink { fill: @pink }
+.sketch-cell-black { fill: @black }
+.sketch-cell-grey { fill: @grey }
+.sketch-cell-white { fill: @white }
+

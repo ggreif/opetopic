@@ -10,3 +10,7 @@ vite.config.*js
 frontend/*.*js
 
 **/*~
+target/
+logs/
+**/*.agdai
+lib/
