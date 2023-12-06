@@ -7,7 +7,10 @@ import Nesting3d from "./svgs/3dnesting.svelte"
 import Badnesting from "./svgs/badnesting.svelte"
 import Newzoom from "./svgs/newzoom.svelte"
 import Newzoomreveal from "./svgs/newzoomreveal.svelte"
-
+import Bigcomplex from "./svgs/bigcomplex.svelte"
+import BigcomplexFirst from "./svgs/bigcomplex-first.svelte"
+import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
+BigcomplexSecond
 </script>
 
   <div class="ui raised segment">
@@ -214,12 +217,15 @@ import Newzoomreveal from "./svgs/newzoomreveal.svelte"
 
     <div class="ui basic center aligned segment">
       <div id="csvg" style="opacity:1.0">
+        <Bigcomplex/>
 	<!-- <object type="image/svg+xml" data="/assets/svgs/bigcomplex.svg"></object> -->
       </div>
       <div id="fsvg" style="opacity:0.0; position: relative; top:-245px; margin-bottom:-245px;">
+        <BigcomplexFirst/>
 	<!-- <object type="image/svg+xml" data="/assets/svgs/bigcomplex-first.svg"></object> -->
       </div>
       <div id="ssvg" style="opacity:0.0; position: relative; top:-245px; margin-bottom:-245px;">
+        <BigcomplexSecond/>
 	<!-- <object type="image/svg+xml" data="/assets/svgs/bigcomplex-second.svg"></object> -->
       </div>
     </div>
