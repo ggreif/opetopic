@@ -1,6 +1,7 @@
 <script lang="ts">
   import logo from "./assets/dfinity.svg"
 import Home from "./components/Home.svelte"
+import Complexes from "./components/Complexes.svelte"
   /*
    * Connect2ic provides essential utilities for IC app development
    */
@@ -56,6 +57,8 @@ import Home from "./components/Home.svelte"
 </Connect2ICProvider>
 
 <Home/>
+<hr/>
+<Complexes/>
 
 
 <style global>
