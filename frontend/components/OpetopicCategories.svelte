@@ -89,9 +89,9 @@ import CompUnivs from "./svgs/comp-univs.svelte"
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/categories/categories" class="ui right labeled icon button">
+	  <a href="/docs/theory/units" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
-    	    Next: Categories
+    	    Next: Identities and Units
 	  </a>
 	</div>
       </div>
