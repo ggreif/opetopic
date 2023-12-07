@@ -75,7 +75,7 @@ import CompUnivs from "./svgs/comp-univs.svelte"
       in a model category.  We think this makes the axiom reasonable
       from a theoretical point of view.  In compensation for this 
       strengthening of the axioms for a category, our definition of
-      universal properties are weaker that those given by Baez-Dolan.
+      universal properties are weaker than those given by Baez-Dolan.
       We will show later that under this stronger definition of category,
       we can recover the full strength of Baez-Dolan style universal cells.
     </p>
