@@ -10,6 +10,8 @@ import OpetopicSets from "./components/OpetopicSets.svelte"
 import Extrusions from "./components/Extrusions.svelte"
 import UniversalProperties from "./components/UniversalProperties.svelte"
 import OpetopicCategories from "./components/OpetopicCategories.svelte"
+import IdentitiesUnits from "./components/IdentitiesUnits.svelte"
+import Equivalences from "./components/Equivalences.svelte"
 
   /*
    * Connect2ic provides essential utilities for IC app development
@@ -82,6 +84,11 @@ import OpetopicCategories from "./components/OpetopicCategories.svelte"
 <UniversalProperties/>
 <hr/>
 <OpetopicCategories/>
+<hr/>
+<IdentitiesUnits/>
+<hr/>
+<Equivalences/>
+
 
 <style global>
     body {
