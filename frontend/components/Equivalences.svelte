@@ -1,3 +1,28 @@
+<script lang="ts">
+
+
+import Unaryex from "./svgs/unary-ex.svelte"
+import Eqvnotation from "./svgs/eqv-notation.svelte"
+
+import Equivdef from "./svgs/equiv-def.svelte"
+
+import Ftu from "./svgs/f-tu.svelte"
+import Gtu from "./svgs/g-tu.svelte"
+import Etatu from "./svgs/eta-tu.svelte"
+import Etaeqvtu from "./svgs/eta-eqv-tu.svelte"
+import Unitl from "./svgs/unit-l.svelte"
+import Alphadef from "./svgs/alpha-def.svelte"
+import Betadef from "./svgs/beta-def.svelte"
+import Phidef from "./svgs/phi-def.svelte"
+import Psidef from "./svgs/psi-def.svelte"
+import Gammadef from "./svgs/gamma-def.svelte"
+import Epsilondef from "./svgs/epsilon-def.svelte"
+import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
+
+</script>
+
+
+
 
   <div class="ui raised segment">
     <h2 class="ui dividing header">Equivalences</h2>
@@ -9,7 +34,8 @@
       as follows:
     </p>
 
-    @svg("eqvs/unary-ex.svg")
+    <Unaryex/>
+    <!-- @svg("eqvs/unary-ex.svg") -->
 
     <p>
       Of course, the number of input edges of x (and y) depends on the
@@ -23,7 +49,8 @@
       this case, a small circle decorating its target edge like so
     </p>
     
-    @svg("eqvs/eqv-notation.svg")
+    <Eqvnotation/>
+    <!-- @svg("eqvs/eqv-notation.svg") -->
 
     <p>
       With these conventions in mind, the following coinductive definition of
@@ -35,7 +62,8 @@
       <div class="ui header">Equivalences</div>
     </div>
     <div class="ui middle attached center aligned segment">
-      <object type="image/svg+xml" data="/assets/svgs/eqvs/equiv-def.svg"></object>
+      <Equivdef/>
+      <!-- <object type="image/svg+xml" data="/assets/svgs/eqvs/equiv-def.svg"></object> -->
     </div>
     <div class="ui bottom attached segment">
       <p>
@@ -83,14 +111,16 @@
       are given a target universal <em>arrow</em> f.
     </p>
 
-    @svg("eqvs/f-tu.svg")
+    <Ftu/>
+    <!-- @svg("eqvs/f-tu.svg") -->
 
     <p>
       By the definition of target universality, we obtain a lift 
       in the following diagram:
     </p>
 
-    @svg("eqvs/g-tu.svg")
+    <Gtu/>
+    <!-- @svg("eqvs/g-tu.svg") -->
 
     <p>
       And we see that, moreover, g is target universal by closure,
@@ -107,14 +137,16 @@
       using the lift
     </p>
 
-    @svg("eqvs/eta-tu.svg")
+    <Etatu/>
+    <!-- @svg("eqvs/eta-tu.svg") -->
 
     <p>
       Furthermore, since η is a unary, target universal cell, we conclude
       that it is an equivalence by the coinductive hypothesis.
     </p>
 
-    @svg("eqvs/eta-eqv-tu.svg")
+    <Etaeqvtu/>
+    <!-- @svg("eqvs/eta-eqv-tu.svg") -->
 
     <p>
       The construction of ε is more involved, and proceeds as follows.  First,
@@ -122,7 +154,8 @@
       which, applied to f, has the form.
     </p>
 
-    @svg("eqvs/unit-l.svg")
+    <Unitl/>
+    <!-- @svg("eqvs/unit-l.svg") -->
 
     <p>
       Similarly, we have the right unit, unit-r.  From the first step of 
@@ -135,19 +168,22 @@
       Our first step is to lift f along itself, creating the cell α as shown
     </p>
 
-    @svg("eqvs/alpha-def.svg")
+    <Alphadef/>
+    <!-- @svg("eqvs/alpha-def.svg") -->
 
     <p>
       Next, we define β as
     </p>
 
-    @svg("eqvs/beta-def.svg")
+    <Betadef/>
+    <!-- @svg("eqvs/beta-def.svg") -->
 
     <p>
       And φ as
     </p>
 
-    @svg("eqvs/phi-def.svg")
+    <Phidef/>
+    <!-- @svg("eqvs/phi-def.svg") -->
 
     <p>
       Next use the source lifting property obtained from the
@@ -155,15 +191,18 @@
       the cells φ and γ as follows:
     </p>
 
-    @svg("eqvs/psi-def.svg")
+    <Psidef/>
+    <!-- @svg("eqvs/psi-def.svg") -->
 
-    @svg("eqvs/gamma-def.svg")
+    <Gammadef/>
+    <!-- @svg("eqvs/gamma-def.svg") -->
 
     <p>
       We now define ε as the composite
     </p>
     
-    @svg("eqvs/epsilon-def.svg")
+    <Epsilondef/>
+    <!-- @svg("eqvs/epsilon-def.svg") -->
 
     <p>
       And finally, since ε is a unary, target universal cell,
@@ -171,7 +210,8 @@
       hypothesis.
     </p>
 
-    @svg("eqvs/epsilon-eqv.svg")
+    <Epsiloneqv/>
+    <!-- @svg("eqvs/epsilon-eqv.svg") -->
     
     <p>
       This completes the proof.
