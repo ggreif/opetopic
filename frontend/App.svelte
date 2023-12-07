@@ -1,5 +1,6 @@
 <script lang="ts">
-  import logo from "./assets/dfinity.svg"
+
+import logo from "./assets/dfinity.svg"
 import Home from "./components/Home.svelte"
 import Intro from "./components/Intro.svelte"
 import Complexes from "./components/Complexes.svelte"
@@ -8,6 +9,7 @@ import Geometry from "./components/Geometry.svelte"
 import OpetopicSets from "./components/OpetopicSets.svelte"
 import Extrusions from "./components/Extrusions.svelte"
 import UniversalProperties from "./components/UniversalProperties.svelte"
+import OpetopicCategories from "./components/OpetopicCategories.svelte"
 
   /*
    * Connect2ic provides essential utilities for IC app development
@@ -78,6 +80,8 @@ import UniversalProperties from "./components/UniversalProperties.svelte"
 <Extrusions/>
 <hr/>
 <UniversalProperties/>
+<hr/>
+<OpetopicCategories/>
 
 <style global>
     body {

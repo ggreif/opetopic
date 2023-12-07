@@ -1,0 +1,100 @@
+<script lang="ts">
+
+import CompsExist from "./svgs/comps-exist.svelte"
+import ClosureUnivs from "./svgs/closure-univs.svelte"
+import CompUnivs from "./svgs/comp-univs.svelte"
+
+</script>
+
+  <div class="ui raised segment">
+    <h2 class="ui dividing header">Opetopic Categories</h2>
+
+    <p>
+      We will say that an opetopic set is an <em>opetopic category</em>
+      if the following two conditions are satisfied:
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">Composites exist</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <CompsExist/>
+      <!-- <object type="image/svg+xml" data="/assets/svgs/categories/comps-exist.svg"></object> -->
+    </div>
+    <div class="ui bottom attached segment">
+      <p>
+	Every pasting diagram admits a target universal filler.  That is,
+	given x, y, z as pictured, we obtain u and v such that v is target
+	universal.
+      </p>
+    </div>
+
+    <p>
+      Note that we continue the convention begun in the second about
+      <a href="/docs/categories/uprops">universal properties</a> 
+      where the cells or properties which are the conclusions of these
+      axioms are depicted in red.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">Closure of Target Universals</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <ClosureUnivs/>
+      <!-- <object type="image/svg+xml" data="/assets/svgs/categories/closure-univs.svg"></object> -->
+    </div>
+    <div class="ui bottom attached segment">
+      <p>
+	For any target universal cell, if all but one face is also target
+	universal, so is the remaining one.  In the above schematic example,
+	if all of f, x, y, and w are target universal as depicted by the
+	black decorations, then z is also target universal, as depicted
+	in red.
+      </p>
+    </div>
+
+    <h3 class="ui dividing header">Comparison with Baez-Dolan Opetopic Categories</h3>
+
+    <p>
+      We note that the second axiom here is strengthened with respect
+      to that given by Baez and Dolan in
+      their <a href="http://arxiv.org/abs/q-alg/9702014">original
+      definition</a>.  Their definition requires only that composites
+      of target universals are also target universal, that is, they
+      require our axiom only in the case where it is the cell w 
+      which is not already known to be target universal, as depicted
+      by the following diagram:
+    </p>
+
+    <CompUnivs/>
+    <!-- @svg("categories/comp-univs.svg") -->
+
+    <p>
+      Readers familiar with model categories will recognize this as
+      an opetopic adaptation of the 2-for-3 axiom of equivalences 
+      in a model category.  We think this makes the axiom reasonable
+      from a theoretical point of view.  In compensation for this 
+      strengthening of the axioms for a category, our definition of
+      universal properties are weaker that those given by Baez-Dolan.
+      We will show later that under this stronger definition of category,
+      we can recover the full strength of Baez-Dolan style universal cells.
+    </p>
+
+    <div class="ui secondary menu">
+      <div class="item">
+	<a href="/docs/categories/uprops" class="ui left labeled icon button">
+    	  <i class="left arrow icon"></i>
+    	  Prev: Universal Properties
+	</a>
+      </div>
+      <div class="right menu">
+	<div class="item">
+	  <a href="/docs/categories/categories" class="ui right labeled icon button">
+    	    <i class="right arrow icon"></i>
+    	    Next: Categories
+	  </a>
+	</div>
+      </div>
+    </div>
+
+  </div>
