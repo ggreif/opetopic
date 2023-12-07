@@ -246,9 +246,9 @@ $: if (bonds) { attr = 'hidden' } else { attr = 'visible' }
   <g
      transform="translate(14076.662,-1581)"
      id="g4560">
-    <g
+    <g visibility={attr}
        id="g4562">
-      <rect visibility={attr}
+      <rect
          x="-2894"
          y="-11169"
          width="6847"
@@ -268,9 +268,9 @@ $: if (bonds) { attr = 'hidden' } else { attr = 'visible' }
            style="fill:#000000;stroke:#000000;stroke-width:1" />
       </g>
     </g>
-    <g
+    <g visibility={attr}
        id="g4570">
-      <rect visibility={attr}
+      <rect
          x="-2097"
          y="-5588"
          width="4653"
@@ -290,9 +290,9 @@ $: if (bonds) { attr = 'hidden' } else { attr = 'visible' }
            style="fill:#000000;stroke:#000000;stroke-width:1" />
       </g>
     </g>
-    <g
+    <g visibility={attr}
        id="g4578">
-      <rect visibility={attr}
+      <rect
          x="700"
          y="-10469"
          width="2753"
