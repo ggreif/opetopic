@@ -11,6 +11,8 @@ import Bigcomplex from "./svgs/bigcomplex.svelte"
 import BigcomplexFirst from "./svgs/bigcomplex-first.svelte"
 import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
 
+$: bonds = false;
+
 </script>
 
   <div class="ui raised segment">
@@ -178,7 +180,8 @@ import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
 
     <div class="ui basic center aligned segment">
       <div id="atoms" style="opacity:1.0">
-        <Newzoom/>
+        <Newzoom bonds={bonds}/>
+        <Newzoomreveal/>
 	<!-- <object type="image/svg+xml" id="atoms" data="/assets/svgs/newzoom.svg"></object> -->
       </div>
       <div id="bond" style="opacity:0.0; position: relative; top:-317px; margin-bottom:-317px;">
@@ -188,7 +191,7 @@ import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
     </div>
     <div class="ui basic center aligned segment">
       <div class="ui toggle checkbox">
-	<input type="checkbox" name="public">
+	<input type="checkbox" name="public" bind:checked={bonds} />
 	<label>Show bond</label>
       </div>
     </div>

@@ -1,3 +1,12 @@
+<script lang="ts">
+
+export let bonds = true
+
+$: attr = ''
+
+$: if (bonds) { attr = 'hidden' } else { attr = 'visible' }
+</script>
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -121,7 +130,7 @@
     </g>
     <g
        id="g4512">
-      <path
+      <path visibility={attr}
          d="M 0,-3029 V 1200"
          id="path4514"
          inkscape:connector-curvature="0"
@@ -129,7 +138,7 @@
     </g>
     <g
        id="g4516">
-      <path
+      <path visibility={attr}
          d="m 3586,-5846 v 1858 a 200,200 0 0 1 -200,200 H 721"
          id="path4518"
          inkscape:connector-curvature="0"
@@ -137,7 +146,7 @@
     </g>
     <g
        id="g4520">
-      <path
+      <path visibility={attr}
          d="m 4962,-11565 v 4642 a 200,200 0 0 1 -200,200 h -400"
          id="path4522"
          inkscape:connector-curvature="0"
@@ -145,7 +154,7 @@
     </g>
     <g
        id="g4524">
-      <path
+      <path visibility={attr}
          d="m 2210,-11565 v 4642 a 200,200 0 0 0 200,200 h 400"
          id="path4526"
          inkscape:connector-curvature="0"
@@ -153,7 +162,7 @@
     </g>
     <g
        id="g4528">
-      <path
+      <path visibility={attr}
          d="m 0,-7484 v 2938"
          id="path4530"
          inkscape:connector-curvature="0"
@@ -161,7 +170,7 @@
     </g>
     <g
        id="g4532">
-      <path
+      <path visibility={attr}
          d="m -2049,-11565 v 7577 a 200,200 0 0 0 200,200 h 1128"
          id="path4534"
          inkscape:connector-curvature="0"
@@ -239,7 +248,7 @@
      id="g4560">
     <g
        id="g4562">
-      <rect
+      <rect visibility={attr}
          x="-2894"
          y="-11169"
          width="6847"
@@ -261,7 +270,7 @@
     </g>
     <g
        id="g4570">
-      <rect
+      <rect visibility={attr}
          x="-2097"
          y="-5588"
          width="4653"
@@ -283,7 +292,7 @@
     </g>
     <g
        id="g4578">
-      <rect
+      <rect visibility={attr}
          x="700"
          y="-10469"
          width="2753"
