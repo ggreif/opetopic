@@ -1,0 +1,185 @@
+<script lang="ts">
+
+import Object from "./svgs/object.svelte"
+import Arrow from "./svgs/arrow.svelte"
+import Drop from "./svgs/drop.svelte"
+import Twoglob from "./svgs/twoglob.svelte"
+import Simplex from "./svgs/simplex.svelte"
+import Quad from "./svgs/quad.svelte"
+import Threecell from "./svgs/threecell.svelte"
+
+</script>
+
+  <div class="ui raised segment">
+    <h2 class="ui dividing header">Geometry</h2>
+
+    <p>
+      In this section, we explore the connection between our opetopic
+      diagrams and the more traditional geometry of pasting diagrams
+      in low dimensions.  In each example, hover over the cells of
+      the opetopic diagram to highlight the part of the pasting
+      diagram it corresponds to.
+    </p>
+
+    <h3 class="ui dividing header">Dimension 0</h3>
+
+    <p>
+      As usual, dimension 0 is rather uninteresting: there is a single
+      opetope of dimension 0 corresponding to a point.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">The Object</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="object-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+
+      <Object/>
+      <!-- <svg width="75" height="75" id="object-svg"></svg> -->
+    </div>
+
+    <h3 class="ui dividing header">Dimension 1</h3>
+
+    <p>
+      In dimension 1, there is also a unique opetope, this time corresponding
+      to an arrow.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">The Arrow</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="arrow-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+      <Arrow/>
+      <!-- <svg width="150" height="75" id="arrow-svg"> -->
+    </div>
+
+    <h3 class="ui dividing header">Dimension 2</h3>
+
+    <p>
+      Dimension 2 becomes more interesting: we already have infinitely
+      many opetopes of dimension two, one for each natural number
+      which counts the number of source arrows.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">The Drop</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="drop-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+      <Drop/>
+      <!-- <svg width="150" height="150" id="drop-svg"></svg> -->
+    </div>
+
+    <p>
+      Drops, like the one above and its higher dimensional counterparts
+      play the role of degeneracies for opetopes.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">The Two-Glob</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="twoglob-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+      <Twoglob/>
+      <!-- <svg width="150" height="150" id="twoglob-svg"></svg>
+    </div>
+
+    <p>
+      This first globular shape is an example of a more general phenomenon:
+      all the higher dimensional globs are also opetopes.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">The Simplex</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="simplex-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+      <Simplex/>
+      <!-- <svg width="175" height="175" id="simplex-svg"></svg> -->
+    </div>
+
+    <p>
+      In contrast to the situation for globs, the two-dimensional simplex
+      is the only overlap with the simplicial world: no higher dimensional
+      simplex is also an opetope.
+    </p>
+
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">The Quadrilateral</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="quad-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+      <Quad/>
+      <!-- <svg width="175" height="175" id="quad-svg"></svg> -->
+    </div>
+
+    <p>
+      We hope the reader can see how the pattern continues on from here.
+    </p>
+
+    <h3 class="ui dividing header">Dimension 3</h3>
+
+    <p>
+      Things become much more interesting in dimension 3, as we hope the
+      following example will start to show.
+    </p>
+    
+    <div class="ui top attached inverted grey segment">
+      <div class="ui header">A Three Cell</div>
+    </div>
+    <div class="ui middle attached center aligned segment">
+      <div id="threecell-pane"></div>
+    </div>
+    <div class="ui bottom attached center aligned segment">
+      <Threecell/>
+      <!-- <svg width="725" height="250" id="threecell-svg"></svg> -->
+    </div>
+
+    <p>
+      As you can see, already in dimension 3, the naive geometric
+      picture begins to fail us: the boundary arrows and objects must
+      be duplicated in order to make room for the target cell.  You
+      are supposed to imagine that the pasting diagram on the right is
+      slid on top of its target two cell, with the edges identified,
+      and that the top cell Φ represents the space in between when
+      the pasting diagram is bent out of the page.
+    </p>
+    
+    <p>
+      The opetopic diagram, however, presents no such ambiguity.  Each
+      cell occurs exactly once in the dimension where it lives.
+    </p>
+
+    <div class="ui secondary menu">
+      <div class="item">
+	<a href="/docs/diagrams/opetopes" class="ui left labeled icon button">
+    	  <i class="left arrow icon"></i>
+    	  Prev: Opetopes
+	</a>
+      </div>
+      <div class="right menu">
+	<div class="item">
+	  <a href="/docs/diagrams/osets" class="ui right labeled icon button">
+    	    <i class="right arrow icon"></i>
+    	    Next: Opetopic Sets
+	  </a>
+	</div>
+      </div>
+    </div>
+
+  </div>
+
+}
