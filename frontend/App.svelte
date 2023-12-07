@@ -5,6 +5,8 @@ import Intro from "./components/Intro.svelte"
 import Complexes from "./components/Complexes.svelte"
 import Opetopes from "./components/Opetopes.svelte"
 import Geometry from "./components/Geometry.svelte"
+import OpetopicSets from "./components/OpetopicSets.svelte"
+import Extrusions from "./components/Extrusions.svelte"
 
   /*
    * Connect2ic provides essential utilities for IC app development
@@ -69,7 +71,10 @@ import Geometry from "./components/Geometry.svelte"
 <Opetopes/>
 <hr/>
 <Geometry/>
-
+<hr/>
+<OpetopicSets/>
+<hr/>
+<Extrusions/>
 
 <style global>
     body {
