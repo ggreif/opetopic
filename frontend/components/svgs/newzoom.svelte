@@ -372,7 +372,7 @@ $: if (bonds) { contra = 'visible'; attr = 'hidden' } else { contra = 'hidden'; 
          ry="200"
          id="rect4612"
          style="fill:#ffffff;stroke:#000000;stroke-width:100" />
-      <g
+      <g visibility={attr}
          transform="translate(-291,-3915)"
          id="g4614">
         <path
@@ -394,7 +394,7 @@ $: if (bonds) { contra = 'visible'; attr = 'hidden' } else { contra = 'hidden'; 
          ry="200"
          id="rect4620"
          style="fill:#ffffff;stroke:#000000;stroke-width:100" />
-      <g
+      <g visibility={attr}
          transform="translate(1800,-8589)"
          id="g4622">
         <path
@@ -416,7 +416,7 @@ $: if (bonds) { contra = 'visible'; attr = 'hidden' } else { contra = 'hidden'; 
          ry="200"
          id="rect4628"
          style="fill:#ffffff;stroke:#000000;stroke-width:100" />
-      <g
+      <g visibility={attr}
          transform="translate(-1794,-6704)"
          id="g4630">
         <path

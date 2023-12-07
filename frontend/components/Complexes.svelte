@@ -6,7 +6,6 @@ import Nesting from "./svgs/nesting.svelte"
 import Nesting3d from "./svgs/3dnesting.svelte"
 import Badnesting from "./svgs/badnesting.svelte"
 import Newzoom from "./svgs/newzoom.svelte"
-import Newzoomreveal from "./svgs/newzoomreveal.svelte"
 import Bigcomplex from "./svgs/bigcomplex.svelte"
 import BigcomplexFirst from "./svgs/bigcomplex-first.svelte"
 import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
@@ -181,12 +180,7 @@ $: bonds = false;
     <div class="ui basic center aligned segment">
       <div id="atoms" style="opacity:1.0">
         <Newzoom bonds={bonds}/>
-        <Newzoomreveal/>
 	<!-- <object type="image/svg+xml" id="atoms" data="/assets/svgs/newzoom.svg"></object> -->
-      </div>
-      <div id="bond" style="opacity:0.0; position: relative; top:-317px; margin-bottom:-317px;">
-        <Newzoomreveal/>
-	<!-- <object type="image/svg+xml" id="bond" data="/assets/svgs/newzoomreveal.svg"></object> -->
       </div>
     </div>
     <div class="ui basic center aligned segment">
