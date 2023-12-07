@@ -7,6 +7,7 @@ import Opetopes from "./components/Opetopes.svelte"
 import Geometry from "./components/Geometry.svelte"
 import OpetopicSets from "./components/OpetopicSets.svelte"
 import Extrusions from "./components/Extrusions.svelte"
+import UniversalProperties from "./components/UniversalProperties.svelte"
 
   /*
    * Connect2ic provides essential utilities for IC app development
@@ -75,6 +76,8 @@ import Extrusions from "./components/Extrusions.svelte"
 <OpetopicSets/>
 <hr/>
 <Extrusions/>
+<hr/>
+<UniversalProperties/>
 
 <style global>
     body {
