@@ -129,53 +129,55 @@ $: if (bonds) { contra = 'visible'; attr = 'hidden' } else { contra = 'hidden'; 
            style="fill:#000000;stroke:#000000;stroke-width:1" />
       </g>
     </g>
-    <g
-       id="g4512">
-      <path visibility={attr}
-         d="M 0,-3029 V 1200"
-         id="path4514"
-         inkscape:connector-curvature="0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
-    <g
-       id="g4516">
-      <path visibility={attr}
-         d="m 3586,-5846 v 1858 a 200,200 0 0 1 -200,200 H 721"
-         id="path4518"
-         inkscape:connector-curvature="0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
-    <g
-       id="g4520">
-      <path visibility={attr}
-         d="m 4962,-11565 v 4642 a 200,200 0 0 1 -200,200 h -400"
-         id="path4522"
-         inkscape:connector-curvature="0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
-    <g
-       id="g4524">
-      <path visibility={attr}
-         d="m 2210,-11565 v 4642 a 200,200 0 0 0 200,200 h 400"
-         id="path4526"
-         inkscape:connector-curvature="0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
-    <g
-       id="g4528">
-      <path visibility={attr}
-         d="m 0,-7484 v 2938"
-         id="path4530"
-         inkscape:connector-curvature="0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
-    <g
-       id="g4532">
-      <path visibility={attr}
-         d="m -2049,-11565 v 7577 a 200,200 0 0 0 200,200 h 1128"
-         id="path4534"
-         inkscape:connector-curvature="0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
+    <g visibility={attr}>
+      <g
+         id="g4512">
+        <path visibility={attr}
+           d="M 0,-3029 V 1200"
+           id="path4514"
+           inkscape:connector-curvature="0"
+           style="fill:none;stroke:#000000;stroke-width:100" />
+      </g>
+      <g
+         id="g4516">
+        <path
+           d="m 3586,-5846 v 1858 a 200,200 0 0 1 -200,200 H 721"
+           id="path4518"
+           inkscape:connector-curvature="0"
+           style="fill:none;stroke:#000000;stroke-width:100" />
+      </g>
+      <g
+         id="g4520">
+        <path
+           d="m 4962,-11565 v 4642 a 200,200 0 0 1 -200,200 h -400"
+           id="path4522"
+           inkscape:connector-curvature="0"
+           style="fill:none;stroke:#000000;stroke-width:100" />
+      </g>
+      <g
+         id="g4524">
+        <path
+           d="m 2210,-11565 v 4642 a 200,200 0 0 0 200,200 h 400"
+           id="path4526"
+           inkscape:connector-curvature="0"
+           style="fill:none;stroke:#000000;stroke-width:100" />
+      </g>
+      <g
+         id="g4528">
+        <path
+           d="m 0,-7484 v 2938"
+           id="path4530"
+           inkscape:connector-curvature="0"
+           style="fill:none;stroke:#000000;stroke-width:100" />
+      </g>
+      <g
+         id="g4532">
+        <path
+           d="m -2049,-11565 v 7577 a 200,200 0 0 0 200,200 h 1128"
+           id="path4534"
+           inkscape:connector-curvature="0"
+           style="fill:none;stroke:#000000;stroke-width:100" />
+      </g>
     </g>
     <g
        id="g4536">
