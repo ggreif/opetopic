@@ -47,10 +47,10 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
     .then(
     function (graph: any) {
         var nodeRadius = 5;
-        console.log(graph)
+        //console.log(graph)
 
         graph.nodes.forEach(function (v: any) { v.height = v.width = 2 * nodeRadius; });
-        console.log(graph.links)
+        //console.log(graph.links)
 
         d3cola
             .nodes(graph.nodes)
