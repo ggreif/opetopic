@@ -9,11 +9,14 @@
   "dependencies": {
     "@connect2ic/core": "^0.1.1",
     "@connect2ic/svelte": "^0.1.1",
-    "@dfinity/agent": "^0.20.2"
+    "@dfinity/agent": "^0.20.2",
+    "d3": "^7.8.5",
+    "webcola": "^3.4.0"
   },
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "@types/d3": "^7.4.3",
     "@types/node": "^18.0.0",
     "buffer": "^6.0.3",
     "eslint-plugin-svelte": "^2.35.1",

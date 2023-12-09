@@ -13,6 +13,9 @@ import OpetopicCategories from "./components/OpetopicCategories.svelte"
 import IdentitiesUnits from "./components/IdentitiesUnits.svelte"
 import Equivalences from "./components/Equivalences.svelte"
 
+
+import Layout from "./components/Layout.svelte"
+
   /*
    * Connect2ic provides essential utilities for IC app development
    */
@@ -41,6 +44,10 @@ import Equivalences from "./components/Equivalences.svelte"
     },
   })
 </script>
+
+
+<Layout/>
+<hr/>
 
 <Connect2ICProvider client={client}>
   <div class="App">
