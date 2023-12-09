@@ -3,8 +3,8 @@ import * as d3 from 'd3';
 import { PseudoRandom, ConvexHull, isLeft, clockwiseRadialSweep, polysOverlap, TVGPoint, TangentVisibilityGraph, Calculator, tangents, Rectangle, PriorityQueue } from 'webcola';
 import {onMount} from 'svelte';
 
-//let container: SVGSVGElement;
-let container: HTMLElement;
+let container: SVGSVGElement;
+let container2: HTMLElement;
 
 function geom(): string {
     var svg = d3.select("body").append("svg").attr("id", 1).attr("width", 300).attr("height", 200);
@@ -62,11 +62,11 @@ function geom(): string {
 }
 
 onMount(() => {
-    const child = document.createElement('span');
-		child.textContent = 'child';
-		container.appendChild(child);
-/*
-		const child = document.createElement("circle");
+    const child2 = document.createElement('span');
+		child2.textContent = 'child';
+		container2.appendChild(child2);
+
+		const child = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         //d3.select
         child.setAttribute('cx', "22");
         child.setAttribute('cy', "13");
@@ -74,7 +74,7 @@ onMount(() => {
         child.setAttribute('stroke', "black");
         child.setAttribute('stroke-width', "7");
         child.setAttribute('fill', 'red')
-        */
+
         //child.x(6);
         //attr('cx', 20);
 		//child.textContent = 'child';
@@ -82,7 +82,7 @@ onMount(() => {
         container.appendChild(child)
 	});
 
-    $: svgX = `<svg><circle/></svg>`;
+    $: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
 
 
 </script>
@@ -93,5 +93,5 @@ onMount(() => {
     {geom()}
 </div>
 
-<!-- < id="surprise" width="400" height="150" bind:this={container}/> -->
-<div bind:this={container}/>
+<svg id="surprise" width="400" height="150" bind:this={container}/>
+<div bind:this={container2}/>
