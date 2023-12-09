@@ -52,12 +52,14 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
     console.log(d3cola)
 
 
-    let graph = await d3.json("https://raw.githubusercontent.com/tgdwyer/WebCola/master/website/examples/graphdata/chris.json");
-    function build(graph: any) {
+    let graph = await d3.json("https://raw.githubusercontent.com/tgdwyer/WebCola/master/website/examples/graphdata/chris.json")
+    .then(
+    function (graph: any) {
         var nodeRadius = 5;
         console.log(graph)
 
         graph.nodes.forEach(function (v: any) { v.height = v.width = 2 * nodeRadius; });
+        console.log(graph.links)
 
         d3cola
             .nodes(graph.nodes)
@@ -82,7 +84,6 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
             .data(graph.links)
           .enter().append('svg:path')
             .attr('class', 'link');
-        console.log("paths")
 
         var node = svg.selectAll(".node")
             .data(graph.nodes)
@@ -118,20 +119,9 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
         });
 
         console.log("done!")
+    });
 
-        // turn on overlap avoidance after first convergence
-        //cola.on("end", function () {
-        //    if (!cola.avoidOverlaps()) {
-        //        graph.nodes.forEach(function (v) {
-        //            v.width = v.height = 10;
-        //        });
-        //        cola.avoidOverlaps(true);
-        //        cola.start();
-        //    }
-        //});
-    };
-
-    build(graph)
+    //build(graph)
 }
 
 
@@ -240,3 +230,18 @@ onMount(async () => {
 
 <svg id="surprise" width="960" height="500" bind:this={container}/>
 <div bind:this={container2}/>
+
+<style>
+:global(.node) {
+  stroke: #830505;
+  stroke-width: 1.5px;
+}
+
+:global(.link) {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1.5px;
+  opacity: 0.4;
+  marker-end: url(#end-arrow);
+}
+</style>
