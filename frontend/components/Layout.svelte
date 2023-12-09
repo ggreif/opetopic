@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as d3 from 'd3';
-import { PseudoRandom, ConvexHull, isLeft, clockwiseRadialSweep, polysOverlap, TVGPoint, TangentVisibilityGraph, Calculator, tangents, Rectangle, PriorityQueue } from 'webcola';
+//import { PseudoRandom, ConvexHull, isLeft, clockwiseRadialSweep, polysOverlap, TVGPoint, TangentVisibilityGraph, Calculator, tangents, Rectangle, PriorityQueue } from 'webcola';
 
 import * as cola from 'webcola'
 import {onMount} from 'svelte';
@@ -13,7 +13,6 @@ type Tree = undefined | Node
 interface Node { 
     [label: string]: Tree
 }
-
 
 const t: Tree = {f: {b: undefined, d: {a: undefined}, e: {c: undefined}}}
 
@@ -34,23 +33,15 @@ function createTree(label: string, t: Node, into: d3.Selection<SVGSVGElement, un
     }
 }
 
+const width = 960,
+      height = 500;
+
 async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>) {
-
-    var width = 960,
-        height = 500;
-
     var color = d3.scaleOrdinal(d3.schemeCategory10);
 
     var d3cola = cola.d3adaptor(d3)
         .avoidOverlaps(true)
         .size([width, height]);
-/*
-    var svg = d3.select("body").append("svg")
-        .attr("width", width)
-        .attr("height", height);
-*/
-    console.log(d3cola)
-
 
     let graph = await d3.json("https://raw.githubusercontent.com/tgdwyer/WebCola/master/website/examples/graphdata/chris.json")
     .then(
@@ -117,14 +108,8 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
                 .attr("cy", function (d: any) { return d.y; });
 
         });
-
-        console.log("done!")
     });
-
-    //build(graph)
 }
-
-
 
 function geom(): string {
     const svg = d3.select("body").append("svg").attr("id", 1).attr("width", 300).attr("height", 200);
@@ -166,19 +151,10 @@ function geom(): string {
     }
 
     drawCircle(svg)
-    //console.log(svg)
 
     const child = document.createElement('circle');
-/*
-    return new SVGCircleElement().attr('cx', p.x)
-            .attr('cy', p.y)
-            .attr('fill', 'red')
-            .attr('r', 35)
-            .attr('stroke', "black")
-            .attr('stroke-width', 20);
-            */
-    return "HEY!"
 
+    return "HEY!"
 }
 
 onMount(async () => {
@@ -195,10 +171,6 @@ onMount(async () => {
         child.setAttribute('stroke-width', "7");
         child.setAttribute('fill', 'red')
 
-        //child.x(6);
-        //attr('cx', 20);
-		//child.textContent = 'child';
-		//container.appendChild(child).attr('cx', 20);;
         container.appendChild(child)
 
         const svg = d3.select("#surprise")
@@ -217,8 +189,7 @@ onMount(async () => {
         console.log(svg)
 	});
 
-    $: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
-
+$: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
 
 </script>
 
@@ -228,20 +199,20 @@ onMount(async () => {
     {geom()}
 </div>
 
-<svg id="surprise" width="960" height="500" bind:this={container}/>
+<svg id="surprise" {width} {height} bind:this={container}/>
 <div bind:this={container2}/>
 
 <style>
-:global(.node) {
-  stroke: #830505;
-  stroke-width: 1.5px;
-}
+    :global(.node) {
+        stroke: #830505;
+        stroke-width: 1.5px;
+    }
 
-:global(.link) {
-  fill: none;
-  stroke: #000;
-  stroke-width: 1.5px;
-  opacity: 0.4;
-  marker-end: url(#end-arrow);
-}
+    :global(.link) {
+        fill: none;
+        stroke: #000;
+        stroke-width: 1.5px;
+        opacity: 0.4;
+        marker-end: url(#end-arrow);
+    }
 </style>
