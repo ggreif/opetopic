@@ -2,9 +2,35 @@
 import * as d3 from 'd3';
 import { PseudoRandom, ConvexHull, isLeft, clockwiseRadialSweep, polysOverlap, TVGPoint, TangentVisibilityGraph, Calculator, tangents, Rectangle, PriorityQueue } from 'webcola';
 import {onMount} from 'svelte';
+//    import Object from './svgs/object.svelte'
 
 let container: SVGSVGElement;
 let container2: HTMLElement;
+
+// describe the bond tree as an object
+type Tree = undefined | Node
+interface Node { 
+    [label: string]: Tree
+}
+
+
+const t: Tree = {f: {b: undefined, d: {a: undefined}, e: {c: undefined}}}
+
+function createTree(label: string, t: Node, into: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>) {
+    function distributeEdges(edges: Array<string>) {
+        const [side, rest] = [edges.length / 3, edges.length % 3]
+        const sideEdges = side + rest / 2
+        const topEdges = side + rest % 2
+        console.log(sideEdges, topEdges)
+        return [sideEdges, topEdges]
+    }
+
+    const edges = Object.keys(t)
+    // we have 3 sides on this node, distribute the edges
+    distributeEdges(edges)
+    for (const k of edges) console.log(k)
+
+}
 
 function geom(): string {
     const svg = d3.select("body").append("svg").attr("id", 1).attr("width", 300).attr("height", 200);
@@ -90,6 +116,8 @@ onMount(() => {
             .attr('stroke', "orange")
             .attr('class', "variable")
 
+        const rootLabel = "f"
+        createTree(rootLabel, <Node>t.f, d3.select("#surprise"))
         //console.log(svg)
 	});
 
