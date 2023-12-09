@@ -1,8 +1,9 @@
 <script lang="ts">
 import * as d3 from 'd3';
 import { PseudoRandom, ConvexHull, isLeft, clockwiseRadialSweep, polysOverlap, TVGPoint, TangentVisibilityGraph, Calculator, tangents, Rectangle, PriorityQueue } from 'webcola';
+
+import * as cola from 'webcola'
 import {onMount} from 'svelte';
-//    import Object from './svgs/object.svelte'
 
 let container: SVGSVGElement;
 let container2: HTMLElement;
@@ -28,9 +29,112 @@ function createTree(label: string, t: Node, into: d3.Selection<SVGSVGElement, un
     const edges = Object.keys(t)
     // we have 3 sides on this node, distribute the edges
     distributeEdges(edges)
-    for (const k of edges) console.log(k)
-
+    for (const k of edges) {
+        console.log(k)
+    }
 }
+
+async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>) {
+
+    var width = 960,
+        height = 500;
+
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    var d3cola = cola.d3adaptor(d3)
+        .avoidOverlaps(true)
+        .size([width, height]);
+/*
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+*/
+    console.log(d3cola)
+
+
+    let graph = await d3.json("https://raw.githubusercontent.com/tgdwyer/WebCola/master/website/examples/graphdata/chris.json");
+    function build(graph: any) {
+        var nodeRadius = 5;
+        console.log(graph)
+
+        graph.nodes.forEach(function (v: any) { v.height = v.width = 2 * nodeRadius; });
+
+        d3cola
+            .nodes(graph.nodes)
+            .links(graph.links)
+            .flowLayout("y", 30)
+            .symmetricDiffLinkLengths(6)
+            .start(10,20,20);
+
+        // define arrow markers for graph links
+        svg.append('svg:defs').append('svg:marker')
+            .attr('id', 'end-arrow')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 6)
+            .attr('markerWidth', 3)
+            .attr('markerHeight', 3)
+            .attr('orient', 'auto')
+          .append('svg:path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#000');
+
+        var path = svg.selectAll(".link")
+            .data(graph.links)
+          .enter().append('svg:path')
+            .attr('class', 'link');
+        console.log("paths")
+
+        var node = svg.selectAll(".node")
+            .data(graph.nodes)
+          .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", nodeRadius)
+            .style("fill", function (d: any) { return color(d.group); })
+            .call(d3cola.drag);
+
+        node.append("title")
+            .text(function (d: any) { return d.name; });
+
+        d3cola.on("tick", function () {
+            // draw directed edges with proper padding from node centers
+            path.attr('d', function (d: any) {
+                var deltaX = d.target.x - d.source.x,
+                    deltaY = d.target.y - d.source.y,
+                    dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+                    normX = deltaX / dist,
+                    normY = deltaY / dist,
+                    sourcePadding = nodeRadius,
+                    targetPadding = nodeRadius + 2,
+                    sourceX = d.source.x + (sourcePadding * normX),
+                    sourceY = d.source.y + (sourcePadding * normY),
+                    targetX = d.target.x - (targetPadding * normX),
+                    targetY = d.target.y - (targetPadding * normY);
+                return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
+            });
+
+            node.attr("cx", function (d: any) { return d.x; })
+                .attr("cy", function (d: any) { return d.y; });
+
+        });
+
+        console.log("done!")
+
+        // turn on overlap avoidance after first convergence
+        //cola.on("end", function () {
+        //    if (!cola.avoidOverlaps()) {
+        //        graph.nodes.forEach(function (v) {
+        //            v.width = v.height = 10;
+        //        });
+        //        cola.avoidOverlaps(true);
+        //        cola.start();
+        //    }
+        //});
+    };
+
+    build(graph)
+}
+
+
 
 function geom(): string {
     const svg = d3.select("body").append("svg").attr("id", 1).attr("width", 300).attr("height", 200);
@@ -87,7 +191,7 @@ function geom(): string {
 
 }
 
-onMount(() => {
+onMount(async () => {
     const child2 = document.createElement('span');
 		child2.textContent = 'child';
 		container2.appendChild(child2);
@@ -107,7 +211,8 @@ onMount(() => {
 		//container.appendChild(child).attr('cx', 20);;
         container.appendChild(child)
 
-        const svg = d3.select("#surprise").append("rect")
+        const svg = d3.select("#surprise")
+        svg.append("rect")
             .attr('x', 34)
             .attr('y', 4)
             .attr('width', 40)
@@ -118,7 +223,8 @@ onMount(() => {
 
         const rootLabel = "f"
         createTree(rootLabel, <Node>t.f, d3.select("#surprise"))
-        //console.log(svg)
+        downward(svg)
+        console.log(svg)
 	});
 
     $: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
@@ -132,5 +238,5 @@ onMount(() => {
     {geom()}
 </div>
 
-<svg id="surprise" width="400" height="150" bind:this={container}/>
+<svg id="surprise" width="960" height="500" bind:this={container}/>
 <div bind:this={container2}/>
