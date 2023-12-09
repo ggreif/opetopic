@@ -7,7 +7,7 @@ let container: SVGSVGElement;
 let container2: HTMLElement;
 
 function geom(): string {
-    var svg = d3.select("body").append("svg").attr("id", 1).attr("width", 300).attr("height", 200);
+    const svg = d3.select("body").append("svg").attr("id", 1).attr("width", 300).attr("height", 200);
 
     const l = {x1: 30, y1: 0, x2: 45, y2: 24};
     function drawLine(svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>, stroke = "green") {
@@ -46,7 +46,7 @@ function geom(): string {
     }
 
     drawCircle(svg)
-    console.log(svg)
+    //console.log(svg)
 
     const child = document.createElement('circle');
 /*
@@ -80,6 +80,17 @@ onMount(() => {
 		//child.textContent = 'child';
 		//container.appendChild(child).attr('cx', 20);;
         container.appendChild(child)
+
+        const svg = d3.select("#surprise").append("rect")
+            .attr('x', 34)
+            .attr('y', 4)
+            .attr('width', 40)
+            .attr('height', 15)
+            //.attr('fill', "red") -- steered by 'class'
+            .attr('stroke', "orange")
+            .attr('class', "variable")
+
+        //console.log(svg)
 	});
 
     $: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
