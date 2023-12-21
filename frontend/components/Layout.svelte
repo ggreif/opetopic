@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 //import { PseudoRandom, ConvexHull, isLeft, clockwiseRadialSweep, polysOverlap, TVGPoint, TangentVisibilityGraph, Calculator, tangents, Rectangle, PriorityQueue } from 'webcola';
 
 import * as cola from 'webcola'
+//import {InputNode} from 'webcola'
 import {onMount} from 'svelte';
 
 let container: SVGSVGElement;
@@ -21,7 +22,7 @@ function createTree(label: string, t: Node, into: d3.Selection<SVGSVGElement, un
         const [side, rest] = [edges.length / 3, edges.length % 3]
         const sideEdges = side + rest / 2
         const topEdges = side + rest % 2
-        console.log(sideEdges, topEdges)
+        // console.log(sideEdges, topEdges)
         return [sideEdges, topEdges]
     }
 
@@ -29,12 +30,20 @@ function createTree(label: string, t: Node, into: d3.Selection<SVGSVGElement, un
     // we have 3 sides on this node, distribute the edges
     distributeEdges(edges)
     for (const k of edges) {
-        console.log(k)
+        //console.log(k)
+
     }
 }
 
 const width = 960,
       height = 500;
+
+type Graph = {
+    nodes: cola.InputNode[];
+    links: /*cola.Link<NodeRefType>*/{target: number, source: number, value: number}[];
+    groups: Array<any>/*cola.Group[]*/;
+    constraints: Array<any>/*{axis: string, left: number, right: number, gap: number}*/[]
+}
 
 async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>) {
     var color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -43,18 +52,26 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
         .avoidOverlaps(true)
         .size([width, height]);
 
-    let graph = await d3.json("https://raw.githubusercontent.com/tgdwyer/WebCola/master/website/examples/graphdata/chris.json")
-    .then(
-    function (graph: any) {
+    let graph = await d3.json("./chris.json")
+    .then((g: any) => <Graph>g).then(
+    function (graph: Graph) {
+        //let graph = {...graph0, groups: [{"leaves":[77,79]}]}
         var nodeRadius = 5;
         //console.log(graph)
 
         graph.nodes.forEach(function (v: any) { v.height = v.width = 2 * nodeRadius; });
-        //console.log(graph.links)
+        graph.groups.forEach(function (g: any) { g.padding = 12 });
+        //console.log(graph.groups)
+
+        /*let n1: cola.Node = 77
+        let n2: cola.Node = 79
+        let n3: cola.Node = 78*/
+        //let groups: cola.Group[] = [{leaves:[n1, n2, n3], padding: 12}]
 
         d3cola
             .nodes(graph.nodes)
             .links(graph.links)
+            .groups(graph.groups)
             .flowLayout("y", 30)
             .symmetricDiffLinkLengths(6)
             .start(10,20,20);
@@ -73,7 +90,7 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
 
         var path = svg.selectAll(".link")
             .data(graph.links)
-          .enter().append('svg:path')
+          .enter().append('path')
             .attr('class', 'link');
 
         var node = svg.selectAll(".node")
@@ -83,6 +100,15 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
             .attr("r", nodeRadius)
             .style("fill", function (d: any) { return color(d.group); })
             .call(d3cola.drag);
+
+        var group = svg.selectAll(".group")
+            .data(graph.groups)
+          .enter().append("rect")
+            .attr("rx", 8).attr("ry", 8)
+            .attr("class", "group")
+            //.style("fill", function (d, i) { return color(i); })
+            .call(d3cola.drag);
+        console.log(group)
 
         node.append("title")
             .text(function (d: any) { return d.name; });
@@ -106,6 +132,12 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
 
             node.attr("cx", function (d: any) { return d.x; })
                 .attr("cy", function (d: any) { return d.y; });
+
+            group.attr("x", function (d: any) { return d.bounds.x; })
+                .attr("y", function (d: any) { return d.bounds.y; })
+                .attr("width", function (d: any) { return d.bounds.width(); })
+                .attr("height", function (d: any) { return d.bounds.height(); });
+
 
         });
     });
@@ -215,4 +247,12 @@ $: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
         opacity: 0.4;
         marker-end: url(#end-arrow);
     }
+
+    :global(.group) {
+        fill: red;
+        stroke: #fff;
+        stroke-width: 1.5px;
+        opacity: 0.7;
+    }
+
 </style>
