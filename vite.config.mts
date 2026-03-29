@@ -96,19 +96,7 @@ const config: UserConfig = {
 		}
 	},
 	optimizeDeps: {
-		esbuildOptions: {
-			define: {
-				global: 'globalThis'
-			},
-			plugins: [
-				{
-					name: 'fix-node-globals-polyfill',
-					setup(build: any) {
-						build.onResolve({ filter: /_virtual-process-polyfill_\.js/ }, ({ path }: { path: string }) => ({ path }));
-					}
-				}
-			]
-		}
+		// esbuildOptions removed (deprecated in Vite 8, which uses Rolldown)
 	},
 	worker: {
 		format: 'es'
@@ -130,6 +118,7 @@ export default defineConfig((): UserConfig => {
 		...config,
 		// Backwards compatibility for auto generated types of dfx that are meant for webpack and process.env
 		define: {
+			global: 'globalThis',
 			'process.env': {
 				...readCanisterIds({}),
 				DFX_NETWORK: network
