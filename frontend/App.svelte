@@ -34,10 +34,10 @@ const client = createClient({
   </div>
   <ConnectDialog />
 
+<OpetopeBuilder/>
+<hr/>
 <Layout/>
 <hr/>
-
-
 <Home/>
 <hr/>
 <Intro/>
@@ -59,8 +59,6 @@ const client = createClient({
 <IdentitiesUnits/>
 <hr/>
 <Equivalences/>
-<hr/>
-<OpetopeBuilder/>
 
 </Connect2ICProvider>
 
