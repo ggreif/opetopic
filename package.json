@@ -18,18 +18,17 @@
   },
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
-    "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/d3": "^7.4.3",
     "@types/node": "^22.19.15",
     "buffer": "^6.0.3",
     "eslint-plugin-svelte": "^2.35.1",
     "prettier": "^3.8.1",
     "prettier-plugin-svelte": "^3.5.1",
-    "svelte": "^4.2.8",
+    "svelte": "^5.55.0",
     "svelte-check": "^4.4.5",
-    "svelte-preprocess": "^5.1.1",
     "typescript": "~5.8",
-    "vite": "^6.4.1",
+    "vite": "^8.0.3",
     "vitest": "^4.1.2"
   }
 }
