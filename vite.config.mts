@@ -48,7 +48,7 @@ const readCanisterIds = ({ prefix }: { prefix?: string }): Record<string, string
 };
 
 const config: UserConfig = {
-	plugins: [svelte()],
+	plugins: [svelte({ exclude: ['dist', 'src/app.html'] })],
 	resolve: {
 		alias: {
 			$declarations: resolve('./src/declarations')
@@ -115,12 +115,6 @@ const config: UserConfig = {
 };
 
 export default defineConfig((): UserConfig => {
-       plugins: [
-       svelte({
-       /* plugin options */
-           exclude: ["dist", 'src/app.html']
-       })
-        ];
 	// Expand environment - .env files - with canister IDs
 	process.env = {
 		...process.env,

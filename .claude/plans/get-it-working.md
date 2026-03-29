@@ -241,6 +241,26 @@
   3. Deploys to IC mainnet on push to `main`.
 - [ ] Reference the existing CircleCI config at `origin/circleci` branch for patterns.
 
+### 4.5 Migrate from `dfx` to `icp-cli` (lowest priority / future)
+
+> `dfx` is the legacy DFINITY SDK. The IC community is consolidating tooling around
+> `icp-cli` (and related tools like `quill`, `ic-repl`, `vessel`/`mops` for Motoko).
+> Migrating reduces the dependency on the monolithic `dfx` binary and improves
+> compatibility with the broader IC ecosystem.
+
+- [ ] Track the `icp-cli` project for a stable release and feature parity with `dfx`:
+  https://github.com/dfinity/icp-cli
+- [ ] Audit what dfx features the project actually uses:
+  - `dfx start` → local replica (replaceable with `pocket-ic` or standalone replica)
+  - `dfx deploy` → canister install (replaceable with `icp-cli canister install`)
+  - `dfx generate` → candid/JS bindings (replaceable with `didc` + custom scripts)
+  - `dfx identity` → key management (replaceable with `icp-cli identity`)
+- [ ] Replace `dfx.json` with whatever config format `icp-cli` adopts.
+- [ ] Update CI/CD workflows to use `icp-cli` instead of `dfx`.
+- [ ] Note: `mops` (Motoko package manager) is already wired in via `"packtool": "mops sources"`
+  in `dfx.json`, and `npx ic-mops` is available — this is compatible with both `dfx`
+  and `icp-cli`, so no change needed on the Motoko dependency side.
+
 ---
 
 ## Upgrade order summary

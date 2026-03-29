@@ -26,7 +26,7 @@ import Layout from "./components/Layout.svelte"
   /*
    * Import canister definitions like this:
    */
-  import * as counter from "../.dfx/local/canisters/counter"
+  import * as counter from "$declarations/counter"
   /*
    * Some examples to get you started
    */
