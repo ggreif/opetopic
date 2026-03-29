@@ -12,6 +12,7 @@ import OpetopicCategories from "./components/OpetopicCategories.svelte"
 import IdentitiesUnits from "./components/IdentitiesUnits.svelte"
 import Equivalences from "./components/Equivalences.svelte"
 import Layout from "./components/Layout.svelte"
+import OpetopeBuilder from "./components/OpetopeBuilder.svelte"
 import Connect2ICProvider from "./components/Connect2ICProvider.svelte"
 import ConnectButton from "./components/ConnectButton.svelte"
 import ConnectDialog from "./components/ConnectDialog.svelte"
@@ -58,6 +59,8 @@ const client = createClient({
 <IdentitiesUnits/>
 <hr/>
 <Equivalences/>
+<hr/>
+<OpetopeBuilder/>
 
 </Connect2ICProvider>
 
