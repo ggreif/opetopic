@@ -52,7 +52,8 @@ const config: UserConfig = {
 	resolve: {
 		alias: {
 			$declarations: resolve('./src/declarations')
-		}
+		},
+		dedupe: ['@dfinity/agent', '@dfinity/candid', '@dfinity/principal']
 	},
 	build: {
 		target: 'es2022',
