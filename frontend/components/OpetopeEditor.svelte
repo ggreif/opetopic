@@ -1,59 +1,45 @@
 <script lang="ts">
+  import BoxDiagram from './BoxDiagram.svelte'
   import OpetopeDiagram from './OpetopeDiagram.svelte'
   import type { AtomicDiagram } from '../lib/opetope'
 
   let {
     focus,
-    prev = undefined,
-    succ = undefined,
-    onfocuschange = undefined,
+    oncellclick = undefined,
   }: {
     focus: AtomicDiagram
-    prev?: AtomicDiagram
-    succ?: AtomicDiagram
-    onfocuschange?: (diagram: AtomicDiagram) => void
+    oncellclick?: (cellId: string) => void
   } = $props()
 
   function handleCellClick(cellId: string) {
-    // For now: log the click. Phase 2 will navigate the complex.
     console.log('cell clicked:', cellId)
+    oncellclick?.(cellId)
   }
 </script>
 
 <div class="editor">
-  <div class="pane prev-pane">
-    <div class="pane-label">prev</div>
-    {#if prev}
-      <OpetopeDiagram diagram={prev} width={300} height={280} />
-    {:else}
-      <div class="pane-empty">—</div>
-    {/if}
+  <!-- Focus pane: box/containment view of focus.root -->
+  <div class="pane focus-pane">
+    <div class="pane-label">boxes</div>
+    <BoxDiagram tree={focus.root} width={420} height={340} />
   </div>
 
-  <div class="pane focus-pane">
-    <div class="pane-label">focus</div>
+  <!-- Succ pane: edge/tree view of focus.edgeRoot -->
+  <div class="pane succ-pane">
+    <div class="pane-label">tree</div>
     <OpetopeDiagram
       diagram={focus}
-      width={380}
+      width={320}
       height={340}
       oncellclick={handleCellClick}
     />
-  </div>
-
-  <div class="pane succ-pane">
-    <div class="pane-label">succ</div>
-    {#if succ}
-      <OpetopeDiagram diagram={succ} width={300} height={280} />
-    {:else}
-      <div class="pane-empty">—</div>
-    {/if}
   </div>
 </div>
 
 <style>
   .editor {
     display: flex;
-    gap: 12px;
+    gap: 20px;
     align-items: flex-start;
     padding: 8px 0;
   }
@@ -64,12 +50,8 @@
     gap: 6px;
   }
 
-  .focus-pane {
-    flex-shrink: 0;
-  }
-
-  .prev-pane, .succ-pane {
-    opacity: 0.65;
+  .succ-pane {
+    opacity: 0.8;
     flex-shrink: 0;
   }
 
@@ -80,18 +62,5 @@
     letter-spacing: 0.08em;
     color: #888;
     text-align: center;
-  }
-
-  .pane-empty {
-    width: 300px;
-    height: 280px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2em;
-    color: #ccc;
-    border: 1px dashed #e0e0e0;
-    border-radius: 8px;
-    background: #fafafa;
   }
 </style>

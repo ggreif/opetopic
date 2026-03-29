@@ -204,3 +204,37 @@ export function simplex(
 
   return { root: edgeRoot, edgeRoot }
 }
+
+/**
+ * The boxtree example from boxtree.svg.
+ *
+ * Box tree (left side of SVG) = nested rectangles:
+ *   j { g { a, b, c }, i { t }, u { d, e } }
+ *
+ * Edge tree (right side of SVG) = rooted directed tree with same shape:
+ *   j → g → { a, b, c }
+ *   j → i → { t }
+ *   j → u → { d, e }
+ *
+ * Labels: j = 2-cell (outermost), g/i/u = 1-cells, a/b/c/t/d/e = 0-cells
+ */
+export function boxtree(): AtomicDiagram {
+  const j = cell('j', 2)
+  const g = cell('g', 1)
+  const i = cell('i', 1)
+  const u = cell('u', 1)
+  const a = cell('a', 0)
+  const b = cell('b', 0)
+  const c = cell('c', 0)
+  const t = cell('t', 0)
+  const d = cell('d', 0)
+  const e = cell('e', 0)
+
+  const tree: Tree = node(j, [
+    ['g', node(g, [['a', leaf(a)], ['b', leaf(b)], ['c', leaf(c)]])],
+    ['i', node(i, [['t', leaf(t)]])],
+    ['u', node(u, [['d', leaf(d)], ['e', leaf(e)]])],
+  ])
+
+  return { root: tree, edgeRoot: tree }
+}

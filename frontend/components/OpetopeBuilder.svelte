@@ -1,31 +1,28 @@
 <script lang="ts">
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, type AtomicDiagram } from '../lib/opetope'
+  import { simplex, arrow, point, boxtree, type AtomicDiagram } from '../lib/opetope'
 
-  // Start with the simplex as the focus diagram
-  let focus = $state<AtomicDiagram>(simplex())
-  let prev = $state<AtomicDiagram | undefined>(arrow())
-  let succ = $state<AtomicDiagram | undefined>(undefined)
+  // Start with the boxtree as the focus diagram
+  let focus = $state<AtomicDiagram>(boxtree())
 
   // Example gallery switcher
   const examples: { label: string; make: () => AtomicDiagram }[] = [
-    { label: 'Point (0-cell)',  make: () => point() },
-    { label: 'Arrow (1-cell)',  make: () => arrow() },
+    { label: 'Boxtree',          make: () => boxtree() },
     { label: 'Simplex (2-cell)', make: () => simplex() },
+    { label: 'Arrow (1-cell)',   make: () => arrow() },
+    { label: 'Point (0-cell)',   make: () => point() },
   ]
 
   function loadExample(make: () => AtomicDiagram) {
     focus = make()
-    prev = undefined
-    succ = undefined
   }
 </script>
 
 <section class="builder">
   <h2>Opetope Builder <span class="badge">experimental</span></h2>
   <p class="desc">
-    A D3/WebCola visualizer for opetopic complexes.
-    Nodes = cells, edges = tree structure, groups = box containment.
+    Left: box/containment view (nested rectangles). Right: edge/tree view (directed graph).
+    The label on each box corresponds to the branch label on the tree — this is the bond.
   </p>
 
   <div class="toolbar">
@@ -35,7 +32,7 @@
     {/each}
   </div>
 
-  <OpetopeEditor {focus} {prev} {succ} />
+  <OpetopeEditor {focus} />
 </section>
 
 <style>
