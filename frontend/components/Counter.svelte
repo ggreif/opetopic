@@ -14,14 +14,14 @@
     await refreshCounter()
   }
 
-  $: {
+  $effect(() => {
     if (!$loading && $counter) {
       refreshCounter()
     }
-  }
+  })
 
 </script>
 <div class="example">
   <p style="font-size: 2.5em;">{count?.toString()}</p>
-  <button class="connect-button" on:click={increment}>+</button>
+  <button class="connect-button" onclick={increment}>+</button>
 </div>

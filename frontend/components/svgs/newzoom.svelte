@@ -1,11 +1,9 @@
 <script lang="ts">
 
-export let bonds = true
+let { bonds = true } = $props<{ bonds?: boolean }>()
 
-$: attr = ''
-$: contra = ''
-
-$: if (bonds) { contra = 'visible'; attr = 'hidden' } else { contra = 'hidden'; attr = 'visible' }
+let attr = $derived(bonds ? 'hidden' : 'visible')
+let contra = $derived(bonds ? 'visible' : 'hidden')
 </script>
 
 <svg

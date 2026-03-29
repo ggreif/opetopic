@@ -10,7 +10,7 @@ import Bigcomplex from "./svgs/bigcomplex.svelte"
 import BigcomplexFirst from "./svgs/bigcomplex-first.svelte"
 import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
 
-$: bonds = false;
+let bonds = $state(false);
 
 </script>
 

@@ -14,7 +14,7 @@
 <div class="example">
   {#if $wallet}
     <p>Buy me a beer</p>
-    <button class="connect-button" on:click={onPurchase}>Purchase</button>
+    <button class="connect-button" onclick={onPurchase}>Purchase</button>
   {:else}
     <p class="example-disabled">Connect with a wallet to access this example</p>
   {/if}

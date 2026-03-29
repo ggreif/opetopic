@@ -221,7 +221,7 @@ onMount(async () => {
         console.log(svg)
 	});
 
-$: svgX = `<svg id="by text" width="400" height="150"><circle r="30"/></svg>`;
+let svgX = $state(`<svg id="by text" width="400" height="150"><circle r="30"/></svg>`);
 
 </script>
 
