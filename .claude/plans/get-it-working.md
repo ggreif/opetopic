@@ -241,25 +241,118 @@
   3. Deploys to IC mainnet on push to `main`.
 - [ ] Reference the existing CircleCI config at `origin/circleci` branch for patterns.
 
-### 4.5 Migrate from `dfx` to `icp-cli` (lowest priority / future)
+### 4.5 Migrate from `dfx` to `icp-cli` (in progress)
 
-> `dfx` is the legacy DFINITY SDK. The IC community is consolidating tooling around
-> `icp-cli` (and related tools like `quill`, `ic-repl`, `vessel`/`mops` for Motoko).
-> Migrating reduces the dependency on the monolithic `dfx` binary and improves
-> compatibility with the broader IC ecosystem.
+> `dfx` is the legacy DFINITY SDK being sunsetted. The successor is `@icp-sdk/icp-cli`
+> (installed as a dev dependency). Config lives in `icp.yaml` instead of `dfx.json`.
+> Motoko compilation is already handled by `npx ic-mops build` — the only remaining
+> dfx usage is canister/asset management wire protocol.
 
-- [ ] Track the `icp-cli` project for a stable release and feature parity with `dfx`:
-  https://github.com/dfinity/icp-cli
-- [ ] Audit what dfx features the project actually uses:
-  - `dfx start` → local replica (replaceable with `pocket-ic` or standalone replica)
-  - `dfx deploy` → canister install (replaceable with `icp-cli canister install`)
-  - `dfx generate` → candid/JS bindings (replaceable with `didc` + custom scripts)
-  - `dfx identity` → key management (replaceable with `icp-cli identity`)
-- [ ] Replace `dfx.json` with whatever config format `icp-cli` adopts.
-- [ ] Update CI/CD workflows to use `icp-cli` instead of `dfx`.
-- [ ] Note: `mops` (Motoko package manager) is already wired in via `"packtool": "mops sources"`
-  in `dfx.json`, and `npx ic-mops` is available — this is compatible with both `dfx`
-  and `icp-cli`, so no change needed on the Motoko dependency side.
+#### What we learned about `@icp-sdk/icp-cli` v0.2.2
+
+**Package**: `@icp-sdk/icp-cli` (invoked as `icp` via npx or PATH)
+
+**Command mapping (dfx → icp):**
+
+| dfx command | icp equivalent |
+|---|---|
+| `dfx start --clean --background` | `icp network start -d` |
+| `dfx stop` | `icp network stop` |
+| `dfx canister install --wasm <file> --mode upgrade` | `icp canister install --wasm <file>` |
+| `dfx deploy assets` | `icp sync assets -e local` |
+| `dfx canister id <name>` | `icp canister id <name> -e local` |
+| `dfx identity whoami` | `icp identity whoami` |
+
+**Config format** (`icp.yaml`):
+```yaml
+networks:
+  - name: local
+    mode: connected          # connects to existing replica
+    url: http://127.0.0.1:4943
+
+environments:
+  - name: local
+    network: local
+    canisters:
+      - counter
+      - assets
+
+canisters:
+  - name: counter
+    # REQUIRED: must have a 'recipe' or 'build' section
+    # (currently missing — causes parse error when using name-based install)
+  - name: assets
+    sync:
+      steps:
+        - type: assets
+          dir: dist
+```
+
+**Known blockers (as of icp-cli 0.2.2 + dfx 0.31.0 replica):**
+
+1. **`icp canister install` by name requires `recipe`/`build` in `icp.yaml`**
+   - Error: `"Canister counter must have a 'recipe' or a 'build' section"`
+   - Fix: either define a build section in `icp.yaml`, or install by principal ID
+
+2. **Management canister IDL mismatch with dfx 0.31.0 replica**
+   - Error when installing by principal ID with `--network http://127.0.0.1:4943 --root-key …`
+   - `icp-cli` 0.2.2 doesn't know the `log_memory_store_size` field returned by dfx replica
+   - **Root cause:** dfx 0.31.0 and icp-cli 0.2.2 have different management canister IDL versions
+   - **Fix path:** Use `icp network start -d` (icp-cli's own replica) instead of dfx's replica
+
+3. **No `--wasm-memory-persistence keep` equivalent yet**
+   - dfx uses `--wasm-memory-persistence keep` for `persistent actor` upgrades
+   - icp-cli 0.2.2 may not yet expose this flag; check release notes for 0.3.x+
+
+#### Final working `icp.yaml` format
+
+```yaml
+networks:
+  - name: local
+    mode: managed        # icp-cli manages replica lifecycle
+    bind: 127.0.0.1:4943 # NOTE: icp-cli ignores bind, starts on port 8000 by default
+
+environments:
+  - name: local
+    network: local
+    canisters:
+      - counter
+      - assets
+
+canisters:
+  - name: counter
+    build:
+      steps:
+        - type: script
+          commands:
+            - npx ic-mops build
+            - cp .mops/.build/counter.wasm "$ICP_WASM_OUTPUT_PATH"
+
+  - name: assets
+    recipe:
+      type: "@dfinity/asset-canister@v2.1.0"
+      configuration:
+        dir: dist
+    # NOTE: cannot combine recipe + sync sections; recipe handles sync via dir
+```
+
+#### Migration steps
+
+- [x] Create `icp.yaml` with correct syntax
+- [x] Switch replica: `icp network start local -d` (runs on port 8000, not 4943)
+- [x] `icp build -e local` → builds counter WASM via `npx ic-mops build`
+- [x] `icp canister create` + `icp canister install` → deploys both canisters
+- [x] `icp sync assets -e local` → uploads `dist/` to assets canister
+- [x] `package.json` updated: `start:local`, `stop:local`, `deploy:local` all use `icp`
+- [x] Vite proxy updated: `/api` → `http://localhost:8000`
+- [ ] Remove `dfx.json` and `dfx` from devDependencies once confirmed stable
+- [ ] Note: canisters must be created once (`icp canister create`) before first install;
+  IDs are stored in `.icp/` (gitignore this directory or commit canister IDs separately)
+
+#### Remaining gap
+
+- No `--wasm-memory-persistence keep` equivalent yet; `persistent actor` upgrades
+  may need special handling — monitor icp-cli releases
 
 ---
 

@@ -4,9 +4,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:mo": "npx ic-mops build",
-    "install:counter": "dfx canister install counter --wasm .mops/.build/counter.wasm --mode upgrade --upgrade-unchanged --wasm-memory-persistence keep",
-    "deploy:local": "npm run build:mo && npm run install:counter && npm run build && dfx deploy assets",
+    "start:local": "npx @icp-sdk/icp-cli network start local -d",
+    "stop:local": "npx @icp-sdk/icp-cli network stop local",
+    "deploy:local": "npx @icp-sdk/icp-cli build -e local && npx @icp-sdk/icp-cli canister install counter -e local && npm run build && npx @icp-sdk/icp-cli canister install assets -e local && npx @icp-sdk/icp-cli sync assets -e local",
     "serve": "vite preview"
   },
   "dependencies": {
