@@ -1,6 +1,6 @@
 <script lang="ts">
   import BoxDiagram from './BoxDiagram.svelte'
-  import OpetopeDiagram from './OpetopeDiagram.svelte'
+  import TreeDiagram from './TreeDiagram.svelte'
   import type { AtomicDiagram } from '../lib/opetope'
 
   let {
@@ -27,8 +27,8 @@
   <!-- Succ pane: edge/tree view of focus.edgeRoot -->
   <div class="pane succ-pane">
     <div class="pane-label">tree</div>
-    <OpetopeDiagram
-      diagram={focus}
+    <TreeDiagram
+      tree={focus.edgeRoot}
       width={320}
       height={340}
       oncellclick={handleCellClick}
