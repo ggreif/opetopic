@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:mo": "npx ic-mops build",
     "serve": "vite preview"
   },
   "dependencies": {
