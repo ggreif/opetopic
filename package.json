@@ -5,6 +5,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:mo": "npx ic-mops build",
+    "install:counter": "dfx canister install counter --wasm .mops/.build/counter.wasm --mode upgrade --upgrade-unchanged --wasm-memory-persistence keep",
+    "deploy:local": "npm run build:mo && npm run install:counter && npm run build && dfx deploy assets",
     "serve": "vite preview"
   },
   "dependencies": {
