@@ -108,7 +108,7 @@ async function downward(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
             .attr("class", "group")
             //.style("fill", function (d, i) { return color(i); })
             .call(d3cola.drag);
-        console.log(group)
+        //console.log(group)
 
         node.append("title")
             .text(function (d: any) { return d.name; });

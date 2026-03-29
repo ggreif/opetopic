@@ -118,6 +118,7 @@ export default defineConfig((): UserConfig => {
        plugins: [
        svelte({
        /* plugin options */
+           exclude: ["dist", 'src/app.html']
        })
         ];
 	// Expand environment - .env files - with canister IDs
