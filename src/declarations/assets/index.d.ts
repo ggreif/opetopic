@@ -7,7 +7,7 @@ import type {
 import type { Principal } from "@icp-sdk/core/principal";
 import type { IDL } from "@icp-sdk/core/candid";
 
-import { _SERVICE } from './counter.did';
+import { _SERVICE } from './assets.did';
 
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const canisterId: string;
@@ -47,4 +47,4 @@ export declare const createActor: (
  * Intialized Actor using default settings, ready to talk to a canister using its candid interface
  * @constructs {@link ActorSubClass}
  */
-export declare const counter: ActorSubclass<_SERVICE>;
+export declare const assets: ActorSubclass<_SERVICE>;

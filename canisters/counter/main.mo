@@ -1,5 +1,5 @@
-actor {
-    stable var currentValue: Nat = 0;
+persistent actor {
+    var currentValue: Nat = 0;
 
     public func increment(): async () {
         currentValue += 1;

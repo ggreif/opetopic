@@ -1,8 +1,8 @@
 import { Actor, HttpAgent } from "@icp-sdk/core/agent";
 
 // Imports and re-exports candid interface
-import { idlFactory } from "./counter.did.js";
-export { idlFactory } from "./counter.did.js";
+import { idlFactory } from "./assets.did.js";
+export { idlFactory } from "./assets.did.js";
 
 /* CANISTER_ID is replaced by webpack based on node environment
  * Note: canister environment variable will be standardized as
@@ -10,7 +10,7 @@ export { idlFactory } from "./counter.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_COUNTER;
+  process.env.CANISTER_ID_ASSETS;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -38,5 +38,3 @@ export const createActor = (canisterId, options = {}) => {
     ...options.actorOptions,
   });
 };
-
-export const counter = canisterId ? createActor(canisterId) : undefined;
