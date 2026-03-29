@@ -1,6 +1,5 @@
 <script lang="ts">
 
-import logo from "./assets/dfinity.svg"
 import Home from "./components/Home.svelte"
 import Intro from "./components/Intro.svelte"
 import Complexes from "./components/Complexes.svelte"
@@ -12,15 +11,27 @@ import UniversalProperties from "./components/UniversalProperties.svelte"
 import OpetopicCategories from "./components/OpetopicCategories.svelte"
 import IdentitiesUnits from "./components/IdentitiesUnits.svelte"
 import Equivalences from "./components/Equivalences.svelte"
-
-
 import Layout from "./components/Layout.svelte"
+import Connect2ICProvider from "./components/Connect2ICProvider.svelte"
+import ConnectButton from "./components/ConnectButton.svelte"
+import ConnectDialog from "./components/ConnectDialog.svelte"
 
-  // TODO: @connect2ic/svelte is incompatible with Svelte 5 (uses removed svelte/internal APIs).
-  // IC wallet auth is disabled until connect2ic ships a Svelte 5-compatible release
-  // or is replaced with @nfid/identitykit / @internet-computer/identity.
+import { createClient } from "@connect2ic/core"
+import { InternetIdentity } from "@connect2ic/core/providers/internet-identity"
+import { StoicWallet } from "@connect2ic/core/providers/stoic-wallet"
+import { PlugWallet } from "@connect2ic/core/providers/plug-wallet"
+
+const client = createClient({
+  canisters: {},
+  providers: [new InternetIdentity(), new StoicWallet(), new PlugWallet()],
+})
 </script>
 
+<Connect2ICProvider {client}>
+  <div class="auth-section">
+    <ConnectButton />
+  </div>
+  <ConnectDialog />
 
 <Layout/>
 <hr/>
@@ -48,6 +59,7 @@ import Layout from "./components/Layout.svelte"
 <hr/>
 <Equivalences/>
 
+</Connect2ICProvider>
 
 <style global>
     body {

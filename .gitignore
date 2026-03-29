@@ -14,6 +14,6 @@ frontend/*.*js
 target/
 logs/
 **/*.agdai
-lib/
+opetopic-*/lib/
 
 .mops
