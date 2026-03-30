@@ -8,7 +8,7 @@
 
   const reverseBond = {path3415: 'rect3371', path3485: 'rect3377', path3423: 'rect3383', path3427: 'rect3389',
    path3625: 'rect3575', path3629: 'rect3611', path3633: 'rect3605', path3637: 'rect3617',
-   path3489: 'rect3443', path3473: 'rect3403', path3469: 'rect3397', path3485: '', path3457: '',
+   path3489: 'rect3443', path3473: 'rect3403', path3469: 'rect3397', path3457: '',
    path3477: 'rect3437', path3481: 'rect3431', path3473: 'rect3403', path3419: 'rect3377',
    path3593: 'rect3519', path3597: 'rect3555', path3585: 'rect3525', path3589: 'rect3561',
    path3601: 'rect3567', path3581: 'rect3513',
@@ -35,7 +35,7 @@
 
     // Col 2 (g3447) → bond to paths in g3509
     rect3451: { edges: [] },
-    rect3457: { edges: [] },
+    rect3457: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
     rect3463: { edges: ['path3485'] },
     rect3493: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
     rect3499: { edges: ['path3473', 'path3481', 'path3477'] },
