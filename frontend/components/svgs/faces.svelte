@@ -44,8 +44,8 @@
     // Col 3 (g3509) → bond to paths in g3571
     // rect3555 bonds to the x=0 edge, which is split into two segments by rect3617
     rect3513: { edges: [] },
-    rect3519: { edges: [] },
-    rect3525: { edges: [] },
+    rect3519: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
+    rect3525: { edges: ['path3535', 'path3539'] },
     rect3555: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
     rect3561: { edges: ['path3535', 'path3539'] },
     rect3567: { edges: ['path3547', 'path3551'] },
