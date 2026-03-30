@@ -11,7 +11,9 @@
    path3489: 'rect3443', path3473: 'rect3403', path3469: 'rect3397', path3485: '', path3457: '',
    path3477: 'rect3437', path3481: 'rect3431', path3473: 'rect3403', path3419: 'rect3377',
    path3593: 'rect3519', path3597: 'rect3555', path3585: 'rect3525', path3589: 'rect3561',
-   path3601: 'rect3567', path3581: 'rect3513'
+   path3601: 'rect3567', path3581: 'rect3513',
+   path3531: 'rect3451', path3543: 'rect3499', path3535: 'rect3457', path3547: 'rect3463',
+   path3551: 'rect3505', path3539: 'rect3493'
  }
 
 
@@ -44,9 +46,9 @@
     rect3513: { edges: [] },
     rect3519: { edges: [] },
     rect3525: { edges: [] },
-    rect3555: { edges: [] },
-    rect3561: { edges: [] },
-    rect3567: { edges: [] },
+    rect3555: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
+    rect3561: { edges: ['path3535', 'path3539'] },
+    rect3567: { edges: ['path3547', 'path3551'] },
 
     // Col 4 (g3571) → bond to paths in g3621
     rect3575: { edges: [] },
