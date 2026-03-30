@@ -1,6 +1,7 @@
 <script lang="ts">
+  import * as d3 from 'd3'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, boxtree, type AtomicDiagram } from '../lib/opetope'
+  import { simplex, arrow, point, boxtree, cell, sourceExtrude, subtreeFor, type AtomicDiagram } from '../lib/opetope'
 
   // Start with the boxtree as the focus diagram
   let focus = $state<AtomicDiagram>(boxtree())
@@ -15,6 +16,48 @@
 
   function loadExample(make: () => AtomicDiagram) {
     focus = make()
+  }
+
+  // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
+  const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
+  let _labelIdx = 0
+  function freshLabel(): string {
+    const i = _labelIdx++
+    return i < _greek.length ? _greek[i] : `x${i - _greek.length}`
+  }
+
+  function handleSourceExtrude(leafId: string) {
+    // Find the dim of the extruded leaf so the new child has dim - 1
+    function findDim(tree: typeof focus.root): number {
+      if (tree.cell.id === leafId) return tree.cell.dim
+      if (tree.children === null) return -1
+      for (const [, child] of tree.children) {
+        const d = findDim(child)
+        if (d >= 0) return d
+      }
+      return -1
+    }
+    const parentDim = findDim(focus.edgeRoot)
+    const newCell = cell(freshLabel(), Math.max(0, parentDim - 1))
+
+    const newEdgeRoot = sourceExtrude(focus.edgeRoot, leafId, newCell)
+    const newRoot     = sourceExtrude(focus.root,     leafId, newCell)
+    focus = { root: newRoot, edgeRoot: newEdgeRoot }
+
+    // Navigate to newCell through the reactive $state proxy so mutations trigger Svelte reactivity
+    const reactiveCell = subtreeFor(focus.edgeRoot, newCell.id)!.cell
+    reactiveCell.nascent = 0.05  // immediately perceptible
+
+    // Grow nascent 0.05 → 1 over ~500ms
+    const STEPS = 30
+    d3.timer((elapsed) => {
+      const step = Math.min(STEPS, Math.round(elapsed / (500 / STEPS)))
+      reactiveCell.nascent = Math.max(0.05, step / STEPS)
+      if (step >= STEPS) {
+        delete (reactiveCell as any).nascent  // cell is now mature
+        return true
+      }
+    })
   }
 </script>
 
@@ -32,7 +75,7 @@
     {/each}
   </div>
 
-  <OpetopeEditor {focus} />
+  <OpetopeEditor {focus} onsourceextrude={handleSourceExtrude} />
 </section>
 
 <style>

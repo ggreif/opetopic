@@ -15,13 +15,14 @@
 export type Cell = {
   id: string
   label: string
-  dim: number   // 0 = point, 1 = arrow, 2 = 2-cell, ...
+  dim: number      // 0 = point, 1 = arrow, 2 = 2-cell, ...
+  nascent?: number // 0 = just born, 1 = fully grown; absent = mature
 }
 
 /** A tree node: a cell with labeled child subtrees. */
 export type Tree = {
   cell: Cell
-  children: [string, Tree][]  // edge label → subtree
+  children: [string, Tree][] | null  // null = open branch tip (leaf); [] = nullary corolla
 }
 
 /**
@@ -79,7 +80,7 @@ export function toGraph(diagram: AtomicDiagram): Graph {
       cellIndex.set(tree.cell.id, nodes.length)
       nodes.push({ name: tree.cell.label, group: tree.cell.dim })
     }
-    for (const [, subtree] of tree.children) {
+    if (tree.children) for (const [, subtree] of tree.children) {
       collectNodes(subtree)
     }
   }
@@ -89,7 +90,7 @@ export function toGraph(diagram: AtomicDiagram): Graph {
   const seenEdges = new Set<string>()
   function collectEdges(tree: Tree) {
     const parentIdx = cellIndex.get(tree.cell.id)!
-    for (const [, subtree] of tree.children) {
+    if (tree.children) for (const [, subtree] of tree.children) {
       const childIdx = cellIndex.get(subtree.cell.id)!
       const edgeKey = `${childIdx}->${parentIdx}`
       if (!seenEdges.has(edgeKey)) {
@@ -114,7 +115,7 @@ export function toGraph(diagram: AtomicDiagram): Graph {
       leaves.push(ownIdx)
     }
 
-    for (const [, subtree] of tree.children) {
+    if (tree.children) for (const [, subtree] of tree.children) {
       const childOwnIdx = cellIndex.get(subtree.cell.id)
       // Only recurse into subtrees whose root cell hasn't been grouped yet
       if (childOwnIdx !== undefined && !groupedNodes.has(childOwnIdx)) {
@@ -143,11 +144,11 @@ export function descendantIds(tree: Tree, cellId: string): Set<string> {
   const ids = new Set<string>()
   function collectAll(t: Tree) {
     ids.add(t.cell.id)
-    for (const [, child] of t.children) collectAll(child)
+    if (t.children) for (const [, child] of t.children) collectAll(child)
   }
   function seek(t: Tree): boolean {
     if (t.cell.id === cellId) { collectAll(t); return true }
-    for (const [, child] of t.children) { if (seek(child)) return true }
+    if (t.children) for (const [, child] of t.children) { if (seek(child)) return true }
     return false
   }
   seek(tree)
@@ -157,19 +158,40 @@ export function descendantIds(tree: Tree, cellId: string): Set<string> {
 /** Return the subtree rooted at cellId, or null if not found. */
 export function subtreeFor(tree: Tree, cellId: string): Tree | null {
   if (tree.cell.id === cellId) return tree
-  for (const [, child] of tree.children) {
+  if (tree.children) for (const [, child] of tree.children) {
     const found = subtreeFor(child, cellId)
     if (found) return found
   }
   return null
 }
 
+/**
+ * Source extrusion at a leaf: the leaf becomes a corolla with one new nascent child.
+ *
+ * The new child cell is shared between root and edgeRoot (same object), so both
+ * renderers see the same nascent value — the bond holds during animation.
+ */
+export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
+  if (tree.cell.id === leafId && tree.children === null) {
+    // The extruded cell becomes the new corolla (dot); newCell is the fresh leaf (source)
+    // growing above it — "there is still a branch outwards" from the new dot.
+    return { ...tree, children: [['src', { cell: newCell, children: null }]] }
+  }
+  if (tree.children === null) return tree
+  return {
+    ...tree,
+    children: tree.children.map(
+      ([lbl, child]) => [lbl, sourceExtrude(child, leafId, newCell)] as [string, Tree]
+    ),
+  }
+}
+
 // ── Example diagrams ─────────────────────────────────────────────────────────
 
 let _id = 0
 function id(label: string) { return `${label}_${_id++}` }
-function cell(label: string, dim: number): Cell { return { id: id(label), label, dim } }
-function leaf(c: Cell): Tree { return { cell: c, children: [] } }
+export function cell(label: string, dim: number): Cell { return { id: id(label), label, dim } }
+function leaf(c: Cell): Tree { return { cell: c, children: null } }
 function node(c: Cell, children: [string, Tree][]): Tree { return { cell: c, children } }
 
 /**

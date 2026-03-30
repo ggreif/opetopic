@@ -150,7 +150,9 @@ A standalone static SVG demo of the 5-dimensional opetope, fully working:
 
 **Blueprint for click-extraction in the editor**: the `reverseBond` + BFS pattern directly maps to assembling an `AtomicDiagram` from a clicked cell in `OpetopeEditor`.
 
-### Phase 2c — Option key + click-to-extract in the editor (next)
+### Phase 2c — Option key + click-to-extract in the editor
+
+
 
 The demo (`faces.svelte`) has proven the interaction model. Now bring it to `OpetopeEditor`:
 
@@ -164,6 +166,82 @@ the excerpted face opetope. In the editor this means:
 **Click-to-extract** (next after Option key): clicking a highlighted face cell calls
 `subtreeFor(focus.edgeRoot, cellId)` → wraps result as `AtomicDiagram` → fires
 `onfaceclick` prop; `Opetopes.svelte` wires a second `OpetopeEditor` fed by this.
+
+### Phase 2d — source extrusion with nascent animation (next)
+
+**Context** (`Opetopes.svelte`): the inductive construction recipe is *"Start with a finite,
+linear nesting of boxes. Draw the edge tree which corresponds to that nesting. Add boxes to
+taste…"* — the editor should embody this directly.
+
+**Pane roles** (for the builder):
+- **Prev pane** (left): linear box nesting = the `n-1`-dimensional substrate (a sequence of boxes)
+- **Focus pane** (middle/right): edge tree = the source structure of the current `n`-cell being built
+
+**Operation**: source extrusion at a leaf `L` of the Focus edge tree:
+1. `L` goes from leaf (open tip, no dot) to corolla with one new child `L'`
+2. In the box pane: box `L` gains a sub-box `L'` inside it
+3. `L'` starts tiny and grows to default size, widening `L` and all ancestors
+
+**Interaction**: right-click on an input branch (leaf node's branch) in the tree pane →
+context menu → "Source extrusion". The branch is identifiable because `branch.id ∈ leafIds`
+where `leafIds = new Set(nodes.filter(d => !d.children).map(d => d.data.id))`.
+
+---
+
+#### The `nascent` attribute
+
+Add `nascent?: number` to `Cell` (0 = just created, 1 = fully grown, absent = mature):
+
+```typescript
+export type Cell = {
+  id: string
+  label: string
+  dim: number
+  nascent?: number   // present only during growth animation; 0..1
+}
+```
+
+**Why on `Cell` not on `Tree`**: both `BoxDiagram` and `TreeDiagram` receive a `Tree` and walk
+it independently. Embedding `nascent` in the cell lets both renderers pick it up during their
+own traversal without extra plumbing.
+
+**Parallel evolution** — the two views evolve together because both walk the same underlying
+tree. `nascent` is the single shared signal:
+- `BoxDiagram.measure(t)`: if `t.cell.nascent` is defined, scale leaf size by `nascent`
+  → `w = nascent × LEAF_W`, `h = nascent × LEAF_H`. Parent's `measure()` sees the smaller
+  child and shrinks accordingly, then grows as `nascent` → 1. The enclosing box widens naturally.
+- `TreeDiagram.computeLayout()`: nascent node starts positioned at its parent's dot (nascent=0)
+  and lerps to its computed target position (nascent=1). The corolla bus width grows as the new
+  branch separates from the dot.
+
+**Animation driver**: a `requestAnimationFrame` loop (or `d3.timer`) increments `nascent` each
+frame (e.g. `nascent += 0.04` for ~25 frames / ~400ms at 60fps). Once `nascent >= 1`, delete
+the attribute and re-assign `focus` to trigger a clean final render. Svelte reactivity
+propagates the changing `nascent` through `$state` → both diagrams re-render each tick.
+
+**Data flow**:
+```
+OpetopeBuilder.$state focus
+  → user right-clicks leaf L in TreeDiagram
+  → onsourceextrude(L.id) fires
+  → sourceExtrude(focus.edgeRoot, L.id, newCell{nascent:0}) → newEdgeRoot
+  → sourceExtrude(focus.root,     L.id, newCell{nascent:0}) → newRoot
+     (same cell object shared — nascent mutation is visible in both)
+  → focus = { root: newRoot, edgeRoot: newEdgeRoot }
+  → d3.timer ticks: cell.nascent += 0.04 → focus = {...focus} (force re-render)
+  → at nascent >= 1: delete cell.nascent, assign final focus
+```
+
+**Implementation sketch**:
+- `opetope.ts`: export `cell`, add `sourceExtrude(tree, leafId, newCell): Tree`
+- `TreeDiagram.svelte`: `onsourceextrude` prop; leaf-branch contextmenu; `computeLayout`
+  lerps nascent nodes toward target position
+- `BoxDiagram.svelte`: `measure()` scales leaf dims by `nascent ?? 1`
+- `OpetopeEditor.svelte`: relay `onsourceextrude` prop
+- `OpetopeBuilder.svelte`: `handleSourceExtrude` — creates newCell, calls `sourceExtrude`,
+  starts `d3.timer` ticking `nascent`, assigns `focus` reactively each frame
+
+---
 
 ### Phase 3 — prev pane overlay + dimension jumping (next session)
 

@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { Tree, Cell } from '../lib/opetope'
 
-  let { tree, width = 480, height = 340, highlight = undefined, onhover = undefined }: {
+  let { tree, width = 480, height = 340, highlight = undefined, onhover = undefined, onsourceextrude = undefined }: {
     tree: Tree
     width?: number
     height?: number
     highlight?: string
     onhover?: (cellId: string | null) => void
+    onsourceextrude?: (leafId: string) => void
   } = $props()
 
   // Layout constants
@@ -24,9 +25,9 @@
   }
 
   function measure(t: Tree): { w: number; h: number } {
-    if (!t.children.length) return { w: LEAF_W, h: LEAF_H }
-    const kids = t.children.map(([, s]) => measure(s))
-    const totalW = kids.reduce((s, k) => s + k.w, 0)
+    if (t.children === null || t.children.length === 0) return { w: LEAF_W, h: LEAF_H }
+    const kids = t.children.map(([, c]) => measure(c))
+    const totalW = kids.reduce((acc, k) => acc + k.w, 0)
       + H_GAP * (kids.length - 1) + 2 * H_PAD
     const maxH = Math.max(...kids.map(k => k.h))
     return { w: Math.max(totalW, LEAF_W), h: maxH + V_PAD_TOP + V_PAD_BOT }
@@ -34,7 +35,7 @@
 
   function place(t: Tree, x: number, y: number): BoxRect {
     const { w, h } = measure(t)
-    if (!t.children.length) return { cell: t.cell, x, y, w, h, children: [] }
+    if (t.children === null || t.children.length === 0) return { cell: t.cell, x, y, w, h, children: [] }
     let cx = x + H_PAD
     const cy = y + V_PAD_TOP
     const children = t.children.map(([, s]) => {
@@ -64,15 +65,36 @@
   const offsetY   = $derived((height - scaledH) / 2)
   const layout    = $derived(place(tree, 0, 0))
   const allBoxes  = $derived(flatten(layout))
+
+  // ── Context menu ─────────────────────────────────────────────────────────────
+
+  let ctxMenu = $state<{ x: number; y: number; leafId: string } | null>(null)
+
+  function handleContextMenu(e: MouseEvent, box: BoxRect) {
+    if (box.children.length > 0) return   // only leaf and nullary-corolla boxes
+    e.preventDefault()
+    ctxMenu = { x: e.clientX, y: e.clientY, leafId: box.cell.id }
+  }
+
+  function closeCtxMenu() { ctxMenu = null }
+
+  function invokeSourceExtrude() {
+    if (ctxMenu) {
+      onsourceextrude?.(ctxMenu.leafId)
+      ctxMenu = null
+    }
+  }
 </script>
 
 <svg {width} {height} class="box-diagram">
   <g transform={`translate(${offsetX},${offsetY}) scale(${scale})`}>
-    {#each allBoxes as box}
+    {#each allBoxes as box (box.cell.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <g
         onmouseenter={() => onhover?.(box.cell.id)}
         onmouseleave={() => onhover?.(null)}
+        oncontextmenu={(e) => handleContextMenu(e, box)}
+        opacity={box.cell.nascent ?? 1}
       >
         <rect
           x={box.x} y={box.y}
@@ -80,6 +102,7 @@
           rx="5" ry="5"
           class="box-rect"
           class:highlighted={box.cell.id === highlight}
+          class:leaf={box.children.length === 0}
         />
         <!-- label: top-right corner inside the box; font-size compensates for scale -->
         <text
@@ -93,6 +116,15 @@
     {/each}
   </g>
 </svg>
+
+{#if ctxMenu}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="ctx-overlay" onclick={closeCtxMenu}></div>
+  <div class="ctx-menu" style="left: {ctxMenu.x}px; top: {ctxMenu.y}px">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <button onclick={invokeSourceExtrude}>Source extrusion</button>
+  </div>
+{/if}
 
 <style>
   .box-diagram {
@@ -108,6 +140,10 @@
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
     transition: stroke-width 0.1s, stroke 0.1s;
+  }
+
+  :global(.box-rect.leaf) {
+    cursor: context-menu;
   }
 
   :global(.box-rect.highlighted) {
@@ -128,5 +164,39 @@
   :global(.box-label.highlighted) {
     fill: #a02480;
     font-weight: bold;
+  }
+
+  .ctx-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+  }
+
+  .ctx-menu {
+    position: fixed;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    overflow: hidden;
+    min-width: 160px;
+  }
+
+  .ctx-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .ctx-menu button:hover {
+    background: #f3e5f5;
+    color: #a02480;
   }
 </style>

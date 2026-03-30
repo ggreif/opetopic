@@ -6,9 +6,11 @@
   let {
     focus,
     oncellclick = undefined,
+    onsourceextrude = undefined,
   }: {
     focus: AtomicDiagram
     oncellclick?: (cellId: string) => void
+    onsourceextrude?: (leafId: string) => void
   } = $props()
 
   let hoveredId = $state<string | null>(null)
@@ -29,6 +31,7 @@
       height={340}
       highlight={hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
+      onsourceextrude={(leafId) => onsourceextrude?.(leafId)}
     />
   </div>
 

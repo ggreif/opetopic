@@ -25,10 +25,11 @@
 
   function buildHier(t: Tree): any {
     return {
-      id:    t.cell.id,
-      label: t.cell.label,
-      dim:   t.cell.dim,
-      children: t.children.length
+      id:      t.cell.id,
+      label:   t.cell.label,
+      dim:     t.cell.dim,
+      nascent: t.cell.nascent,
+      children: t.children !== null
         ? t.children.map(([, s]) => buildHier(s))
         : undefined,
     }
@@ -64,17 +65,18 @@
     })
     ;(root as any)._stemLen = stemLen
 
+    // Nascent nodes start at their parent's dot position and lerp toward target.
+    root.each((d: any) => {
+      if (d.data.nascent !== undefined && d.parent) {
+        const n = d.data.nascent as number
+        d.x = d.parent.x + n * (d.x - d.parent.x)
+        d.y = d.parent.y + n * (d.y - d.parent.y)
+      }
+    })
+
     return root
   }
 
-  /**
-   * Decompose a corolla into:
-   *   bus     — the horizontal span only (structural, never highlighted)
-   *   branches — one path per child, keyed to child.data.id, highlighted individually
-   *
-   * Each branch carries the arc end (╰ or ╯) for the outermost children so
-   * that the arc colour follows the branch it belongs to.
-   */
   /**
    * Decompose a corolla into per-child branch paths.
    * Each outer branch extends all the way horizontally to the dot (d.x),
@@ -133,9 +135,9 @@
 <svg {width} {height} class="tree-diagram">
   <!-- Pass 1: all branch paths — stem included as a branch of the root.
        Include root even when it's a leaf (e.g. bare point) so the stem is drawn. -->
-  {#each nodes.filter((d: any) => d.children || !d.parent) as d}
+  {#each nodes.filter((d: any) => d.children || !d.parent) as d (d.data.id)}
     {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
-    {#each branches as branch}
+    {#each branches as branch (branch.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <g
         onmouseenter={() => onhover?.(branch.id)}
@@ -148,7 +150,7 @@
   {/each}
 
   <!-- Edge labels: midpoint of the vertical edge leading to each non-root node -->
-  {#each nodes.filter((d: any) => d.parent) as d}
+  {#each nodes.filter((d: any) => d.parent) as d (d.data.id)}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <text
       x={(d.x as number) + 5}
@@ -172,7 +174,7 @@
   >{hier.data.label}</text>
 
   <!-- Pass 3: dots on top of all paths and labels -->
-  {#each nodes.filter((d: any) => d.children) as d}
+  {#each nodes.filter((d: any) => d.children) as d (d.data.id)}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <circle
@@ -239,4 +241,5 @@
     fill: #a02480;
     font-weight: bold;
   }
+
 </style>
