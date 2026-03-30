@@ -11,6 +11,8 @@
     oncellclick?: (cellId: string) => void
   } = $props()
 
+  let hoveredId = $state<string | null>(null)
+
   function handleCellClick(cellId: string) {
     console.log('cell clicked:', cellId)
     oncellclick?.(cellId)
@@ -21,7 +23,13 @@
   <!-- Focus pane: box/containment view of focus.root -->
   <div class="pane focus-pane">
     <div class="pane-label">boxes</div>
-    <BoxDiagram tree={focus.root} width={420} height={340} />
+    <BoxDiagram
+      tree={focus.root}
+      width={420}
+      height={340}
+      highlight={hoveredId ?? undefined}
+      onhover={(id) => { hoveredId = id }}
+    />
   </div>
 
   <!-- Succ pane: edge/tree view of focus.edgeRoot -->
@@ -31,6 +39,8 @@
       tree={focus.edgeRoot}
       width={320}
       height={340}
+      highlight={hoveredId ?? undefined}
+      onhover={(id) => { hoveredId = id }}
       oncellclick={handleCellClick}
     />
   </div>

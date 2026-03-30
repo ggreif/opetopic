@@ -115,12 +115,34 @@ j = outermost box = tree root (dim 2); g/i/u = dim 1; a/b/c/t/d/e = dim 0 (leave
 - `OpetopeEditor.svelte` two-pane layout
 - `OpetopeBuilder.svelte` with example gallery
 
-### Phase 2 — navigation (next)
+### Phase 2 — live bonds (next)
+
+The label on each box (boxes pane) matches the branch label on the corresponding edge (tree pane) — this is the **bond**. We want this bond to be visually alive:
+
+**Interaction**: hovering over any labeled element (box rectangle + its label, or tree edge + its label) highlights the **matching element in both panes simultaneously**.
+
+**Visual treatment**:
+- Label text: `font-weight: bold`
+- Stroke (box border / tree edge path): `stroke-width × 1.5`
+- Highlight is bidirectional: hover in boxes pane highlights in tree pane and vice versa
+
+**Implementation sketch**:
+1. `OpetopeEditor` holds `let hoveredId = $state<string | null>(null)`
+2. Both `BoxDiagram` and `TreeDiagram` get two new props:
+   - `highlight?: string` — the currently hovered cell id
+   - `onhover?: (cellId: string | null) => void` — fired on mouseenter/mouseleave
+3. `BoxDiagram`: `mouseenter`/`mouseleave` on each rect+label pair → calls `onhover`; applies `.highlighted` class when `rect.cell.id === highlight`
+4. `TreeDiagram`: `mouseenter`/`mouseleave` on each edge path+label pair (keyed by child cell id) → calls `onhover`; applies `.highlighted` class when `child.data.id === highlight`
+5. Both panes use the same `cell.id` as the key, so hover in one pane automatically highlights in the other
+
+This is fully feasible with SVG pointer events and Svelte 5 `$state`/`$props`.
+
+### Phase 3 — navigation (future)
 - Click a cell in the tree pane → navigate the opetopic complex
 - Clicking a cell in `focus` makes it new focus; old focus becomes `succ`, source becomes `prev`
 - Prev pane restored showing `n-1` dimensional faces
 
-### Phase 3 — builder interactions (future)
+### Phase 4 — builder interactions (future)
 - Add-cell toolbar (dimension selector + label)
 - Click to add 0-cell or 1-cell to focus diagram
 - Drag to connect two 0-cells as a 1-cell

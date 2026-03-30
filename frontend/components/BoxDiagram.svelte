@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { Tree, Cell } from '../lib/opetope'
 
-  let { tree, width = 480, height = 340 }: {
+  let { tree, width = 480, height = 340, highlight = undefined, onhover = undefined }: {
     tree: Tree
     width?: number
     height?: number
+    highlight?: string
+    onhover?: (cellId: string | null) => void
   } = $props()
 
   // Layout constants
@@ -57,18 +59,26 @@
 
 <svg {width} {height} class="box-diagram">
   {#each allBoxes as box}
-    <rect
-      x={box.x} y={box.y}
-      width={box.w} height={box.h}
-      rx="5" ry="5"
-      class="box-rect"
-    />
-    <!-- label: top-right corner inside the box -->
-    <text
-      x={box.x + box.w - 7}
-      y={box.y + 18}
-      class="box-label"
-    >{box.cell.label}</text>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <g
+      onmouseenter={() => onhover?.(box.cell.id)}
+      onmouseleave={() => onhover?.(null)}
+    >
+      <rect
+        x={box.x} y={box.y}
+        width={box.w} height={box.h}
+        rx="5" ry="5"
+        class="box-rect"
+        class:highlighted={box.cell.id === highlight}
+      />
+      <!-- label: top-right corner inside the box -->
+      <text
+        x={box.x + box.w - 7}
+        y={box.y + 18}
+        class="box-label"
+        class:highlighted={box.cell.id === highlight}
+      >{box.cell.label}</text>
+    </g>
   {/each}
 </svg>
 
@@ -84,6 +94,12 @@
     fill: #fff;
     stroke: #333;
     stroke-width: 1.5;
+    transition: stroke-width 0.1s, stroke 0.1s;
+  }
+
+  :global(.box-rect.highlighted) {
+    stroke: #a02480;
+    stroke-width: 2.25;
   }
 
   :global(.box-label) {
@@ -93,5 +109,11 @@
     fill: #222;
     pointer-events: none;
     text-anchor: end;
+    transition: fill 0.1s, font-weight 0.1s;
+  }
+
+  :global(.box-label.highlighted) {
+    fill: #a02480;
+    font-weight: bold;
   }
 </style>
