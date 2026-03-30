@@ -10,8 +10,7 @@
   const reverseBond = {
     // Col 0 ← paths in g3393
     path3415: 'rect3371', path3419: 'rect3377', path3423: 'rect3383', path3427: 'rect3389',
-    // NOTE: path3485 → rect3377 is suspicious — needs verification
-    path3485: 'rect3377',
+    path3485: 'rect3409',
     // Col 1 ← paths in g3447
     path3469: 'rect3397', path3473: 'rect3403',
     path3477: 'rect3437', path3481: 'rect3431', path3489: 'rect3443',
