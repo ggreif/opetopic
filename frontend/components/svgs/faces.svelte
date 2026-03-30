@@ -6,15 +6,24 @@
   const MOSS  = '#6a9153'
   const BLACK = '#000000'
 
-  const reverseBond = {path3415: 'rect3371', path3485: 'rect3377', path3423: 'rect3383', path3427: 'rect3389',
-   path3625: 'rect3575', path3629: 'rect3611', path3633: 'rect3605', path3637: 'rect3617',
-   path3489: 'rect3443', path3473: 'rect3403', path3469: 'rect3397', path3457: '',
-   path3477: 'rect3437', path3481: 'rect3431', path3473: 'rect3403', path3419: 'rect3377',
-   path3593: 'rect3519', path3597: 'rect3555', path3585: 'rect3525', path3589: 'rect3561',
-   path3601: 'rect3567', path3581: 'rect3513',
-   path3531: 'rect3451', path3543: 'rect3499', path3535: 'rect3457', path3547: 'rect3463',
-   path3551: 'rect3505', path3539: 'rect3493'
- }
+  // Inverse bond: path id → rect id it bonds to (one column to the left)
+  const reverseBond = {
+    // Col 0 ← paths in g3393
+    path3415: 'rect3371', path3419: 'rect3377', path3423: 'rect3383', path3427: 'rect3389',
+    // NOTE: path3485 → rect3377 is suspicious — needs verification
+    path3485: 'rect3377',
+    // Col 1 ← paths in g3447
+    path3469: 'rect3397', path3473: 'rect3403',
+    path3477: 'rect3437', path3481: 'rect3431', path3489: 'rect3443',
+    // Col 2 ← paths in g3509
+    path3531: 'rect3451', path3535: 'rect3457', path3539: 'rect3493',
+    path3543: 'rect3499', path3547: 'rect3463', path3551: 'rect3505',
+    // Col 3 ← paths in g3571
+    path3581: 'rect3513', path3585: 'rect3525', path3589: 'rect3561',
+    path3593: 'rect3519', path3597: 'rect3555', path3601: 'rect3567',
+    // Col 4 ← paths in g3621
+    path3625: 'rect3575', path3629: 'rect3611', path3633: 'rect3605', path3637: 'rect3617',
+  }
 
 
   type Entry = { edges: string[] }
@@ -71,8 +80,7 @@
     if (!id) return
     const entry = faceMap[id]
     if (!entry) return
-    // TODO: once reverseBond is complete, simplify to entry.edges.map(e => reverseBond[e])
-    const cells = entry.edges.flatMap(e => reverseBond[e as keyof typeof reverseBond] ? [reverseBond[e as keyof typeof reverseBond]] : [])
+    const cells = entry.edges.map(e => reverseBond[e as keyof typeof reverseBond])
     ;[...entry.edges, ...cells].forEach(eid => {
       const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
       if (el) el.style.stroke = MOSS
