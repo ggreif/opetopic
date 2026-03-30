@@ -110,10 +110,10 @@ import Faces from "./svgs/faces.svelte"
     <p>
       First of all, as you pass your mouse cursor over one of the cells,
       you will notice that a number of lower dimensional cells are highlighted.
-      These are exactly the faces of the face you are pointing at.  Furthermore
-      if you click on one of the faces, its opetopic structure will be
-      "extracted" into the bottom region, where you can verify that it also
-      is an opetope in the sense defined above.
+      These are exactly the faces of the cell you are pointing at.  Furthermore,
+      holding the <em>Option</em> key while hovering isolates the face structure:
+      all non-face lines are hidden, leaving only the highlighted cells visible
+      as the excerpted face opetope.
     </p>
 
     <h3 class="ui dividing header">Constructing Opetopes Inductively</h3>

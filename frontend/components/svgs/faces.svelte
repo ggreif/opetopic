@@ -70,11 +70,21 @@
 
   let svgEl = $state<SVGSVGElement | undefined>(undefined)
   let hoveredBox = $state<string | null>(null)
+  let optionHeld = $state(false)
+
+  $effect(() => {
+    const down = (e: KeyboardEvent) => { if (e.altKey) { optionHeld = true; applyHighlight(hoveredBox) } }
+    const up   = (e: KeyboardEvent) => { if (!e.altKey) { optionHeld = false; applyHighlight(hoveredBox) } }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
+  })
 
   function applyHighlight(id: string | null) {
     if (!svgEl) return
+    const bg = (optionHeld && id) ? 'none' : BLACK
     svgEl!.querySelectorAll<SVGElement>('rect[id], path[id]').forEach(el => {
-      el.style.stroke = BLACK
+      el.style.stroke = bg
     })
     svgEl!.querySelectorAll<SVGElement>('path[id]').forEach(el => {
       el.style.strokeWidth = '100'
@@ -91,7 +101,7 @@
       const e = faceMap[cur]
       if (!e) continue
       const cells = e.edges.map(e => reverseBond[e as keyof typeof reverseBond])
-      e.edges.forEach(eid => {
+      if (!optionHeld) e.edges.forEach(eid => {
         const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
         if (el) { el.style.stroke = MOSS; el.style.strokeWidth = '50' }
       })
