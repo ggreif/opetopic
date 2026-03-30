@@ -108,12 +108,12 @@ import Faces from "./svgs/faces.svelte"
     </div>
 
     <p>
-      As you pass your mouse cursor over the corolla in the rightmost
-      (5th-dimensional) atomic diagram, you will notice that the four
-      boxes in the preceding (4th-dimensional) diagram are highlighted
-      in green.  These are exactly the faces of the 5-cell you are
-      pointing at.  Further face levels and click-to-extract are
-      planned.
+      First of all, as you pass your mouse cursor over one of the cells,
+      you will notice that a number of lower dimensional cells are highlighted.
+      These are exactly the faces of the face you are pointing at.  Furthermore
+      if you click on one of the faces, its opetopic structure will be
+      "extracted" into the bottom region, where you can verify that it also
+      is an opetope in the sense defined above.
     </p>
 
     <h3 class="ui dividing header">Constructing Opetopes Inductively</h3>

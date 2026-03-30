@@ -1,6 +1,6 @@
 <script lang="ts">
   // Face highlighting for the 5-dimensional opetope.
-  // Hovering any box highlights ONE LEVEL of faces (no transitivity):
+  // Hovering any box transitively highlights all faces (via reverseBond):
   //   edges:    corresponding edge segment(s) in the next atomic diagram (the bond)
   //   cells:    directly contained boxes, derived via inverse bond lookup
   const MOSS  = '#6a9153'
@@ -27,14 +27,14 @@
 
   type Entry = { edges: string[] }
   const faceMap: Record<string, Entry> = {
-    // Col 0 (g3367) linear nesting → bond to paths in g3393
-    rect3371: { edges: [] },
-    rect3377: { edges: [] },
-    rect3383: { edges: [] },
-    rect3389: { edges: [] },
+    // Col 0 (g3367) — leaf cells, no faces to show
+    // rect3371: { edges: [] },
+    // rect3377: { edges: [] },
+    // rect3383: { edges: [] },
+    // rect3389: { edges: [] },
 
     // Col 1 (g3393) → bond to paths in g3447
-    rect3397: { edges: [] },
+    // rect3397: { edges: [] },  // root box
     rect3403: { edges: ['path3415', 'path3423'] },
     rect3409: { edges: ['path3423'] },
     rect3431: { edges: ['path3415', 'path3419'] },
@@ -42,7 +42,7 @@
     rect3443: { edges: ['path3423', 'path3427'] },
 
     // Col 2 (g3447) → bond to paths in g3509
-    rect3451: { edges: [] },
+    // rect3451: { edges: [] },  // root box
     rect3457: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
     rect3463: { edges: ['path3485'] },
     rect3493: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
@@ -50,8 +50,8 @@
     rect3505: { edges: ['path3485'] },
 
     // Col 3 (g3509) → bond to paths in g3571
+    // rect3513: { edges: [] },  // root box
     // rect3555 bonds to the x=0 edge, which is split into two segments by rect3617
-    rect3513: { edges: [] },
     rect3519: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
     rect3525: { edges: ['path3535', 'path3539'] },
     rect3555: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
@@ -59,7 +59,7 @@
     rect3567: { edges: ['path3547', 'path3551'] },
 
     // Col 4 (g3571) → bond to paths in g3621
-    rect3575: { edges: [] },
+    // rect3575: { edges: [] },  // root box
     rect3617: { edges: ['path3593', 'path3597'] },  // left
     rect3611: { edges: ['path3585', 'path3589'] },  // right
     rect3605: { edges: ['path3581', 'path3601', 'path3593', 'path3585'] },  // middle
@@ -81,18 +81,26 @@
     })
     if (!id) return
     const entry = faceMap[id]
-    if (!entry || entry.edges.length === 0) return
+    if (!entry) return
     const hovered = svgEl!.querySelector<SVGElement>(`#${id}`)
     if (hovered) hovered.style.stroke = MOSS
-    const cells = entry.edges.map(e => reverseBond[e as keyof typeof reverseBond])
-    entry.edges.forEach(eid => {
-      const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
-      if (el) { el.style.stroke = MOSS; el.style.strokeWidth = '50' }
-    })
-    cells.forEach(eid => {
-      const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
-      if (el) el.style.stroke = MOSS
-    })
+    // Transitively highlight all faces via reverseBond
+    const queue: string[] = [id]
+    while (queue.length > 0) {
+      const cur = queue.shift()!
+      const e = faceMap[cur]
+      if (!e) continue
+      const cells = e.edges.map(e => reverseBond[e as keyof typeof reverseBond])
+      e.edges.forEach(eid => {
+        const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
+        if (el) { el.style.stroke = MOSS; el.style.strokeWidth = '50' }
+      })
+      cells.forEach(cid => {
+        const el = svgEl!.querySelector<SVGElement>(`#${cid}`)
+        if (el) el.style.stroke = MOSS
+        queue.push(cid)
+      })
+    }
   }
 
   $effect(() => { applyHighlight(hoveredBox) })
