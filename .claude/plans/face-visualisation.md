@@ -137,12 +137,26 @@ The label on each box (boxes pane) matches the branch label on the corresponding
 
 This is fully feasible with SVG pointer events and Svelte 5 `$state`/`$props`.
 
-### Phase 3 — navigation (future)
+### Phase 3 — prev pane overlay + dimension jumping (next session)
+
+Two intertwined goals:
+
+**Overlay in the focus pane**: the n-1 dimensional faces (prev) are shown overlaid with
+the n-dimensional faces (focus) in a single pane. The boxes/edgetree of the prev diagram
+sits behind or alongside the boxes/edgetree of the focus diagram, visually expressing
+the bond between them — the face map glues them together.
+
+**Dimension jumping**: UI to increase or decrease `n` for the focus:
+- Decrease (zoom out): the current focus becomes the new succ; the prev becomes the new focus
+- Increase (zoom in): clicking a cell in the focus makes it the new focus; old focus becomes prev
+- The pane stack slides: prev ← focus ← succ at each step
+
+### Phase 4 — navigation (future)
 - Click a cell in the tree pane → navigate the opetopic complex
 - Clicking a cell in `focus` makes it new focus; old focus becomes `succ`, source becomes `prev`
 - Prev pane restored showing `n-1` dimensional faces
 
-### Phase 4 — builder interactions (future)
+### Phase 5 — builder interactions (future)
 - Add-cell toolbar (dimension selector + label)
 - Click to add 0-cell or 1-cell to focus diagram
 - Drag to connect two 0-cells as a 1-cell

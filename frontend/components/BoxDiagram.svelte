@@ -50,36 +50,48 @@
     return [b, ...b.children.flatMap(flatten)]
   }
 
+  const PAD = 16  // margin around the scaled content
+
   const rootSize  = $derived(measure(tree))
-  const offsetX   = $derived(Math.max(0, (width  - rootSize.w) / 2))
-  const offsetY   = $derived(Math.max(0, (height - rootSize.h) / 2))
-  const layout    = $derived(place(tree, offsetX, offsetY))
+  const scale     = $derived(Math.min(
+    (width  - 2 * PAD) / rootSize.w,
+    (height - 2 * PAD) / rootSize.h,
+    1,   // never upscale
+  ))
+  const scaledW   = $derived(rootSize.w * scale)
+  const scaledH   = $derived(rootSize.h * scale)
+  const offsetX   = $derived((width  - scaledW) / 2)
+  const offsetY   = $derived((height - scaledH) / 2)
+  const layout    = $derived(place(tree, 0, 0))
   const allBoxes  = $derived(flatten(layout))
 </script>
 
 <svg {width} {height} class="box-diagram">
-  {#each allBoxes as box}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <g
-      onmouseenter={() => onhover?.(box.cell.id)}
-      onmouseleave={() => onhover?.(null)}
-    >
-      <rect
-        x={box.x} y={box.y}
-        width={box.w} height={box.h}
-        rx="5" ry="5"
-        class="box-rect"
-        class:highlighted={box.cell.id === highlight}
-      />
-      <!-- label: top-right corner inside the box -->
-      <text
-        x={box.x + box.w - 7}
-        y={box.y + 18}
-        class="box-label"
-        class:highlighted={box.cell.id === highlight}
-      >{box.cell.label}</text>
-    </g>
-  {/each}
+  <g transform={`translate(${offsetX},${offsetY}) scale(${scale})`}>
+    {#each allBoxes as box}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <g
+        onmouseenter={() => onhover?.(box.cell.id)}
+        onmouseleave={() => onhover?.(null)}
+      >
+        <rect
+          x={box.x} y={box.y}
+          width={box.w} height={box.h}
+          rx="5" ry="5"
+          class="box-rect"
+          class:highlighted={box.cell.id === highlight}
+        />
+        <!-- label: top-right corner inside the box; font-size compensates for scale -->
+        <text
+          x={box.x + box.w - 7}
+          y={box.y + 18}
+          font-size={13 / scale}
+          class="box-label"
+          class:highlighted={box.cell.id === highlight}
+        >{box.cell.label}</text>
+      </g>
+    {/each}
+  </g>
 </svg>
 
 <style>
@@ -94,6 +106,7 @@
     fill: #fff;
     stroke: #333;
     stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
     transition: stroke-width 0.1s, stroke 0.1s;
   }
 
