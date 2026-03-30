@@ -2,52 +2,60 @@
   // Face highlighting for the 5-dimensional opetope.
   // Hovering any box highlights ONE LEVEL of faces (no transitivity):
   //   edges:    corresponding edge segment(s) in the next atomic diagram (the bond)
-  //   cells:    directly contained boxes in the same atomic diagram
+  //   cells:    directly contained boxes, derived via inverse bond lookup
   const MOSS  = '#6a9153'
   const BLACK = '#000000'
 
-  type Entry = { edges: string[]; cells: string[] }
+  const reverseBond = {path3415: 'rect3371', path3485: 'rect3377', path3423: 'rect3383', path3427: 'rect3389',
+   path3625: 'rect3575', path3629: 'rect3611', path3633: 'rect3605', path3637: 'rect3617',
+   path3489: 'rect3443', path3473: 'rect3403', path3469: 'rect3397', path3485: '', path3457: '',
+   path3477: 'rect3437', path3481: 'rect3431', path3473: 'rect3403', path3419: 'rect3377',
+   path3593: 'rect3519', path3597: 'rect3555', path3585: 'rect3525', path3589: 'rect3561',
+   path3601: 'rect3567', path3581: 'rect3513'
+ }
+
+
+  type Entry = { edges: string[] }
   const faceMap: Record<string, Entry> = {
     // Col 0 (g3367) linear nesting → bond to paths in g3393
-    rect3371: { edges: [], cells: [] },
-    rect3377: { edges: [], cells: [] },
-    rect3383: { edges: [], cells: [] },
-    rect3389: { edges: [], cells: [] },
+    rect3371: { edges: [] },
+    rect3377: { edges: [] },
+    rect3383: { edges: [] },
+    rect3389: { edges: [] },
 
     // Col 1 (g3393) → bond to paths in g3447
-    rect3397: { edges: [], cells: [] },
-    rect3403: { edges: [], cells: [] },
-    rect3409: { edges: [], cells: [] },
-    rect3431: { edges: ['path3415', 'path3485'], cells: ['rect3371', 'rect3377'] },
-    rect3437: { edges: ['path3485', 'path3423'], cells: ['rect3377', 'rect3383'] },
-    rect3443: { edges: ['path3423', 'path3427'], cells: ['rect3383', 'rect3389'] },
+    rect3397: { edges: [] },
+    rect3403: { edges: ['path3415', 'path3423'] },
+    rect3409: { edges: ['path3423'] },
+    rect3431: { edges: ['path3415', 'path3419'] },
+    rect3437: { edges: ['path3419', 'path3423'] },
+    rect3443: { edges: ['path3423', 'path3427'] },
 
     // Col 2 (g3447) → bond to paths in g3509
-    rect3451: { edges: [], cells: [] },
-    rect3457: { edges: [], cells: [] },
-    rect3463: { edges: [], cells: [] },
-    rect3493: { edges: [], cells: [] },
-    rect3499: { edges: [], cells: [] },
-    rect3505: { edges: [], cells: [] },
+    rect3451: { edges: [] },
+    rect3457: { edges: [] },
+    rect3463: { edges: ['path3485'] },
+    rect3493: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
+    rect3499: { edges: ['path3473', 'path3481', 'path3477'] },
+    rect3505: { edges: ['path3485'] },
 
     // Col 3 (g3509) → bond to paths in g3571
     // rect3555 bonds to the x=0 edge, which is split into two segments by rect3617
-    rect3513: { edges: [], cells: [] },
-    rect3519: { edges: [], cells: [] },
-    rect3525: { edges: [], cells: [] },
-    rect3555: { edges: [], cells: [] },
-    rect3561: { edges: [], cells: [] },
-    rect3567: { edges: [], cells: [] },
+    rect3513: { edges: [] },
+    rect3519: { edges: [] },
+    rect3525: { edges: [] },
+    rect3555: { edges: [] },
+    rect3561: { edges: [] },
+    rect3567: { edges: [] },
 
     // Col 4 (g3571) → bond to paths in g3621
-    rect3575: { edges: [], cells: [] },
-    rect3617: { edges: [], cells: [] },  // left
-    rect3611: { edges: [], cells: [] },  // right
-    rect3605: { edges: [], cells: [] },  // middle
+    rect3575: { edges: [] },
+    rect3617: { edges: ['path3593', 'path3597'] },  // left
+    rect3611: { edges: ['path3585', 'path3589'] },  // right
+    rect3605: { edges: ['path3581', 'path3601', 'path3593', 'path3585'] },  // middle
 
     // Col 5 — trivial final box; its faces are the 4 corolla edges + the 4 col-4 boxes they bond to
-    rect3641: { edges: ['path3625', 'path3629', 'path3633', 'path3637'],
-                cells: ['rect3575', 'rect3611', 'rect3605', 'rect3617'] },
+    rect3641: { edges: ['path3625', 'path3629', 'path3633', 'path3637'] },
   }
 
   let svgEl = $state<SVGSVGElement | undefined>(undefined)
@@ -61,7 +69,9 @@
     if (!id) return
     const entry = faceMap[id]
     if (!entry) return
-    ;[...entry.edges, ...entry.cells].forEach(eid => {
+    // TODO: once reverseBond is complete, simplify to entry.edges.map(e => reverseBond[e])
+    const cells = entry.edges.flatMap(e => reverseBond[e as keyof typeof reverseBond] ? [reverseBond[e as keyof typeof reverseBond]] : [])
+    ;[...entry.edges, ...cells].forEach(eid => {
       const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
       if (el) el.style.stroke = MOSS
     })

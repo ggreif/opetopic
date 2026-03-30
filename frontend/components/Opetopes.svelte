@@ -101,7 +101,7 @@ import Faces from "./svgs/faces.svelte"
     </p>
     
     <div class="ui top attached segment">
-      <h3 class="ui header">Opetope Faces</h3>
+      <h3 class="ui header"><a id="faces">Opetope Faces</a></h3>
     </div>
     <div class="ui attached center aligned segment">
       <Faces/>
