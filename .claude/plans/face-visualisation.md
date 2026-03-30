@@ -115,7 +115,7 @@ j = outermost box = tree root (dim 2); g/i/u = dim 1; a/b/c/t/d/e = dim 0 (leave
 - `OpetopeEditor.svelte` two-pane layout
 - `OpetopeBuilder.svelte` with example gallery
 
-### Phase 2 — live bonds (next)
+### Phase 2 — live bonds ✅
 
 The label on each box (boxes pane) matches the branch label on the corresponding edge (tree pane) — this is the **bond**. We want this bond to be visually alive:
 
@@ -136,6 +136,36 @@ The label on each box (boxes pane) matches the branch label on the corresponding
 5. Both panes use the same `cell.id` as the key, so hover in one pane automatically highlights in the other
 
 This is fully feasible with SVG pointer events and Svelte 5 `$state`/`$props`.
+
+### Phase 2b — face restriction hover with Option key (next small step)
+
+When hovering a cell X **with the Option key held**, highlight X **and all its
+lower-dimensional faces** (the subtree rooted at X) in **moss green** (`#6a9153` or
+similar). Plain hover (no modifier) keeps the existing single-cell purple bond highlight.
+
+**Key insight**: the faces of cell X are exactly the cells in X's subtree in the edge tree.
+
+**Visual treatment**: moss green (`#6a9153`) stroke + bold label — distinct from the
+purple (`#a02480`) used for plain bond highlighting, so both modes are visually
+distinguishable when the user presses/releases Option mid-hover.
+
+**Implementation sketch**:
+1. Add to `opetope.ts`:
+   - `descendantIds(tree, cellId): Set<string>` — returns cellId + all descendant ids
+   - `subtreeFor(tree, cellId): Tree | null` — returns the subtree rooted at cellId
+   (both already added to `opetope.ts` as a preparatory step)
+2. In `OpetopeEditor`: track `let optionHeld = $state(false)` via `keydown`/`keyup`
+   on `e.altKey`; when Option is held, switch from `hoveredId: string` to
+   `hoveredIds: Set<string>` computed via `descendantIds(focus.edgeRoot, id)`
+3. Add a second highlight prop pair to `BoxDiagram` and `TreeDiagram`:
+   - `highlightIds?: Set<string>` (moss green, face subtree)
+   alongside the existing `highlight?: string` (purple, single bond)
+4. CSS: `.highlighted-face` class → `stroke: #6a9153; font-weight: bold`
+5. Add `onfaceclick?: (face: AtomicDiagram) => void` to `OpetopeEditor`:
+   when a dot is clicked, call `subtreeFor(focus.edgeRoot, cellId)` → wrap as
+   `AtomicDiagram` → call `onfaceclick`
+6. In `Opetopes.svelte`: wire a second `OpetopeEditor` as the face pane, fed by
+   `onfaceclick`
 
 ### Phase 3 — prev pane overlay + dimension jumping (next session)
 

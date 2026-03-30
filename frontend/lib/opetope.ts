@@ -136,6 +136,34 @@ export function toGraph(diagram: AtomicDiagram): Graph {
   return { nodes, links, groups, constraints }
 }
 
+// ── Tree utilities ───────────────────────────────────────────────────────────
+
+/** Return the ids of cellId and all its descendants in the tree. Empty if not found. */
+export function descendantIds(tree: Tree, cellId: string): Set<string> {
+  const ids = new Set<string>()
+  function collectAll(t: Tree) {
+    ids.add(t.cell.id)
+    for (const [, child] of t.children) collectAll(child)
+  }
+  function seek(t: Tree): boolean {
+    if (t.cell.id === cellId) { collectAll(t); return true }
+    for (const [, child] of t.children) { if (seek(child)) return true }
+    return false
+  }
+  seek(tree)
+  return ids
+}
+
+/** Return the subtree rooted at cellId, or null if not found. */
+export function subtreeFor(tree: Tree, cellId: string): Tree | null {
+  if (tree.cell.id === cellId) return tree
+  for (const [, child] of tree.children) {
+    const found = subtreeFor(child, cellId)
+    if (found) return found
+  }
+  return null
+}
+
 // ── Example diagrams ─────────────────────────────────────────────────────────
 
 let _id = 0

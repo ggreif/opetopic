@@ -2,6 +2,7 @@
 
 import Bigcomplex from "./svgs/bigcomplex.svelte"
 import Opetope from "./svgs/opetope.svelte"
+import Faces from "./svgs/faces.svelte"
 
 </script>
 
@@ -100,26 +101,19 @@ import Opetope from "./svgs/opetope.svelte"
     </p>
     
     <div class="ui top attached segment">
-      <h3 class="ui header">Opetope</h3>
+      <h3 class="ui header">Opetope Faces</h3>
     </div>
     <div class="ui attached center aligned segment">
-      <div id="gallery-pane"></div>
-    </div>
-
-    <div class="ui top attached segment">
-      <h3 class="ui header">Face</h3>
-    </div>
-    <div class="ui attached center aligned segment">
-      <div id="face-pane"></div>
+      <Faces/>
     </div>
 
     <p>
-      First of all, as you pass your mouse cursor over one of the cells,
-      you will notice that a number of lower dimensional cells are highlighted.
-      These are exactly the faces of the face you are pointing at.  Furthermore
-      if you click on one of the faces, its opetopic structure will be 
-      "extracted" into the bottom region, where you can verify that it also
-      is an opetope in the sense defined above.
+      As you pass your mouse cursor over the corolla in the rightmost
+      (5th-dimensional) atomic diagram, you will notice that the four
+      boxes in the preceding (4th-dimensional) diagram are highlighted
+      in green.  These are exactly the faces of the 5-cell you are
+      pointing at.  Further face levels and click-to-extract are
+      planned.
     </p>
 
     <h3 class="ui dividing header">Constructing Opetopes Inductively</h3>
