@@ -43,17 +43,17 @@
 
     // Col 2 (g3447) → bond to paths in g3509
     // rect3451: { edges: [] },  // root box
-    rect3457: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
-    rect3463: { edges: ['path3485'] },
+    // rect3457: { edges: [...] },  // interposer (same boundary as rect3493)
+    // rect3463: { edges: [...] },  // interposer (same boundary as rect3505)
     rect3493: { edges: ['path3469', 'path3489', 'path3485', 'path3473'] },
     rect3499: { edges: ['path3473', 'path3481', 'path3477'] },
     rect3505: { edges: ['path3485'] },
 
     // Col 3 (g3509) → bond to paths in g3571
     // rect3513: { edges: [] },  // root box
+    // rect3519: { edges: [...] },  // interposer (same boundary as rect3555)
+    // rect3525: { edges: [...] },  // interposer (same boundary as rect3561)
     // rect3555 bonds to the x=0 edge, which is split into two segments by rect3617
-    rect3519: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
-    rect3525: { edges: ['path3535', 'path3539'] },
     rect3555: { edges: ['path3531', 'path3547', 'path3543', 'path3535'] },
     rect3561: { edges: ['path3535', 'path3539'] },
     rect3567: { edges: ['path3547', 'path3551'] },
