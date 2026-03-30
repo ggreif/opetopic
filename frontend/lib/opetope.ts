@@ -147,17 +147,17 @@ function node(c: Cell, children: [string, Tree][]): Tree { return { cell: c, chi
 /**
  * A single 0-cell (point). Just one node, no edges.
  */
-export function point(label = 'x'): AtomicDiagram {
+export function point(label = 'a'): AtomicDiagram {
   const x = cell(label, 0)
   const t = leaf(x)
   return { root: t, edgeRoot: t }
 }
 
 /**
- * A 1-cell: arrow f: x → y.
- * Edge tree: f at top, x and y as children (source/target).
+ * A 1-cell: arrow f: a → b.
+ * Edge tree: f at top, a and b as children (source/target).
  */
-export function arrow(fLabel = 'f', srcLabel = 'x', tgtLabel = 'y'): AtomicDiagram {
+export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): AtomicDiagram {
   const f = cell(fLabel, 1)
   const x = cell(srcLabel, 0)
   const y = cell(tgtLabel, 0)
@@ -166,40 +166,31 @@ export function arrow(fLabel = 'f', srcLabel = 'x', tgtLabel = 'y'): AtomicDiagr
 }
 
 /**
- * A 2-cell simplex α with:
- *   f: x → y  (left edge)
- *   g: y → z  (right edge)
- *   h: x → z  (bottom edge, target of α)
+ * A 2-cell simplex α with three 1-cell inputs f, g, h.
+ * Each 1-cell has two unique 0-cell endpoints — the Tree type is a tree,
+ * not a DAG, so shared vertices are represented as distinct leaves with
+ * distinct labels (a…i, skipping the 1-cell labels f, g, h).
  *
- * The edge tree for α: α is the root 2-cell.
- * Its boundary consists of the three 1-cells f, g, h arranged as a triangle:
- *   α → f (x→y)
- *   α → g (y→z)
- *   α → h (x→z)  ← target/output edge
- *
- * We model this as: α has children f, g, h; each 1-cell has its endpoint 0-cells.
- * Shared 0-cells (x appears in f and h; y in f and g; z in g and h) are deduplicated
- * by the toGraph() function.
+ *   α → f (a→b)
+ *   α → g (c→d)
+ *   α → h (e→i)
  */
 export function simplex(
   alphaLabel = 'α',
   fLabel = 'f', gLabel = 'g', hLabel = 'h',
-  xLabel = 'x', yLabel = 'y', zLabel = 'z',
+  f_src = 'a', f_tgt = 'b',
+  g_src = 'c', g_tgt = 'd',
+  h_src = 'e', h_tgt = 'i',
 ): AtomicDiagram {
   const alpha = cell(alphaLabel, 2)
   const f = cell(fLabel, 1)
   const g = cell(gLabel, 1)
   const h = cell(hLabel, 1)
-  const x = cell(xLabel, 0)
-  const y = cell(yLabel, 0)
-  const z = cell(zLabel, 0)
 
-  // All six cells (α, f, g, h, x, y, z) share identity by object reference.
-  // toGraph deduplicates by cell.id so shared points appear once.
   const edgeRoot = node(alpha, [
-    [fLabel, node(f, [['src', leaf(x)], ['tgt', leaf(y)]])],
-    [gLabel, node(g, [['src', leaf(y)], ['tgt', leaf(z)]])],
-    [hLabel, node(h, [['src', leaf(x)], ['tgt', leaf(z)]])],
+    [fLabel, node(f, [['src', leaf(cell(f_src, 0))], ['tgt', leaf(cell(f_tgt, 0))]])],
+    [gLabel, node(g, [['src', leaf(cell(g_src, 0))], ['tgt', leaf(cell(g_tgt, 0))]])],
+    [hLabel, node(h, [['src', leaf(cell(h_src, 0))], ['tgt', leaf(cell(h_tgt, 0))]])],
   ])
 
   return { root: edgeRoot, edgeRoot }
@@ -211,7 +202,7 @@ export function simplex(
  * Box tree (left side of SVG) = nested rectangles:
  *   j { g { a, b, c }, i { t }, u { d, e } }
  *
- * Edge tree (right side of SVG) = rooted directed tree with same shape:
+ * Edge tree (right side of SVG) = rooted tree with same shape:
  *   j → g → { a, b, c }
  *   j → i → { t }
  *   j → u → { d, e }

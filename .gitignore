@@ -9,6 +9,7 @@ dist-ssr
 **/*.map
 vite.config.*js
 frontend/*.*js
+frontend/lib/*.js
 
 **/*~
 target/

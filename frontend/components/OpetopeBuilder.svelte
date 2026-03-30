@@ -21,7 +21,7 @@
 <section class="builder">
   <h2>Opetope Builder <span class="badge">experimental</span></h2>
   <p class="desc">
-    Left: box/containment view (nested rectangles). Right: edge/tree view (directed graph).
+    Left: box/containment view (nested rectangles). Right: edge/tree view (rooted tree).
     The label on each box corresponds to the branch label on the tree — this is the bond.
   </p>
 

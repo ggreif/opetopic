@@ -61,13 +61,13 @@
       x={box.x} y={box.y}
       width={box.w} height={box.h}
       rx="5" ry="5"
-      class="box-rect dim-{box.cell.dim}"
+      class="box-rect"
     />
     <!-- label: top-right corner inside the box -->
     <text
       x={box.x + box.w - 7}
       y={box.y + 18}
-      class="box-label dim-{box.cell.dim}"
+      class="box-label"
     >{box.cell.label}</text>
   {/each}
 </svg>
@@ -86,13 +86,6 @@
     stroke-width: 1.5;
   }
 
-  /* dim 2 = outermost cell: slightly tinted */
-  :global(.box-rect.dim-2) { fill: #f5f0ff; stroke: #555; stroke-width: 2; }
-  /* dim 1 = intermediate: neutral */
-  :global(.box-rect.dim-1) { fill: #fff; stroke: #444; stroke-width: 1.5; }
-  /* dim 0 = leaf: light blue tint */
-  :global(.box-rect.dim-0) { fill: #f0f8ff; stroke: #888; stroke-width: 1; }
-
   :global(.box-label) {
     font-family: 'Georgia', serif;
     font-style: italic;
@@ -101,6 +94,4 @@
     pointer-events: none;
     text-anchor: end;
   }
-
-  :global(.box-label.dim-2) { font-size: 15px; font-weight: bold; fill: #333; }
 </style>
