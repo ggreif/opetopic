@@ -88,33 +88,37 @@
   function corollaElements(d: any, stemLen = 0): {
     branches: { id: string; path: string }[]
   } {
-    const children = (d.children as any[]).slice().sort((a: any, b: any) => a.x - b.x)
     const py = d.y as number
     const px = d.x as number
     const r  = ARC_R
 
-    let branches: { id: string; path: string }[]
+    const branches: { id: string; path: string }[] = []
 
-    if (children.length === 1) {
-      branches = [{ id: children[0].data.id, path: `M${px},${py} V${children[0].y}` }]
-    } else {
-      const x0 = children[0].x as number
-      const xN = children[children.length - 1].x as number
+    if (d.children) {
+      const children = (d.children as any[]).slice().sort((a: any, b: any) => a.x - b.x)
 
-      branches = children.map((c: any, i: number) => {
-        let path: string
-        if (i === 0) {
-          path = `M${c.x},${c.y} V${py - r} Q${c.x},${py} ${c.x + r},${py} H${px}`
-        } else if (i === children.length - 1) {
-          path = `M${px},${py} H${xN - r} Q${xN},${py} ${xN},${py - r} V${c.y}`
-        } else {
-          path = `M${c.x},${c.y} V${py}`
-        }
-        return { id: c.data.id, path }
-      })
+      if (children.length === 1) {
+        branches.push({ id: children[0].data.id, path: `M${px},${py} V${children[0].y}` })
+      } else {
+        const x0 = children[0].x as number
+        const xN = children[children.length - 1].x as number
+
+        children.forEach((c: any, i: number) => {
+          let path: string
+          if (i === 0) {
+            path = `M${c.x},${c.y} V${py - r} Q${c.x},${py} ${c.x + r},${py} H${px}`
+          } else if (i === children.length - 1) {
+            path = `M${px},${py} H${xN - r} Q${xN},${py} ${xN},${py - r} V${c.y}`
+          } else {
+            path = `M${c.x},${c.y} V${py}`
+          }
+          branches.push({ id: c.data.id, path })
+        })
+      }
     }
 
-    // Output stem: same as a branch but going downward, keyed to the root's own cell
+    // Output stem: same as a branch but going downward, keyed to the root's own cell.
+    // Present for every root (including a leaf root like a bare point).
     if (stemLen > 0) {
       branches.push({ id: d.data.id, path: `M${px},${py} V${py + stemLen}` })
     }
@@ -127,8 +131,9 @@
 </script>
 
 <svg {width} {height} class="tree-diagram">
-  <!-- Pass 1: all branch paths — stem included as a branch of the root -->
-  {#each nodes.filter((d: any) => d.children) as d}
+  <!-- Pass 1: all branch paths — stem included as a branch of the root.
+       Include root even when it's a leaf (e.g. bare point) so the stem is drawn. -->
+  {#each nodes.filter((d: any) => d.children || !d.parent) as d}
     {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
     {#each branches as branch}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
