@@ -81,7 +81,7 @@
     })
     if (!id) return
     const entry = faceMap[id]
-    if (!entry) return
+    if (!entry || entry.edges.length === 0) return
     const hovered = svgEl!.querySelector<SVGElement>(`#${id}`)
     if (hovered) hovered.style.stroke = MOSS
     const cells = entry.edges.map(e => reverseBond[e as keyof typeof reverseBond])
