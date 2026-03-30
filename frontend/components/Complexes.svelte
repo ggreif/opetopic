@@ -11,6 +11,7 @@ import BigcomplexFirst from "./svgs/bigcomplex-first.svelte"
 import BigcomplexSecond from "./svgs/bigcomplex-second.svelte"
 
 let bonds = $state(false);
+let view = $state<'complex' | 'first' | 'second'>('complex');
 
 </script>
 
@@ -213,24 +214,21 @@ let bonds = $state(false);
     </p> 
 
     <div class="ui basic center aligned segment">
-      <div id="csvg" style="opacity:1.0">
+      <div style="opacity:{view === 'complex' ? 1 : 0}">
         <Bigcomplex/>
-	<!-- <object type="image/svg+xml" data="/assets/svgs/bigcomplex.svg"></object> -->
       </div>
-      <div id="fsvg" style="opacity:0.0; position: relative; top:-245px; margin-bottom:-245px;">
+      <div style="opacity:{view === 'first' ? 1 : 0}; position: relative; top:-245px; margin-bottom:-245px;">
         <BigcomplexFirst/>
-	<!-- <object type="image/svg+xml" data="/assets/svgs/bigcomplex-first.svg"></object> -->
       </div>
-      <div id="ssvg" style="opacity:0.0; position: relative; top:-245px; margin-bottom:-245px;">
+      <div style="opacity:{view === 'second' ? 1 : 0}; position: relative; top:-245px; margin-bottom:-245px;">
         <BigcomplexSecond/>
-	<!-- <object type="image/svg+xml" data="/assets/svgs/bigcomplex-second.svg"></object> -->
       </div>
     </div>
     <div class="ui basic center aligned segment">
       <div class="ui buttons">
-	<button id="cbtn" class="ui button active">Complex</button>
-	<button id="fbtn" class="ui button">First Bond</button>
-	<button id="sbtn" class="ui button">Second Bond</button>
+        <button class="ui button" class:active={view === 'complex'}  onclick={() => view = 'complex'}>Complex</button>
+        <button class="ui button" class:active={view === 'first'}    onclick={() => view = 'first'}>First Bond</button>
+        <button class="ui button" class:active={view === 'second'}   onclick={() => view = 'second'}>Second Bond</button>
       </div>
     </div>
 
