@@ -137,35 +137,33 @@ The label on each box (boxes pane) matches the branch label on the corresponding
 
 This is fully feasible with SVG pointer events and Svelte 5 `$state`/`$props`.
 
-### Phase 2b — face restriction hover with Option key (next small step)
+### Phase 2b — face demo (`faces.svelte`) ✅
 
-When hovering a cell X **with the Option key held**, highlight X **and all its
-lower-dimensional faces** (the subtree rooted at X) in **moss green** (`#6a9153` or
-similar). Plain hover (no modifier) keeps the existing single-cell purple bond highlight.
+A standalone static SVG demo of the 5-dimensional opetope, fully working:
 
-**Key insight**: the faces of cell X are exactly the cells in X's subtree in the edge tree.
+- **`faceMap`**: each non-root, non-interposer box has its boundary `edges` listed
+- **`reverseBond`**: total inverse-bond map (path → rect, one column left); proven correct by manual SVG inspection
+- **Transitive highlighting**: BFS over `faceMap`/`reverseBond` highlights hovered cell + all lower-dimensional faces transitively, with edges at half stroke-width (secondary info) and cells at full moss-green stroke
+- **Option key**: hides all non-face strokes, revealing the excerpted face opetope cleanly
+- **Interposers** (boxes with identical boundaries to their container) are commented out — they are not independently extractable faces
+- **Root boxes** commented out — they represent composite cells, not extractable opetopic faces
 
-**Visual treatment**: moss green (`#6a9153`) stroke + bold label — distinct from the
-purple (`#a02480`) used for plain bond highlighting, so both modes are visually
-distinguishable when the user presses/releases Option mid-hover.
+**Blueprint for click-extraction in the editor**: the `reverseBond` + BFS pattern directly maps to assembling an `AtomicDiagram` from a clicked cell in `OpetopeEditor`.
 
-**Implementation sketch**:
-1. Add to `opetope.ts`:
-   - `descendantIds(tree, cellId): Set<string>` — returns cellId + all descendant ids
-   - `subtreeFor(tree, cellId): Tree | null` — returns the subtree rooted at cellId
-   (both already added to `opetope.ts` as a preparatory step)
-2. In `OpetopeEditor`: track `let optionHeld = $state(false)` via `keydown`/`keyup`
-   on `e.altKey`; when Option is held, switch from `hoveredId: string` to
-   `hoveredIds: Set<string>` computed via `descendantIds(focus.edgeRoot, id)`
-3. Add a second highlight prop pair to `BoxDiagram` and `TreeDiagram`:
-   - `highlightIds?: Set<string>` (moss green, face subtree)
-   alongside the existing `highlight?: string` (purple, single bond)
-4. CSS: `.highlighted-face` class → `stroke: #6a9153; font-weight: bold`
-5. Add `onfaceclick?: (face: AtomicDiagram) => void` to `OpetopeEditor`:
-   when a dot is clicked, call `subtreeFor(focus.edgeRoot, cellId)` → wrap as
-   `AtomicDiagram` → call `onfaceclick`
-6. In `Opetopes.svelte`: wire a second `OpetopeEditor` as the face pane, fed by
-   `onfaceclick`
+### Phase 2c — Option key + click-to-extract in the editor (next)
+
+The demo (`faces.svelte`) has proven the interaction model. Now bring it to `OpetopeEditor`:
+
+**Option key** (proven in demo): holding Option hides all non-face strokes, revealing
+the excerpted face opetope. In the editor this means:
+- Track `optionHeld = $state(false)` via `keydown`/`keyup` on `e.altKey`
+- When held: suppress bond highlights, show only face cells in moss green via
+  `descendantIds(focus.edgeRoot, hoveredId)` (already in `opetope.ts`)
+- Non-face elements get `stroke: none` (not `hidden` — preserves white fill)
+
+**Click-to-extract** (next after Option key): clicking a highlighted face cell calls
+`subtreeFor(focus.edgeRoot, cellId)` → wraps result as `AtomicDiagram` → fires
+`onfaceclick` prop; `Opetopes.svelte` wires a second `OpetopeEditor` fed by this.
 
 ### Phase 3 — prev pane overlay + dimension jumping (next session)
 
