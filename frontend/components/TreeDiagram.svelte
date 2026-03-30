@@ -141,11 +141,8 @@
         onmouseenter={() => onhover?.(branch.id)}
         onmouseleave={() => onhover?.(null)}
       >
-        <path
-          d={branch.path}
-          class="corolla-link"
-          class:highlighted={branch.id === highlight}
-        />
+        <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} />
+        <path d={branch.path} class="corolla-hit" />
       </g>
     {/each}
   {/each}
@@ -200,7 +197,16 @@
     stroke: #444;
     stroke-width: 1.5;
     stroke-linecap: round;
+    pointer-events: none;
     transition: stroke-width 0.1s, stroke 0.1s;
+  }
+
+  :global(.corolla-hit) {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    pointer-events: stroke;
   }
 
   :global(.corolla-link.highlighted) {
