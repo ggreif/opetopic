@@ -37,7 +37,7 @@
 
   function computeLayout(t: Tree) {
     const root = d3.hierarchy(buildHier(t))
-    const innerW = width - 2 * PAD
+    const innerW = (width - 2 * PAD) * 0.9
 
     const leaves = root.leaves()
     leaves.forEach((leaf, i) => {
