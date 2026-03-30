@@ -76,11 +76,18 @@
     svgEl!.querySelectorAll<SVGElement>('rect[id], path[id]').forEach(el => {
       el.style.stroke = BLACK
     })
+    svgEl!.querySelectorAll<SVGElement>('path[id]').forEach(el => {
+      el.style.strokeWidth = '100'
+    })
     if (!id) return
     const entry = faceMap[id]
     if (!entry) return
     const cells = entry.edges.map(e => reverseBond[e as keyof typeof reverseBond])
-    ;[...entry.edges, ...cells].forEach(eid => {
+    entry.edges.forEach(eid => {
+      const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
+      if (el) { el.style.stroke = MOSS; el.style.strokeWidth = '50' }
+    })
+    cells.forEach(eid => {
       const el = svgEl!.querySelector<SVGElement>(`#${eid}`)
       if (el) el.style.stroke = MOSS
     })
