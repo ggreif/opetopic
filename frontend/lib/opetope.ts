@@ -197,23 +197,22 @@ export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
  * Drop cell ids are deterministic ("drop_<cellId>") so Svelte keyed lists stay stable.
  */
 /**
- * Drop insertion combinator — simultaneously:
- *   1. Modifies focus.root: the cell at cellId becomes a nullary corolla (children: [])
- *      which appears as a lollipop in the Succ TreeDiagram.
- *   2. Records the latch in focus.drops (for Prev/Focus slashed markers).
+ * Drop insertion combinator — triggered by double-clicking an edgeRoot branch in Focus:
+ *   1. Records edgeCellId in focus.drops (marks the edgeRoot branch in Prev/Focus tree layer).
+ *   2. Adds newCell as a fresh nullary-corolla (lollipop) child of focus.root's outer frame.
+ *      The lollipop appears as a new sub-box in the Focus box layer and a new branch in Succ.
  *   focus.edgeRoot is left structurally unchanged.
  */
-export function dropInsert(diagram: AtomicDiagram, cellId: string): AtomicDiagram {
-  function lollipop(t: Tree): Tree {
-    if (t.cell.id === cellId && t.children === null)
-      return { ...t, children: [] }
-    if (t.children === null) return t
-    return { ...t, children: t.children.map(([lbl, c]) => [lbl, lollipop(c)] as [string, Tree]) }
+export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: Cell): AtomicDiagram {
+  const lollipop: Tree = { cell: newCell, children: [] }
+  function addChild(t: Tree): Tree {
+    if (t.children === null) return { ...t, children: [[newCell.label, lollipop]] }
+    return { ...t, children: [...t.children, [newCell.label, lollipop]] }
   }
   return {
     ...diagram,
-    root:  lollipop(diagram.root),
-    drops: [...(diagram.drops ?? []), cellId],
+    root:  addChild(diagram.root),
+    drops: [...(diagram.drops ?? []), edgeCellId],
   }
 }
 

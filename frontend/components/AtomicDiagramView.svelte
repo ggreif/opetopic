@@ -9,6 +9,7 @@
     height = 340,
     highlight = undefined,
     onhover = undefined,
+    ondropinsert = undefined,
   }: {
     diagram: AtomicDiagram
     drops?: string[]
@@ -16,6 +17,7 @@
     height?: number
     highlight?: string
     onhover?: (cellId: string | null) => void
+    ondropinsert?: (cellId: string) => void
   } = $props()
 
   const droppedSet = $derived(new Set(drops))
@@ -113,6 +115,27 @@
 
   const hier  = $derived(computeLayout(diagram.edgeRoot))
   const nodes = $derived(hier.descendants() as any[])
+
+  // ── Drop segment boxes — one slashed rect per drop, tracking its branch ─────
+
+  const DROP_W = H_PAD_L + H_PAD_R  // total width of a drop box
+
+  const dropRects = $derived(drops.map(cellId => {
+    const d = nodes.find((n: any) => n.data.id === cellId) as any
+    if (!d) return null
+    let segY0: number, segY1: number, cx: number
+    if (!d.parent) {
+      // Stem branch (root cell)
+      const stemLen = (hier as any)._stemLen as number
+      segY0 = (d.y as number) + stemLen / 4
+      segY1 = (d.y as number) + stemLen * 3 / 4
+    } else {
+      segY0 = (d.y as number) + ((d.parent.y as number) - (d.y as number)) / 4
+      segY1 = (d.y as number) + ((d.parent.y as number) - (d.y as number)) * 3 / 4
+    }
+    cx = d.x as number
+    return { cellId, x: cx - DROP_W / 2, y: segY0, w: DROP_W, h: segY1 - segY0 }
+  }).filter(Boolean) as { cellId: string; x: number; y: number; w: number; h: number }[])
 </script>
 
 <svg {width} {height} class="atomic-diagram">
@@ -130,9 +153,10 @@
         class:highlighted={diagram.root.cell.id === highlight}
         class:leaf={diagram.root.children === null || diagram.root.children.length === 0}
       />
-      {#if droppedSet.has(diagram.root.cell.id)}
-        <line x1={frameRect.x + 4} y1={frameRect.y + 4} x2={frameRect.x + frameRect.w - 4} y2={frameRect.y + frameRect.h - 4} class="drop-slash-box" />
-      {/if}
+      {#each dropRects as dr (dr.cellId)}
+        <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3" class="box-rect leaf" />
+        <line x1={dr.x + 4} y1={dr.y + 4} x2={dr.x + dr.w - 4} y2={dr.y + dr.h - 4} class="drop-slash-box" />
+      {/each}
       <text
         x={frameRect.x + frameRect.w - 7} y={frameRect.y + 18}
         class="box-label"
@@ -147,9 +171,14 @@
       {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
       {#each branches as branch (branch.id)}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <g onmouseenter={() => onhover?.(branch.id)} onmouseleave={() => onhover?.(null)}>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <g
+          onmouseenter={() => onhover?.(branch.id)}
+          onmouseleave={() => onhover?.(null)}
+          ondblclick={() => ondropinsert?.(branch.id)}
+        >
           <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} />
-          <path d={branch.path} class="corolla-hit" />
+          <path d={branch.path} class="corolla-hit" class:droppable={!!ondropinsert} />
         </g>
       {/each}
     {/each}
@@ -221,6 +250,7 @@
   :global(.corolla-hit) {
     fill: none; stroke: transparent; stroke-width: 10; stroke-linecap: round; pointer-events: stroke;
   }
+  :global(.corolla-hit.droppable) { cursor: cell; }
   :global(.edge-label) {
     font-family: 'Georgia', serif;
     font-style: italic;

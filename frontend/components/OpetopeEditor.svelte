@@ -31,7 +31,6 @@
     <div class="pane-label">prev</div>
     <BoxDiagram
       tree={focus.edgeRoot}
-      {drops}
       width={280}
       height={340}
       highlight={hoveredId ?? undefined}
@@ -48,6 +47,7 @@
       {drops}
       highlight={hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
+      ondropinsert={(cellId) => ondropinsert?.(cellId)}
     />
   </div>
 
@@ -62,7 +62,6 @@
       highlight={hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
       oncellclick={handleCellClick}
-      ondropinsert={(cellId) => ondropinsert?.(cellId)}
     />
   </div>
 </div>

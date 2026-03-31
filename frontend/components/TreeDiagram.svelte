@@ -41,7 +41,8 @@
       label:   t.cell.label,
       dim:     t.cell.dim,
       nascent: t.cell.nascent,
-      children: t.children !== null
+      nullary: t.children !== null && t.children.length === 0,
+      children: t.children !== null && t.children.length > 0
         ? t.children.map(([, s]) => buildHier(s))
         : undefined,
     }
@@ -227,8 +228,8 @@
     onmouseleave={() => onhover?.(null)}
   >{hier.data.label}</text>
 
-  <!-- Pass 3: dots on top of all paths and labels -->
-  {#each nodes.filter((d: any) => d.children) as d (d.data.id)}
+  <!-- Pass 3: dots on top of all paths and labels (internal nodes + nullary corollas) -->
+  {#each nodes.filter((d: any) => d.children || d.data.nullary) as d (d.data.id)}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <circle

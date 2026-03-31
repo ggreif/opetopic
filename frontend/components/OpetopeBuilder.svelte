@@ -66,10 +66,10 @@
     })
   }
 
-  function handleDropInsert(cellId: string) {
-    // At most one drop per cell for now
-    if ((focus.drops ?? []).includes(cellId)) return
-    focus = dropInsert(focus, cellId)
+  function handleDropInsert(edgeCellId: string) {
+    // Create a fresh lollipop cell for the new child in root
+    const newCell = cell(freshLabel(), 0)
+    focus = dropInsert(focus, edgeCellId, newCell)
   }
 </script>
 
