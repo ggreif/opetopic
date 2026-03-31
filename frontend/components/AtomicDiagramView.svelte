@@ -91,13 +91,14 @@
     return root
   }
 
-  function corollaElements(d: any, stemLen = 0): { branches: { id: string; path: string }[] } {
+  function corollaElements(d: any, stemLen = 0): { branches: { id: string; path: string; vertPath: string }[] } {
     const py = d.y as number, px = d.x as number, r = ARC_R
-    const branches: { id: string; path: string }[] = []
+    const branches: { id: string; path: string; vertPath: string }[] = []
     if (d.children) {
       const children = (d.children as any[]).slice().sort((a: any, b: any) => a.x - b.x)
       if (children.length === 1) {
-        branches.push({ id: children[0].data.id, path: `M${px},${py} V${children[0].y}` })
+        const p = `M${px},${py} V${children[0].y}`
+        branches.push({ id: children[0].data.id, path: p, vertPath: p })
       } else {
         const xN = children[children.length - 1].x as number
         children.forEach((c: any, i: number) => {
@@ -105,11 +106,16 @@
           if (i === 0)                        path = `M${c.x},${c.y} V${py - r} Q${c.x},${py} ${c.x + r},${py} H${px}`
           else if (i === children.length - 1) path = `M${px},${py} H${xN - r} Q${xN},${py} ${xN},${py - r} V${c.y}`
           else                                path = `M${c.x},${c.y} V${py}`
-          branches.push({ id: c.data.id, path })
+          // vertPath: only the vertical segment from leaf tip to bus level
+          const vertPath = `M${c.x},${c.y} V${py - r}`
+          branches.push({ id: c.data.id, path, vertPath })
         })
       }
     }
-    if (stemLen > 0) branches.push({ id: d.data.id, path: `M${px},${py} V${py + stemLen}` })
+    if (stemLen > 0) {
+      const p = `M${px},${py} V${py + stemLen}`
+      branches.push({ id: d.data.id, path: p, vertPath: p })
+    }
     return { branches }
   }
 
@@ -129,8 +135,11 @@
       segY0 = (d.y as number) + stemLen / 4
       segY1 = (d.y as number) + stemLen * 3 / 4
     } else {
-      segY0 = (d.y as number) + ((d.parent.y as number) - (d.y as number)) / 4
-      segY1 = (d.y as number) + ((d.parent.y as number) - (d.y as number)) * 3 / 4
+      // vertical segment runs from leaf (d.y) up to bus level minus arc (d.parent.y - ARC_R)
+      const vertTop = d.y as number
+      const vertBot = (d.parent.y as number) - ARC_R
+      segY0 = vertTop + (vertBot - vertTop) / 4
+      segY1 = vertTop + (vertBot - vertTop) * 3 / 4
     }
     const cx = d.x as number
     return { edgeId, rootId, x: cx - DROP_W / 2, y: segY0, w: DROP_W, h: segY1 - segY0 }
@@ -178,10 +187,12 @@
         <g
           onmouseenter={() => onhover?.(branch.id)}
           onmouseleave={() => onhover?.(null)}
-          ondblclick={() => ondropinsert?.(branch.id)}
         >
           <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} />
-          <path d={branch.path} class="corolla-hit" class:droppable={!!ondropinsert} />
+          <path d={branch.path} class="corolla-hit" />
+          {#if ondropinsert}
+            <path d={branch.vertPath} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(branch.id)} />
+          {/if}
         </g>
       {/each}
     {/each}
