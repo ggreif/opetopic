@@ -236,7 +236,10 @@
     <circle
       cx={d.x} cy={d.y} r={NODE_R}
       class="tree-node"
+      class:highlighted={d.data.nullary && d.data.id === highlight}
       onclick={() => oncellclick?.(d.data.id)}
+      onmouseenter={() => d.data.nullary ? onhover?.(d.data.id) : undefined}
+      onmouseleave={() => d.data.nullary ? onhover?.(null) : undefined}
     />
   {/each}
 </svg>
