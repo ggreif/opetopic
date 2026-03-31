@@ -147,9 +147,10 @@
 
 <svg {width} {height} class="tree-diagram">
   <!-- Pass 1: all branch paths — stem included as a branch of the root.
-       Include root even when it's a leaf (e.g. bare point) so the stem is drawn. -->
-  {#each nodes.filter((d: any) => d.children || !d.parent) as d (d.data.id)}
-    {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
+       Include root even when it's a leaf (e.g. bare point) so the stem is drawn.
+       Also include nullary corollas so their downward stem is drawn. -->
+  {#each nodes.filter((d: any) => d.children || d.data.nullary || !d.parent) as d (d.data.id)}
+    {@const { branches } = corollaElements(d, (d.parent && !d.data.nullary) ? 0 : (hier as any)._stemLen)}
     {#each branches as branch (branch.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -184,8 +185,8 @@
     {@const y1 = d.parent.y as number}
     {@const dw = 16}
     {@const dh = 11}
-    <!-- k+1 hit segments — double-click any to add one more drop -->
-    {#each Array.from({ length: k + 1 }, (_, i) => i) as i}
+    <!-- k+1 hit segments — only when drops are active or insertable -->
+    {#each (k > 0 || ondropinsert) ? Array.from({ length: k + 1 }, (_, i) => i) : [] as i}
       {@const segY0 = y0 + (i / (k + 1)) * (y1 - y0)}
       {@const segY1 = y0 + ((i + 1) / (k + 1)) * (y1 - y0)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->

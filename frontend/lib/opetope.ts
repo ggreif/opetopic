@@ -35,10 +35,12 @@ export type Tree = {
  *   root     = α { f: x, g: y, h: z }   (α is the box containing f, g, h)
  *   edgeRoot = α { f: x→α, g: y→α, h: z→α }
  */
+export type Drop = { edgeId: string; rootId: string }
+
 export type AtomicDiagram = {
   root: Tree
   edgeRoot: Tree
-  drops?: string[]   // cell ids whose outgoing edge carries a drop
+  drops: Drop[]   // each drop: edgeId = edgeRoot cell, rootId = root lollipop cell
 }
 
 // WebCola graph format (matches chris.json schema)
@@ -212,7 +214,7 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
   return {
     ...diagram,
     root:  addChild(diagram.root),
-    drops: [...(diagram.drops ?? []), edgeCellId],
+    drops: [...diagram.drops, { edgeId: edgeCellId, rootId: newCell.id }],
   }
 }
 
@@ -230,7 +232,7 @@ function node(c: Cell, children: [string, Tree][]): Tree { return { cell: c, chi
 export function point(label = 'a'): AtomicDiagram {
   const x = cell(label, 0)
   const t = leaf(x)
-  return { root: t, edgeRoot: t }
+  return { root: t, edgeRoot: t, drops: [] }
 }
 
 /**
@@ -242,7 +244,7 @@ export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): AtomicDiagr
   const x = cell(srcLabel, 0)
   const y = cell(tgtLabel, 0)
   const edgeRoot = node(f, [['src', leaf(x)], ['tgt', leaf(y)]])
-  return { root: edgeRoot, edgeRoot }
+  return { root: edgeRoot, edgeRoot, drops: [] }
 }
 
 /**
@@ -273,7 +275,7 @@ export function simplex(
     [hLabel, node(h, [['src', leaf(cell(h_src, 0))], ['tgt', leaf(cell(h_tgt, 0))]])],
   ])
 
-  return { root: edgeRoot, edgeRoot }
+  return { root: edgeRoot, edgeRoot, drops: [] }
 }
 
 /**
@@ -307,5 +309,5 @@ export function boxtree(): AtomicDiagram {
     ['u', node(u, [['d', leaf(d)], ['e', leaf(e)]])],
   ])
 
-  return { root: tree, edgeRoot: tree }
+  return { root: tree, edgeRoot: tree, drops: [] }
 }

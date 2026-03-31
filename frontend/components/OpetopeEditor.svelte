@@ -18,7 +18,7 @@
 
   let hoveredId = $state<string | null>(null)
 
-  const drops = $derived(focus.drops ?? [])
+  const drops = $derived(focus.drops)
 
   function handleCellClick(cellId: string) {
     oncellclick?.(cellId)
@@ -56,7 +56,7 @@
     <div class="pane-label">succ</div>
     <TreeDiagram
       tree={focus.root}
-      {drops}
+      drops={[]}
       width={280}
       height={340}
       highlight={hoveredId ?? undefined}

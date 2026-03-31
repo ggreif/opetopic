@@ -1,10 +1,10 @@
 <script lang="ts">
   import * as d3 from 'd3'
-  import type { Tree, AtomicDiagram } from '../lib/opetope'
+  import type { Tree, AtomicDiagram, Drop } from '../lib/opetope'
 
   let {
     diagram,
-    drops = [] as string[],
+    drops = [] as Drop[],
     width = 380,
     height = 340,
     highlight = undefined,
@@ -12,7 +12,7 @@
     ondropinsert = undefined,
   }: {
     diagram: AtomicDiagram
-    drops?: string[]
+    drops?: Drop[]
     width?: number
     height?: number
     highlight?: string
@@ -20,7 +20,7 @@
     ondropinsert?: (cellId: string) => void
   } = $props()
 
-  const droppedSet = $derived(new Set(drops))
+  const droppedEdgeIds = $derived(new Set(drops.map(d => d.edgeId)))
 
   // ── Box layout — frame rect derived from tree coordinates ───────────────────
 
@@ -120,12 +120,11 @@
 
   const DROP_W = H_PAD_L + H_PAD_R  // total width of a drop box
 
-  const dropRects = $derived(drops.map(cellId => {
-    const d = nodes.find((n: any) => n.data.id === cellId) as any
+  const dropRects = $derived(drops.map(({ edgeId, rootId }) => {
+    const d = nodes.find((n: any) => n.data.id === edgeId) as any
     if (!d) return null
-    let segY0: number, segY1: number, cx: number
+    let segY0: number, segY1: number
     if (!d.parent) {
-      // Stem branch (root cell)
       const stemLen = (hier as any)._stemLen as number
       segY0 = (d.y as number) + stemLen / 4
       segY1 = (d.y as number) + stemLen * 3 / 4
@@ -133,9 +132,9 @@
       segY0 = (d.y as number) + ((d.parent.y as number) - (d.y as number)) / 4
       segY1 = (d.y as number) + ((d.parent.y as number) - (d.y as number)) * 3 / 4
     }
-    cx = d.x as number
-    return { cellId, x: cx - DROP_W / 2, y: segY0, w: DROP_W, h: segY1 - segY0 }
-  }).filter(Boolean) as { cellId: string; x: number; y: number; w: number; h: number }[])
+    const cx = d.x as number
+    return { edgeId, rootId, x: cx - DROP_W / 2, y: segY0, w: DROP_W, h: segY1 - segY0 }
+  }).filter(Boolean) as { edgeId: string; rootId: string; x: number; y: number; w: number; h: number }[])
 </script>
 
 <svg {width} {height} class="atomic-diagram">
@@ -153,9 +152,13 @@
         class:highlighted={diagram.root.cell.id === highlight}
         class:leaf={diagram.root.children === null || diagram.root.children.length === 0}
       />
-      {#each dropRects as dr (dr.cellId)}
-        <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3" class="box-rect leaf" />
-        <line x1={dr.x + 4} y1={dr.y + 4} x2={dr.x + dr.w - 4} y2={dr.y + dr.h - 4} class="drop-slash-box" />
+      {#each dropRects as dr (dr.edgeId)}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <g onmouseenter={() => onhover?.(dr.rootId)} onmouseleave={() => onhover?.(null)}>
+          <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
+            class="box-rect leaf" class:highlighted={dr.rootId === highlight} />
+          <line x1={dr.x + 4} y1={dr.y + 4} x2={dr.x + dr.w - 4} y2={dr.y + dr.h - 4} class="drop-slash-box" />
+        </g>
       {/each}
       <text
         x={frameRect.x + frameRect.w - 7} y={frameRect.y + 18}
