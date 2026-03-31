@@ -1,33 +1,38 @@
 <script lang="ts">
   import BoxDiagram from './BoxDiagram.svelte'
   import TreeDiagram from './TreeDiagram.svelte'
+  import AtomicDiagramView from './AtomicDiagramView.svelte'
   import type { AtomicDiagram } from '../lib/opetope'
 
   let {
     focus,
     oncellclick = undefined,
     onsourceextrude = undefined,
+    ondropinsert = undefined,
   }: {
     focus: AtomicDiagram
     oncellclick?: (cellId: string) => void
     onsourceextrude?: (leafId: string) => void
+    ondropinsert?: (cellId: string) => void
   } = $props()
 
   let hoveredId = $state<string | null>(null)
 
+  const drops = $derived(focus.drops ?? [])
+
   function handleCellClick(cellId: string) {
-    console.log('cell clicked:', cellId)
     oncellclick?.(cellId)
   }
 </script>
 
 <div class="editor">
-  <!-- Focus pane: box/containment view of focus.root -->
-  <div class="pane focus-pane">
-    <div class="pane-label">boxes</div>
+  <!-- Prev pane: substrate as BoxDiagram; slashed box where drop latches on -->
+  <div class="pane prev-pane">
+    <div class="pane-label">prev</div>
     <BoxDiagram
-      tree={focus.root}
-      width={420}
+      tree={focus.edgeRoot}
+      {drops}
+      width={280}
       height={340}
       highlight={hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
@@ -35,16 +40,29 @@
     />
   </div>
 
-  <!-- Succ pane: edge/tree view of focus.edgeRoot -->
+  <!-- Focus pane: atomic diagram — tree (left bond) + boxes (right bond) -->
+  <div class="pane focus-pane">
+    <div class="pane-label">focus</div>
+    <AtomicDiagramView
+      diagram={focus}
+      {drops}
+      highlight={hoveredId ?? undefined}
+      onhover={(id) => { hoveredId = id }}
+    />
+  </div>
+
+  <!-- Succ pane: focus.root as tree; lollipops where drops were inserted -->
   <div class="pane succ-pane">
-    <div class="pane-label">tree</div>
+    <div class="pane-label">succ</div>
     <TreeDiagram
-      tree={focus.edgeRoot}
-      width={320}
+      tree={focus.root}
+      {drops}
+      width={280}
       height={340}
       highlight={hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
       oncellclick={handleCellClick}
+      ondropinsert={(cellId) => ondropinsert?.(cellId)}
     />
   </div>
 </div>
@@ -63,8 +81,8 @@
     gap: 6px;
   }
 
-  .succ-pane {
-    opacity: 0.8;
+  .prev-pane, .succ-pane {
+    opacity: 0.85;
     flex-shrink: 0;
   }
 

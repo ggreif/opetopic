@@ -1,14 +1,17 @@
 <script lang="ts">
   import type { Tree, Cell } from '../lib/opetope'
 
-  let { tree, width = 480, height = 340, highlight = undefined, onhover = undefined, onsourceextrude = undefined }: {
+  let { tree, width = 480, height = 340, highlight = undefined, drops = [] as string[], onhover = undefined, onsourceextrude = undefined }: {
     tree: Tree
     width?: number
     height?: number
     highlight?: string
+    drops?: string[]
     onhover?: (cellId: string | null) => void
     onsourceextrude?: (leafId: string) => void
   } = $props()
+
+  const droppedSet = $derived(new Set(drops))
 
   // Layout constants
   const LEAF_W    = 64
@@ -104,6 +107,14 @@
           class:highlighted={box.cell.id === highlight}
           class:leaf={box.children.length === 0}
         />
+        <!-- slashed contour for dropped cells -->
+        {#if droppedSet.has(box.cell.id)}
+          <line
+            x1={box.x + 4} y1={box.y + 4}
+            x2={box.x + box.w - 4} y2={box.y + box.h - 4}
+            class="drop-slash"
+          />
+        {/if}
         <!-- label: top-right corner inside the box; font-size compensates for scale -->
         <text
           x={box.x + box.w - 7}
@@ -164,6 +175,14 @@
   :global(.box-label.highlighted) {
     fill: #a02480;
     font-weight: bold;
+  }
+
+  :global(.drop-slash) {
+    stroke: #666;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    pointer-events: none;
+    vector-effect: non-scaling-stroke;
   }
 
   .ctx-overlay {

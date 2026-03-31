@@ -38,6 +38,7 @@ export type Tree = {
 export type AtomicDiagram = {
   root: Tree
   edgeRoot: Tree
+  drops?: string[]   // cell ids whose outgoing edge carries a drop
 }
 
 // WebCola graph format (matches chris.json schema)
@@ -183,6 +184,36 @@ export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
     children: tree.children.map(
       ([lbl, child]) => [lbl, sourceExtrude(child, leafId, newCell)] as [string, Tree]
     ),
+  }
+}
+
+// ── Succ tree (with drops grafted in) ────────────────────────────────────────
+
+/**
+ * Compute the successor tree from an edge tree and a set of dropped cell ids.
+ *
+ * For each cellId in drops, the corresponding node C gains a new nullary child
+ * (children: []) representing the drop — a lollipop in the succ tree.
+ * Drop cell ids are deterministic ("drop_<cellId>") so Svelte keyed lists stay stable.
+ */
+/**
+ * Drop insertion combinator — simultaneously:
+ *   1. Modifies focus.root: the cell at cellId becomes a nullary corolla (children: [])
+ *      which appears as a lollipop in the Succ TreeDiagram.
+ *   2. Records the latch in focus.drops (for Prev/Focus slashed markers).
+ *   focus.edgeRoot is left structurally unchanged.
+ */
+export function dropInsert(diagram: AtomicDiagram, cellId: string): AtomicDiagram {
+  function lollipop(t: Tree): Tree {
+    if (t.cell.id === cellId && t.children === null)
+      return { ...t, children: [] }
+    if (t.children === null) return t
+    return { ...t, children: t.children.map(([lbl, c]) => [lbl, lollipop(c)] as [string, Tree]) }
+  }
+  return {
+    ...diagram,
+    root:  lollipop(diagram.root),
+    drops: [...(diagram.drops ?? []), cellId],
   }
 }
 

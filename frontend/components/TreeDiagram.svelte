@@ -7,16 +7,28 @@
     width = 320,
     height = 340,
     highlight = undefined,
+    drops = [] as string[],
     onhover = undefined,
     oncellclick = undefined,
+    ondropinsert = undefined,
   }: {
     tree: Tree
     width?: number
     height?: number
     highlight?: string
+    drops: string[]
     onhover?: (cellId: string | null) => void
     oncellclick?: (cellId: string) => void
+    ondropinsert?: (cellId: string) => void
   } = $props()
+
+  // Count drops per cell id (duplicates allowed → k drops on one edge)
+  function countDrops(ds: string[]) {
+    const m = new Map<string, number>()
+    for (const id of ds) m.set(id, (m.get(id) ?? 0) + 1)
+    return m
+  }
+  const dropCounts = $derived(countDrops(drops))
 
   const PAD    = 28
   const NODE_R = 4
@@ -139,13 +151,55 @@
     {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
     {#each branches as branch (branch.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
       <g
         onmouseenter={() => onhover?.(branch.id)}
         onmouseleave={() => onhover?.(null)}
+        ondblclick={() => ondropinsert?.(branch.id)}
       >
         <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} />
-        <path d={branch.path} class="corolla-hit" />
+        <path d={branch.path} class="corolla-hit" class:droppable={!!ondropinsert} />
       </g>
+    {/each}
+  {/each}
+
+  <!-- Pass 2a: drop marker on the root stem (if root is dropped) -->
+  {#if dropCounts.get(hier.data.id)}
+    {@const cx = hier.x as number}
+    {@const y0 = hier.y as number}
+    {@const stemLen = (hier as any)._stemLen}
+    {@const my = y0 + stemLen / 2}
+    {@const dw = 16}
+    {@const dh = 11}
+    <rect x={cx - dw/2} y={my - dh/2} width={dw} height={dh} rx={3} ry={3} class="drop-marker" />
+    <line x1={cx - dw/2 + 2} y1={my - dh/2 + 2} x2={cx + dw/2 - 2} y2={my + dh/2 - 2} class="drop-slash" />
+  {/if}
+
+  <!-- Pass 2b: drop markers + subdivided hit segments for each non-root branch -->
+  {#each nodes.filter((d: any) => d.parent) as d (d.data.id)}
+    {@const k = dropCounts.get(d.data.id) ?? 0}
+    {@const cx = d.x as number}
+    {@const y0 = d.y as number}
+    {@const y1 = d.parent.y as number}
+    {@const dw = 16}
+    {@const dh = 11}
+    <!-- k+1 hit segments — double-click any to add one more drop -->
+    {#each Array.from({ length: k + 1 }, (_, i) => i) as i}
+      {@const segY0 = y0 + (i / (k + 1)) * (y1 - y0)}
+      {@const segY1 = y0 + ((i + 1) / (k + 1)) * (y1 - y0)}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <line
+        x1={cx} y1={segY0} x2={cx} y2={segY1}
+        class="drop-seg-hit"
+        ondblclick={() => ondropinsert?.(d.data.id)}
+      />
+    {/each}
+    <!-- k slashed roundrect markers at the junctions between segments -->
+    {#each Array.from({ length: k }, (_, i) => i) as i}
+      {@const my = y0 + ((i + 1) / (k + 1)) * (y1 - y0)}
+      <rect x={cx - dw/2} y={my - dh/2} width={dw} height={dh} rx={3} ry={3} class="drop-marker" />
+      <line x1={cx - dw/2 + 2} y1={my - dh/2 + 2} x2={cx + dw/2 - 2} y2={my + dh/2 - 2} class="drop-slash" />
     {/each}
   {/each}
 
@@ -209,6 +263,31 @@
     stroke-width: 2.25;
     stroke-linecap: round;
     pointer-events: stroke;
+  }
+
+  :global(.corolla-hit.droppable) {
+    cursor: cell;
+  }
+
+  :global(.drop-seg-hit) {
+    stroke: transparent;
+    stroke-width: 12;
+    cursor: cell;
+    pointer-events: stroke;
+  }
+
+  :global(.drop-marker) {
+    fill: #fff;
+    stroke: #555;
+    stroke-width: 1.5;
+    pointer-events: none;
+  }
+
+  :global(.drop-slash) {
+    stroke: #555;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    pointer-events: none;
   }
 
   :global(.corolla-link.highlighted) {

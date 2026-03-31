@@ -26,13 +26,20 @@ The tree pane is a **dimension-reduced view**: what appears as a 2D area in the 
 
 This reduction is the key to inductively "seeing" n-dimensional opetopic faces: the prev pane (n-1 faces) provides the substrate that the focus (boxes) enboxes following opetopic rules. By iterating this, one can work one's way up to arbitrary dimensions.
 
-### Pane semantics (current)
-- **Focus pane ("boxes")**: `BoxDiagram` of `focus.root` — nested rectangles
-- **Succ pane ("tree")**: `TreeDiagram` of `focus.edgeRoot` — corolla tree, root at bottom
+### Three-pane semantics (current) ✅
 
-### Pane semantics (future — do NOT implement yet)
-- **Prev pane**: will show the `n-1` dimensional faces. The current _boxes_ view (focus) will use that substrate to "enbox" its parts adhering to the opetopic rules.
-  - Once prev is added back, focus becomes the middle pane and shows the bond between prev and succ.
+```
+Prev  |  Focus  |  Succ
+```
+
+- **Prev** (left): `BoxDiagram` of `focus.edgeRoot` — the source substrate; source extrusion operates here (right-click leaf box)
+- **Focus** (centre): `AtomicDiagramView` — single SVG showing `focus.edgeRoot` as a corolla tree **and** `focus.root` as semi-transparent boxes **in superposition** (not side-by-side)
+- **Succ** (right): `TreeDiagram` of `focus.root` — the bonded output tree; drop insertion operates here (double-click branch)
+
+**Left bond**: Prev boxes ↔ Focus tree layer — shared cell IDs from `edgeRoot`
+**Right bond**: Focus box layer ↔ Succ tree — shared cell IDs from `root`
+
+**Critical invariant**: `root` cells and `edgeRoot` cells must have **completely distinct IDs and labels** — no sharing, no aliasing. `withOuterFrame` creates a fresh cell (via `freshLabel()` + `cell()`) for the root outer frame, never reusing `edgeRoot.cell`. This prevents cross-bond hover bleed in the Focus pane.
 
 ### Corolla visual convention
 ```
@@ -56,10 +63,18 @@ This reduction is the key to inductively "seeing" n-dimensional opetopic faces: 
 ## Data model (`frontend/lib/opetope.ts`) ✅
 
 ```typescript
-type Cell = { id: string; label: string; dim: number }
-type Tree = { cell: Cell; children: [string, Tree][] }
-type AtomicDiagram = { root: Tree; edgeRoot: Tree }
+type Cell = { id: string; label: string; dim: number; nascent?: number }
+type Tree = { cell: Cell; children: [string, Tree][] | null }
+//   children === null  → open branch tip (leaf, extrudable source)
+//   children === []    → nullary corolla (lollipop, drop was inserted here)
+//   children === [...] → ordinary corolla
+type AtomicDiagram = { root: Tree; edgeRoot: Tree; drops?: string[] }
+//   drops: cell IDs in root whose outgoing edge carries a drop marker
 ```
+
+**Combinators**:
+- `sourceExtrude(tree, leafId, newCell)` — leaf → corolla with one child; only modifies `edgeRoot`
+- `dropInsert(diagram, cellId)` — cell in `root`: `children: null` → `children: []`; appends to `drops`
 
 Examples implemented: `point()`, `arrow()`, `simplex()`, `boxtree()`
 
@@ -92,14 +107,25 @@ j = outermost box = tree root (dim 2); g/i/u = dim 1; a/b/c/t/d/e = dim 0 (leave
 - SVG `overflow: visible` — labels near edges are not clipped
 - No color-coding, no arrowheads
 
+### `frontend/components/AtomicDiagramView.svelte` ✅
+- Single `<svg>` with two `<g>` layers in superposition:
+  - **Box layer**: `diagram.root` as semi-transparent boxes (`fill: rgba(255,255,255,0.5)`) so tree lines show through
+  - **Tree layer**: `diagram.edgeRoot` as corolla tree (branches, labels, dots)
+- Both layout systems inlined (measure/place/flatten from BoxDiagram; buildHier/computeLayout/corollaElements from TreeDiagram)
+- Props: `diagram`, `drops`, `width`, `height`, `highlight`, `onhover`
+- **Pending geometry**: the outer frame box should intersect input branches at 2/3 of their height, and the output stem at 1/3 from the box bottom — box vertical position needs to be tuned to align with the tree layout
+
 ### `frontend/components/OpetopeEditor.svelte` ✅
-- Two panes: **boxes** (BoxDiagram of focus.root) + **tree** (TreeDiagram of focus.edgeRoot)
-- Prev pane removed for now (will return for `n-1` dimensional faces)
+- Three panes: **Prev** (BoxDiagram edgeRoot) + **Focus** (AtomicDiagramView) + **Succ** (TreeDiagram root)
+- Single `hoveredId` state; propagated to all three panes — cross-bond bleed is prevented by the ID uniqueness invariant in `withOuterFrame`
+- Source extrusion wired to Prev only; drop insertion wired to Succ only
 
 ### `frontend/components/OpetopeBuilder.svelte` ✅
 - Default example: `boxtree()`
 - Toolbar: Boxtree, Simplex, Arrow, Point
 - Lives at top of `App.svelte` (editor first, docs below)
+- `withOuterFrame(diagram)`: creates `focus.root` as a single outer-frame leaf with a **fresh label** (from `freshLabel()`) and **fresh ID** (from `cell()`), keeping `edgeRoot` unchanged — this is the ID-uniqueness fix
+- `_greek` / `_labelIdx` / `freshLabel()` must be declared **before** `focus` init to avoid temporal dead zone crash
 
 ### `frontend/components/OpetopeDiagram.svelte` (retained but unused in editor)
 - Original WebCola force-directed renderer; kept for reference

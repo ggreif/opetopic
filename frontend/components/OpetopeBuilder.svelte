@@ -1,10 +1,24 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, boxtree, cell, sourceExtrude, subtreeFor, type AtomicDiagram } from '../lib/opetope'
+  import { simplex, arrow, point, boxtree, cell, sourceExtrude, subtreeFor, dropInsert, type AtomicDiagram } from '../lib/opetope'
 
-  // Start with the boxtree as the focus diagram
-  let focus = $state<AtomicDiagram>(boxtree())
+  // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
+  const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
+  let _labelIdx = 0
+  function freshLabel(): string {
+    const i = _labelIdx++
+    return i < _greek.length ? _greek[i] : `x${i - _greek.length}`
+  }
+
+  // Focus.root starts as the outer frame only (single leaf = root cell, no sub-boxes).
+  // Focus.edgeRoot is the full substrate tree shown in the Prev pane.
+  function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
+    const src = diagram.edgeRoot.cell
+    return { edgeRoot: diagram.edgeRoot, root: { cell: cell(freshLabel(), src.dim), children: null } }
+  }
+
+  let focus = $state<AtomicDiagram>(withOuterFrame(boxtree()))
 
   // Example gallery switcher
   const examples: { label: string; make: () => AtomicDiagram }[] = [
@@ -15,20 +29,12 @@
   ]
 
   function loadExample(make: () => AtomicDiagram) {
-    focus = make()
-  }
-
-  // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
-  const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
-  let _labelIdx = 0
-  function freshLabel(): string {
-    const i = _labelIdx++
-    return i < _greek.length ? _greek[i] : `x${i - _greek.length}`
+    focus = withOuterFrame(make())
   }
 
   function handleSourceExtrude(leafId: string) {
     // Find the dim of the extruded leaf so the new child has dim - 1
-    function findDim(tree: typeof focus.root): number {
+    function findDim(tree: typeof focus.edgeRoot): number {
       if (tree.cell.id === leafId) return tree.cell.dim
       if (tree.children === null) return -1
       for (const [, child] of tree.children) {
@@ -40,9 +46,9 @@
     const parentDim = findDim(focus.edgeRoot)
     const newCell = cell(freshLabel(), Math.max(0, parentDim - 1))
 
+    // Source extrusion modifies edgeRoot (Prev substrate); root (Focus) is unchanged
     const newEdgeRoot = sourceExtrude(focus.edgeRoot, leafId, newCell)
-    const newRoot     = sourceExtrude(focus.root,     leafId, newCell)
-    focus = { root: newRoot, edgeRoot: newEdgeRoot }
+    focus = { ...focus, edgeRoot: newEdgeRoot }
 
     // Navigate to newCell through the reactive $state proxy so mutations trigger Svelte reactivity
     const reactiveCell = subtreeFor(focus.edgeRoot, newCell.id)!.cell
@@ -59,13 +65,18 @@
       }
     })
   }
+
+  function handleDropInsert(cellId: string) {
+    // At most one drop per cell for now
+    if ((focus.drops ?? []).includes(cellId)) return
+    focus = dropInsert(focus, cellId)
+  }
 </script>
 
 <section class="builder">
   <h2>Opetope Builder <span class="badge">experimental</span></h2>
   <p class="desc">
-    Left: box/containment view (nested rectangles). Right: edge/tree view (rooted tree).
-    The label on each box corresponds to the branch label on the tree — this is the bond.
+    Prev: substrate edge tree. Focus: atomic diagram (right-click leaf box → source extrude; double-click edge in Succ → add drop). Succ: bonded edge tree.
   </p>
 
   <div class="toolbar">
@@ -75,7 +86,7 @@
     {/each}
   </div>
 
-  <OpetopeEditor {focus} onsourceextrude={handleSourceExtrude} />
+  <OpetopeEditor {focus} onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} />
 </section>
 
 <style>
