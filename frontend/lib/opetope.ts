@@ -19,10 +19,37 @@ export type Cell = {
   nascent?: number // 0 = just born, 1 = fully grown; absent = mature
 }
 
-/** A tree node: a cell with labeled child subtrees. */
+/**
+ * Global ID supply — unique across the entire opetope, SVG elements,
+ * and force-layout constraint anchors.
+ */
+let _nextId = 0
+export function freshId(): string { return String(_nextId++) }
+
+/**
+ * A drop is parasitic on a substrate branch, stored in that branch's Drop[]
+ * slot in the children tuple. Its dropId bonds to a lollipop in Succ.
+ */
+export type Drop = {
+  dropId: string   // globally unique primary key
+}
+
+/**
+ * A disk in the box / edge tree.
+ *
+ * cell      — the cell at this node (id, label, dim, nascent).
+ * away      — Set of substrate branch IDs this disk avoids (complement of support).
+ *             support = under(substrate) \ away; always computed, never stored.
+ * children  — [branchId, innerDisk, parasiticDrops]
+ *             null  = open leaf (can be extended via source extrusion)
+ *             []    = nullary corolla (lollipop)
+ * stemDrops — drops on the output stem; only meaningful for the edgeRoot root node.
+ */
 export type Tree = {
-  cell: Cell
-  children: [string, Tree][] | null  // null = open branch tip (leaf); [] = nullary corolla
+  cell:       Cell
+  away:       Set<string>
+  children:   [string, Tree, Drop[]][] | null
+  stemDrops?: Drop[]
 }
 
 /**
@@ -31,56 +58,48 @@ export type Tree = {
  * root     = box tree  (the outermost cell, containing others as boxes)
  * edgeRoot = edge tree (the source structure, directed edges between cells)
  *
- * For a simplex (2-cell α with three 1-cell boundary f, g, h):
- *   root     = α { f: x, g: y, h: z }   (α is the box containing f, g, h)
- *   edgeRoot = α { f: x→α, g: y→α, h: z→α }
+ * Drops are stored inside the tree structure (in each branch's Drop[] slot
+ * and in edgeRoot.stemDrops). Use collectDrops() to derive the flat DropInfo[]
+ * needed by the rendering layer.
  */
-export type Drop = { edgeId: string; rootId: string }
-
 export type AtomicDiagram = {
-  root: Tree
+  root:     Tree
   edgeRoot: Tree
-  drops: Drop[]   // each drop: edgeId = edgeRoot cell, rootId = root lollipop cell
-}
-
-// ── New opetope model (under development) ────────────────────────────────────
-//
-// An opetope is a Tree2[] of length n (n-dimensional).
-// Each Tree2 serves as the box tree of level i and the edge tree of level i+1.
-// Branch IDs are globally unique (from freshId()) — required for away/under
-// correctness and for SVG element IDs and force-layout constraint anchors.
-
-/** Global ID supply — unique across the entire opetope and SVG. */
-let _nextId = 0
-export function freshId(): string { return String(_nextId++) }
-
-/**
- * A drop is parasitic on a specific substrate branch (stored in that
- * branch's Drop[] slot). Its dropId bonds to a lollipop in Succ.
- */
-export type Drop2 = {
-  dropId: string   // globally unique primary key
 }
 
 /**
- * A disk in the box tree.
- *
- * away    — Set of substrate branch IDs this disk avoids (complement of support).
- *           The support (under \ away) is always computed, never stored.
- *           All IDs in away must be globally unique branch IDs from the substrate.
- * children — [branchId, innerDisk, parasitic drops on this branch]
- *           null  = open leaf (can be extended via source extrusion)
- *           []    = nullary corolla
+ * Rendering-layer drop record: the edge node where the drop is attached and the
+ * lollipop cell in Succ that it bonds to. Derived by collectDrops().
  */
-export type Tree2 = {
-  away:     Set<string>
-  children: [string, Tree2, Drop2[]][] | null
+export type DropInfo = { edgeId: string; rootId: string }
+
+/** Collect all drop records from an edge tree, in traversal order. */
+export function collectDrops(t: Tree): DropInfo[] {
+  const result: DropInfo[] = []
+  // Drops on the output stem of the root
+  for (const d of t.stemDrops ?? []) {
+    result.push({ edgeId: t.cell.id, rootId: d.dropId })
+  }
+  function traverse(node: Tree) {
+    if (!node.children) return
+    for (const [, child, drops] of node.children) {
+      for (const d of drops) {
+        result.push({ edgeId: child.cell.id, rootId: d.dropId })
+      }
+      traverse(child)
+    }
+  }
+  traverse(t)
+  return result
 }
+
+/** An opetope: sequence of n disk trees, one per dimension. */
+export type Opetope = Tree[]
 
 /** Compute the set of all branch IDs reachable in a substrate tree. */
-export function allBranchIds(t: Tree2): Set<string> {
+export function allBranchIds(t: Tree): Set<string> {
   const ids = new Set<string>()
-  function collect(node: Tree2) {
+  function collect(node: Tree) {
     if (!node.children) return
     for (const [id, child] of node.children) {
       ids.add(id)
@@ -92,13 +111,10 @@ export function allBranchIds(t: Tree2): Set<string> {
 }
 
 /** The support of a disk: the substrate branch IDs it straddles. */
-export function support(disk: Tree2, substrate: Tree2 | null): Set<string> {
+export function support(disk: Tree, substrate: Tree | null): Set<string> {
   const u = substrate ? allBranchIds(substrate) : new Set<string>()
   return new Set([...u].filter(id => !disk.away.has(id)))
 }
-
-/** An opetope: sequence of n disk trees, one per dimension. */
-export type Opetope = Tree2[]
 
 // WebCola graph format (matches chris.json schema)
 export type GraphNode = { name: string; group?: number }
@@ -233,55 +249,63 @@ export function subtreeFor(tree: Tree, cellId: string): Tree | null {
  */
 export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
   if (tree.cell.id === leafId && tree.children === null) {
-    // The extruded cell becomes the new corolla (dot); newCell is the fresh leaf (source)
-    // growing above it — "there is still a branch outwards" from the new dot.
-    return { ...tree, children: [['src', { cell: newCell, children: null }]] }
+    return { ...tree, children: [['src', { cell: newCell, away: new Set(), children: null }, []]] }
   }
   if (tree.children === null) return tree
   return {
     ...tree,
     children: tree.children.map(
-      ([lbl, child]) => [lbl, sourceExtrude(child, leafId, newCell)] as [string, Tree]
+      ([lbl, child, drops]) => [lbl, sourceExtrude(child, leafId, newCell), drops] as [string, Tree, Drop[]]
     ),
   }
 }
 
-// ── Succ tree (with drops grafted in) ────────────────────────────────────────
-
 /**
- * Compute the successor tree from an edge tree and a set of dropped cell ids.
- *
- * For each cellId in drops, the corresponding node C gains a new nullary child
- * (children: []) representing the drop — a lollipop in the succ tree.
- * Drop cell ids are deterministic ("drop_<cellId>") so Svelte keyed lists stay stable.
- */
-/**
- * Drop insertion combinator — triggered by double-clicking an edgeRoot branch in Focus:
- *   1. Records edgeCellId in focus.drops (marks the edgeRoot branch in Prev/Focus tree layer).
- *   2. Adds newCell as a fresh nullary-corolla (lollipop) child of focus.root's outer frame.
- *      The lollipop appears as a new sub-box in the Focus box layer and a new branch in Succ.
- *   focus.edgeRoot is left structurally unchanged.
+ * Drop insertion — triggered by double-clicking an edgeRoot branch in Focus:
+ *   1. Adds newCell as a fresh lollipop (children: []) to focus.root.
+ *   2. Records the drop in focus.edgeRoot at the appropriate branch:
+ *      - For a child branch (edgeCellId = child.cell.id): stored in that branch's Drop[].
+ *      - For the output stem (edgeCellId = root.cell.id): stored in root.stemDrops.
  */
 export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: Cell): AtomicDiagram {
-  const lollipop: Tree = { cell: newCell, children: [] }
-  function addChild(t: Tree): Tree {
-    if (t.children === null) return { ...t, children: [[newCell.label, lollipop]] }
-    return { ...t, children: [...t.children, [newCell.label, lollipop]] }
+  const lollipop: Tree = { cell: newCell, away: new Set(), children: [] }
+  const newDrop: Drop = { dropId: newCell.id }
+
+  function addLollipopToRoot(t: Tree): Tree {
+    if (t.children === null) return { ...t, children: [[newCell.id, lollipop, []]] }
+    return { ...t, children: [...t.children, [newCell.id, lollipop, []]] }
   }
+
+  function addDropToEdgeRoot(t: Tree): Tree {
+    if (t.cell.id === edgeCellId) {
+      return { ...t, stemDrops: [...(t.stemDrops ?? []), newDrop] }
+    }
+    if (!t.children) return t
+    return {
+      ...t,
+      children: t.children.map(([bid, child, drops]) => {
+        if (child.cell.id === edgeCellId) {
+          return [bid, child, [...drops, newDrop]] as [string, Tree, Drop[]]
+        }
+        return [bid, addDropToEdgeRoot(child), drops] as [string, Tree, Drop[]]
+      }),
+    }
+  }
+
   return {
     ...diagram,
-    root:  addChild(diagram.root),
-    drops: [...diagram.drops, { edgeId: edgeCellId, rootId: newCell.id }],
+    root:     addLollipopToRoot(diagram.root),
+    edgeRoot: addDropToEdgeRoot(diagram.edgeRoot),
   }
 }
 
 // ── Example diagrams ─────────────────────────────────────────────────────────
 
-let _id = 0
-function id(label: string) { return `${label}_${_id++}` }
-export function cell(label: string, dim: number): Cell { return { id: id(label), label, dim } }
-function leaf(c: Cell): Tree { return { cell: c, children: null } }
-function node(c: Cell, children: [string, Tree][]): Tree { return { cell: c, children } }
+export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
+function leaf(c: Cell): Tree { return { cell: c, away: new Set(), children: null } }
+function node(c: Cell, children: [string, Tree][]): Tree {
+  return { cell: c, away: new Set(), children: children.map(([l, t]) => [l, t, [] as Drop[]]) }
+}
 
 /**
  * A single 0-cell (point). Just one node, no edges.
@@ -289,7 +313,7 @@ function node(c: Cell, children: [string, Tree][]): Tree { return { cell: c, chi
 export function point(label = 'a'): AtomicDiagram {
   const x = cell(label, 0)
   const t = leaf(x)
-  return { root: t, edgeRoot: t, drops: [] }
+  return { root: t, edgeRoot: t }
 }
 
 /**
@@ -301,7 +325,7 @@ export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): AtomicDiagr
   const x = cell(srcLabel, 0)
   const y = cell(tgtLabel, 0)
   const edgeRoot = node(f, [['src', leaf(x)], ['tgt', leaf(y)]])
-  return { root: edgeRoot, edgeRoot, drops: [] }
+  return { root: edgeRoot, edgeRoot }
 }
 
 /**
@@ -332,7 +356,7 @@ export function simplex(
     [hLabel, node(h, [['src', leaf(cell(h_src, 0))], ['tgt', leaf(cell(h_tgt, 0))]])],
   ])
 
-  return { root: edgeRoot, edgeRoot, drops: [] }
+  return { root: edgeRoot, edgeRoot }
 }
 
 /**
@@ -366,5 +390,5 @@ export function boxtree(): AtomicDiagram {
     ['u', node(u, [['d', leaf(d)], ['e', leaf(e)]])],
   ])
 
-  return { root: tree, edgeRoot: tree, drops: [] }
+  return { root: tree, edgeRoot: tree }
 }

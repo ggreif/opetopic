@@ -2,7 +2,7 @@
   import BoxDiagram from './BoxDiagram.svelte'
   import TreeDiagram from './TreeDiagram.svelte'
   import AtomicDiagramView from './AtomicDiagramView.svelte'
-  import type { AtomicDiagram } from '../lib/opetope'
+  import { collectDrops, type AtomicDiagram } from '../lib/opetope'
 
   let {
     focus,
@@ -18,7 +18,7 @@
 
   let hoveredId = $state<string | null>(null)
 
-  const drops = $derived(focus.drops)
+  const drops = $derived(collectDrops(focus.edgeRoot))
 
   function handleCellClick(cellId: string) {
     oncellclick?.(cellId)

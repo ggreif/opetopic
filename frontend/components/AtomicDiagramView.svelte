@@ -1,10 +1,10 @@
 <script lang="ts">
   import * as d3 from 'd3'
-  import type { Tree, AtomicDiagram, Drop } from '../lib/opetope'
+  import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
 
   let {
     diagram,
-    drops = [] as Drop[],
+    drops = [] as DropInfo[],
     width = 380,
     height = 340,
     highlight = undefined,
@@ -12,7 +12,7 @@
     ondropinsert = undefined,
   }: {
     diagram: AtomicDiagram
-    drops?: Drop[]
+    drops?: DropInfo[]
     width?: number
     height?: number
     highlight?: string

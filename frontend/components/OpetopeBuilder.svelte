@@ -15,7 +15,7 @@
   // Focus.edgeRoot is the full substrate tree shown in the Prev pane.
   function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
     const src = diagram.edgeRoot.cell
-    return { edgeRoot: diagram.edgeRoot, root: { cell: cell(freshLabel(), src.dim), children: null }, drops: [] }
+    return { edgeRoot: diagram.edgeRoot, root: { cell: cell(freshLabel(), src.dim), away: new Set(), children: null } }
   }
 
   let focus = $state<AtomicDiagram>(withOuterFrame(boxtree()))
