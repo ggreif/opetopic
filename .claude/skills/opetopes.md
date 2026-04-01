@@ -103,6 +103,10 @@ type Tree = {
 
 ### Soundness rules (checked at runtime)
 
+For each disk, let `support = under \ away`:
+
+0. **Connectivity** — `support` must be a connected subtree of the substrate tree. Since every tree has a unique path between any two nodes, the rule is: for every pair of nodes `u, v ∈ support`, every node on the unique path `u → v` must also be in `support`. Any node on the path that is in `away` makes the disk invalid.
+
 For siblings in any `children` array, let `under` = parent's straddled set:
 
 1. `away_i` must be **mutually unequal** (no two sibling disks are the same disk)
