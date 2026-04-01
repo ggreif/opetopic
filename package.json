@@ -12,13 +12,15 @@
   "dependencies": {
     "@connect2ic/core": "0.1.6",
     "@connect2ic/svelte": "0.1.6",
-    "@dfinity/agent": "^0.20.2",
+    "@dfinity/agent": "^3.4.3",
     "@dfinity/auth-client": "^3.4.3",
-    "@dfinity/candid": "^0.20.2",
+    "@dfinity/candid": "^3.4.3",
     "@dfinity/identity": "^3.4.3",
-    "@dfinity/principal": "^0.20.2",
+    "@dfinity/identity-secp256k1": "^3.4.3",
+    "@dfinity/principal": "^3.4.3",
     "@icp-sdk/core": "^5.2.0",
     "d3": "^7.9.0",
+    "ic-mops": "^2.7.0",
     "webcola": "^3.4.0"
   },
   "devDependencies": {
