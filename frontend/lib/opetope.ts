@@ -43,6 +43,63 @@ export type AtomicDiagram = {
   drops: Drop[]   // each drop: edgeId = edgeRoot cell, rootId = root lollipop cell
 }
 
+// ── New opetope model (under development) ────────────────────────────────────
+//
+// An opetope is a Tree2[] of length n (n-dimensional).
+// Each Tree2 serves as the box tree of level i and the edge tree of level i+1.
+// Branch IDs are globally unique (from freshId()) — required for away/under
+// correctness and for SVG element IDs and force-layout constraint anchors.
+
+/** Global ID supply — unique across the entire opetope and SVG. */
+let _nextId = 0
+export function freshId(): string { return String(_nextId++) }
+
+/**
+ * A drop is parasitic on a specific substrate branch (stored in that
+ * branch's Drop[] slot). Its dropId bonds to a lollipop in Succ.
+ */
+export type Drop2 = {
+  dropId: string   // globally unique primary key
+}
+
+/**
+ * A disk in the box tree.
+ *
+ * away    — Set of substrate branch IDs this disk avoids (complement of support).
+ *           The support (under \ away) is always computed, never stored.
+ *           All IDs in away must be globally unique branch IDs from the substrate.
+ * children — [branchId, innerDisk, parasitic drops on this branch]
+ *           null  = open leaf (can be extended via source extrusion)
+ *           []    = nullary corolla
+ */
+export type Tree2 = {
+  away:     Set<string>
+  children: [string, Tree2, Drop2[]][] | null
+}
+
+/** Compute the set of all branch IDs reachable in a substrate tree. */
+export function allBranchIds(t: Tree2): Set<string> {
+  const ids = new Set<string>()
+  function collect(node: Tree2) {
+    if (!node.children) return
+    for (const [id, child] of node.children) {
+      ids.add(id)
+      collect(child)
+    }
+  }
+  collect(t)
+  return ids
+}
+
+/** The support of a disk: the substrate branch IDs it straddles. */
+export function support(disk: Tree2, substrate: Tree2 | null): Set<string> {
+  const u = substrate ? allBranchIds(substrate) : new Set<string>()
+  return new Set([...u].filter(id => !disk.away.has(id)))
+}
+
+/** An opetope: sequence of n disk trees, one per dimension. */
+export type Opetope = Tree2[]
+
 // WebCola graph format (matches chris.json schema)
 export type GraphNode = { name: string; group?: number }
 export type GraphLink = { source: number; target: number; value: number }

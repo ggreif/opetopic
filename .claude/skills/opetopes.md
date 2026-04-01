@@ -84,21 +84,42 @@ More/deeper nesting → more branches and height in Succ.
 ## The Data Structure
 
 ```typescript
+// Global ID supply — unique across the entire opetope, SVG elements,
+// and force-layout constraint anchors. TypeScript is not dependently typed,
+// so cross-tree ID contracts are runtime-only; global uniqueness is the foundation.
+let _nextId = 0
+function freshId(): string { return String(_nextId++) }
+
 type Drop = {
-  dropId: string     // primary key — bonds to lollipop in Succ
+  dropId: string     // globally unique primary key — bonds to lollipop in Succ
 }
 
 type Tree = {
-  away:     string[]                      // substrate node IDs this disk avoids
+  away:     Set<string>                   // SET of substrate branch IDs this disk avoids
   children: [string, Tree, Drop[]][] | null
-  //         ^ edge/disk ID  ^ parasitic drops on this branch
-  //  null = open leaf;  [] = nullary corolla (drop lollipop)
+  //         ^ branch ID   ^ parasitic drops on this branch
+  //  null = open leaf;  [] = nullary corolla
 }
+
+// under() is always computed, never stored
+function under(substrate: Tree | null): Set<string> {
+  if (substrate === null) return new Set()  // dim 0: empty substrate
+  return allBranchIds(substrate)
+}
+
+// support = under(substrate) \ disk.away
+function support(disk: Tree, substrate: Tree | null): Set<string> {
+  const u = under(substrate)
+  return new Set([...u].filter(id => !disk.away.has(id)))
+}
+
+type Opetope = Tree[]   // length n for an n-dimensional opetope
 ```
 
-- `away` stores the **complement** of the straddled set. The base disk's straddled set (`under`) is always computed — never stored.
-- Each child entry carries: edge/disk ID, subtree, and any drops parasitizing that branch.
+- `away` and `under()` are **sets** (`Set<string>`), not arrays.
 - There is **no `cell` field** — disk identity is the `string` given by the parent. Labels and dims are orthogonal (separate map).
+- Branch IDs must be **globally unique** within the opetope — enforced via `freshId()`. This also provides stable IDs for SVG elements and force-layout constraints.
+- The substrate of `Tree[i]` is `Tree[i-1]`; `away` values reference branch IDs from there.
 - An **opetope** is `Tree[]` of length `n` for an n-dimensional opetope.
 
 ### Soundness rules (checked at runtime)
