@@ -37,19 +37,21 @@ export type Drop = {
 /**
  * A disk in the box / edge tree.
  *
- * cell      — the cell at this node (id, label, dim, nascent).
- * away      — Set of substrate branch IDs this disk avoids (complement of support).
- *             support = under(substrate) \ away; always computed, never stored.
- * children  — [branchId, innerDisk, parasiticDrops]
- *             null  = open leaf (can be extended via source extrusion)
- *             []    = nullary corolla (lollipop)
- * stemDrops — drops on the output stem; only meaningful for the edgeRoot root node.
+ * cell     — the cell at this node (id, label, dim, nascent).
+ * away     — Set of substrate branch IDs this disk avoids (complement of support).
+ *            support = under(substrate) \ away; always computed, never stored.
+ * drops    — drops on THIS node's outgoing branch (the stem for the root; the
+ *            branch leading up to the parent for all other nodes). Every node
+ *            has exactly one outgoing edge, so drops sit directly on the node.
+ * children — [branchId, innerDisk]
+ *            null  = open leaf (can be extended via source extrusion)
+ *            []    = nullary corolla (lollipop)
  */
 export type Tree = {
-  cell:       Cell
-  away:       Set<string>
-  children:   [string, Tree, Drop[]][] | null
-  stemDrops?: Drop[]
+  cell:     Cell
+  away:     Set<string>
+  drops:    Drop[]
+  children: [string, Tree][] | null
 }
 
 /**
@@ -58,9 +60,8 @@ export type Tree = {
  * root     = box tree  (the outermost cell, containing others as boxes)
  * edgeRoot = edge tree (the source structure, directed edges between cells)
  *
- * Drops are stored inside the tree structure (in each branch's Drop[] slot
- * and in edgeRoot.stemDrops). Use collectDrops() to derive the flat DropInfo[]
- * needed by the rendering layer.
+ * Drops are stored on each Tree node (node.drops = drops on its outgoing branch).
+ * Use collectDrops() to derive the flat DropInfo[] needed by the rendering layer.
  */
 export type AtomicDiagram = {
   root:     Tree
@@ -76,18 +77,11 @@ export type DropInfo = { edgeId: string; rootId: string }
 /** Collect all drop records from an edge tree, in traversal order. */
 export function collectDrops(t: Tree): DropInfo[] {
   const result: DropInfo[] = []
-  // Drops on the output stem of the root
-  for (const d of t.stemDrops ?? []) {
-    result.push({ edgeId: t.cell.id, rootId: d.dropId })
-  }
   function traverse(node: Tree) {
-    if (!node.children) return
-    for (const [, child, drops] of node.children) {
-      for (const d of drops) {
-        result.push({ edgeId: child.cell.id, rootId: d.dropId })
-      }
-      traverse(child)
+    for (const d of node.drops) {
+      result.push({ edgeId: node.cell.id, rootId: d.dropId })
     }
+    if (node.children) for (const [, child] of node.children) traverse(child)
   }
   traverse(t)
   return result
@@ -102,8 +96,7 @@ export function allBranchIds(t: Tree): Set<string> {
   function collect(node: Tree) {
     if (!node.children) return
     for (const [id, child] of node.children) {
-      ids.add(id)
-      collect(child)
+      ids.add(id); collect(child)
     }
   }
   collect(t)
@@ -249,13 +242,13 @@ export function subtreeFor(tree: Tree, cellId: string): Tree | null {
  */
 export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
   if (tree.cell.id === leafId && tree.children === null) {
-    return { ...tree, children: [['src', { cell: newCell, away: new Set(), children: null }, []]] }
+    return { ...tree, children: [['src', { cell: newCell, away: new Set(), drops: [], children: null }]] }
   }
   if (tree.children === null) return tree
   return {
     ...tree,
     children: tree.children.map(
-      ([lbl, child, drops]) => [lbl, sourceExtrude(child, leafId, newCell), drops] as [string, Tree, Drop[]]
+      ([lbl, child]) => [lbl, sourceExtrude(child, leafId, newCell)] as [string, Tree]
     ),
   }
 }
@@ -268,28 +261,22 @@ export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
  *      - For the output stem (edgeCellId = root.cell.id): stored in root.stemDrops.
  */
 export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: Cell): AtomicDiagram {
-  const lollipop: Tree = { cell: newCell, away: new Set(), children: [] }
+  const lollipop: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
   const newDrop: Drop = { dropId: newCell.id }
 
   function addLollipopToRoot(t: Tree): Tree {
-    if (t.children === null) return { ...t, children: [[newCell.id, lollipop, []]] }
-    return { ...t, children: [...t.children, [newCell.id, lollipop, []]] }
+    if (t.children === null) return { ...t, children: [[newCell.id, lollipop]] }
+    return { ...t, children: [...t.children, [newCell.id, lollipop]] }
   }
 
+  // Add newDrop to whichever node in edgeRoot has cell.id === edgeCellId.
+  // That node's outgoing branch is where the drop attaches.
   function addDropToEdgeRoot(t: Tree): Tree {
     if (t.cell.id === edgeCellId) {
-      return { ...t, stemDrops: [...(t.stemDrops ?? []), newDrop] }
+      return { ...t, drops: [...t.drops, newDrop] }
     }
     if (!t.children) return t
-    return {
-      ...t,
-      children: t.children.map(([bid, child, drops]) => {
-        if (child.cell.id === edgeCellId) {
-          return [bid, child, [...drops, newDrop]] as [string, Tree, Drop[]]
-        }
-        return [bid, addDropToEdgeRoot(child), drops] as [string, Tree, Drop[]]
-      }),
-    }
+    return { ...t, children: t.children.map(([bid, child]) => [bid, addDropToEdgeRoot(child)] as [string, Tree]) }
   }
 
   return {
@@ -302,9 +289,9 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
 // ── Example diagrams ─────────────────────────────────────────────────────────
 
 export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
-function leaf(c: Cell): Tree { return { cell: c, away: new Set(), children: null } }
+function leaf(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: null } }
 function node(c: Cell, children: [string, Tree][]): Tree {
-  return { cell: c, away: new Set(), children: children.map(([l, t]) => [l, t, [] as Drop[]]) }
+  return { cell: c, away: new Set(), drops: [], children }
 }
 
 /**

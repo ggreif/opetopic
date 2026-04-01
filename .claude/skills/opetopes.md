@@ -95,9 +95,11 @@ type Drop = {
 }
 
 type Tree = {
-  away:     Set<string>                   // SET of substrate branch IDs this disk avoids
-  children: [string, Tree, Drop[]][] | null
-  //         ^ branch ID   ^ parasitic drops on this branch
+  away:     Set<string>        // SET of substrate branch IDs this disk avoids
+  drops:    Drop[]             // drops on THIS node's outgoing branch (stem for root;
+  //                           //   branch to parent for all others)
+  children: [string, Tree][] | null
+  //         ^ branch ID
   //  null = open leaf;  [] = nullary corolla
 }
 
@@ -141,7 +143,7 @@ Rule 1 in action: in dimension 0, `under = {}`. Two sibling inner disks would bo
 
 ### Drops
 
-A **drop** is parasitic on a substrate child edge — it lives in the `Drop[]` of that child's tuple, not in the `Tree` nesting. Its `dropId` is its primary key; it bonds to a lollipop (`children: []`) in Succ. Drops do not appear in globular complexes.
+A **drop** is parasitic on an edge of the edge tree. Every node has exactly one outgoing branch (its stem for the root, or the branch leading up to its parent for all others). Drops on that branch are stored directly on the node as `drops: Drop[]`. The `dropId` bonds to a lollipop (`children: []`) in Succ. Drops do not appear in globular complexes.
 
 ---
 
