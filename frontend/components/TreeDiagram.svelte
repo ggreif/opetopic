@@ -305,17 +305,6 @@
     stroke-width: 2.25;
   }
 
-  :global(.tree-node) {
-    cursor: pointer;
-    fill: #333;
-    stroke: none;
-    pointer-events: all;
-    transition: fill 0.1s;
-  }
-
-  :global(.tree-node.highlighted) {
-    fill: #a02480;
-  }
 
   :global(.edge-label) {
     font-family: 'Georgia', serif;
