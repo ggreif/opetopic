@@ -301,13 +301,18 @@
     <!-- Intermediate boxes (wrapper disks added by encircle) -->
     {#each intermediateBoxes as ib (ib.cell.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
       <g
         onmouseenter={() => { onhover?.(ib.cell.id); onnodehover?.(ib.cell.id) }}
         onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+        onclick={(e) => { e.stopPropagation(); onselect?.(ib.cell.id === selected ? null : ib.cell.id) }}
+        oncontextmenu={(e) => { e.preventDefault(); e.stopPropagation(); if (ib.cell.id === selected) ctxMenu = { x: e.clientX, y: e.clientY, cellId: ib.cell.id } }}
       >
         <rect x={ib.x} y={ib.y} width={ib.w} height={ib.h} rx="5" ry="5"
           class="box-rect"
           class:highlighted={ib.cell.id === highlight || ib.cell.id === highlightNode}
+          class:selected={ib.cell.id === selected}
+          style="cursor: {ib.cell.id === selected ? 'context-menu' : 'pointer'}"
         />
         <text x={ib.x + ib.w - 7} y={ib.y + 18} class="box-label"
           class:highlighted={ib.cell.id === highlight}
@@ -317,13 +322,18 @@
     <!-- Drop boxes: outside the frame <g> so their hover doesn't bubble to the frame -->
     {#each dropLayout.rects as dr (dr.rootId)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
       <g
         onmouseenter={() => { onhover?.(dr.rootId); onnodehover?.(dr.rootId) }}
         onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+        onclick={(e) => { e.stopPropagation(); onselect?.(dr.rootId === selected ? null : dr.rootId) }}
+        oncontextmenu={(e) => { e.preventDefault(); e.stopPropagation(); if (dr.rootId === selected) ctxMenu = { x: e.clientX, y: e.clientY, cellId: dr.rootId } }}
       >
         <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
           class="box-rect leaf"
-          class:highlighted={dr.rootId === highlight || dr.rootId === highlightNode} />
+          class:highlighted={dr.rootId === highlight || dr.rootId === highlightNode}
+          class:selected={dr.rootId === selected}
+          style="cursor: {dr.rootId === selected ? 'context-menu' : 'pointer'}" />
       </g>
     {/each}
   </g>
@@ -500,6 +510,7 @@
   }
   :global(.tree-node.highlighted) { stroke: #a02480; stroke-width: 2.25; }
   :global(.tree-node.selected) { fill: #e53935; cursor: context-menu; }
+  :global(.box-rect.selected) { stroke: #e53935; stroke-width: 2.25; }
 
   .ctx-overlay {
     position: fixed; inset: 0; z-index: 99;
