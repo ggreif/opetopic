@@ -215,7 +215,7 @@
       }
     }
     walk(diagram.root, true)
-    return result
+    return result.reverse()  // inner boxes last → rendered on top in SVG
   })())
 
   // ── Drop boxes — one per drop, stacking upward above the leaf for k > 1 ─────
