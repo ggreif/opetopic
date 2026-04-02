@@ -29,6 +29,8 @@
   }
 </script>
 
+<svelte:window onclick={() => { selectedId = null }} />
+
 <div class="editor">
   <!-- Prev pane: substrate as BoxDiagram; slashed box where drop latches on -->
   <div class="pane prev-pane">
@@ -69,7 +71,8 @@
       drops={[]}
       width={280}
       height={340}
-      highlight={selectedId ?? succHoveredId ?? undefined}
+      highlight={succHoveredId ?? undefined}
+      selectionHighlight={selectedId ?? undefined}
       onhover={(id) => { succHoveredId = id }}
       oncellclick={handleCellClick}
     />

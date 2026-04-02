@@ -7,6 +7,7 @@
     width = 320,
     height = 340,
     highlight = undefined,
+    selectionHighlight = undefined,
     drops = [] as string[],
     onhover = undefined,
     oncellclick = undefined,
@@ -16,6 +17,7 @@
     width?: number
     height?: number
     highlight?: string
+    selectionHighlight?: string
     drops: string[]
     onhover?: (cellId: string | null) => void
     oncellclick?: (cellId: string) => void
@@ -160,7 +162,7 @@
         onmouseleave={() => onhover?.(null)}
         ondblclick={() => ondropinsert?.(branch.id)}
       >
-        <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} />
+        <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} class:selection-highlighted={branch.id === selectionHighlight} />
         <path d={branch.path} class="corolla-hit" class:droppable={!!ondropinsert} />
       </g>
     {/each}
@@ -295,6 +297,11 @@
 
   :global(.corolla-link.highlighted) {
     stroke: #a02480;
+    stroke-width: 2.25;
+  }
+
+  :global(.corolla-link.selection-highlighted) {
+    stroke: #e53935;
     stroke-width: 2.25;
   }
 

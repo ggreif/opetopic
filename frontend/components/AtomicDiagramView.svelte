@@ -176,6 +176,48 @@
   const hier  = $derived(computeLayout(diagram.edgeRoot, dropCountsByEdge))
   const nodes = $derived(hier.descendants() as any[])
 
+  // ── Intermediate boxes — non-root, non-leaf nodes of focus.root ──────────────
+  // After encircle, focus.root gains wrapper nodes that have no counterpart in
+  // edgeRoot. We render them as nested box rects around their leaf descendants'
+  // tree-node rects.
+  const INTER_PAD = 10
+
+  type InterBox = { cell: { id: string; label: string; dim: number }; x: number; y: number; w: number; h: number }
+
+  const intermediateBoxes = $derived((() => {
+    if (!diagram.root) return [] as InterBox[]
+    const s = DROP_BOX_H / 2
+
+    // Map edge-tree cell.id → layout position
+    const posMap = new Map<string, { x: number; y: number }>()
+    for (const d of nodes) posMap.set(d.data.id as string, { x: d.x as number, y: d.y as number })
+
+    // Collect all leaf-box cell IDs under a focus.root subtree
+    function leafIds(t: Tree): string[] {
+      if (!t.children || t.children.length === 0) return [t.cell.id]
+      return t.children.flatMap(([, c]) => leafIds(c))
+    }
+
+    const result: InterBox[] = []
+    function walk(t: Tree, isRoot: boolean) {
+      if (!t.children) return  // leaf box in focus.root
+      if (!isRoot) {
+        const ids = leafIds(t)
+        const positions = ids.map(id => posMap.get(id)).filter(Boolean) as { x: number; y: number }[]
+        if (positions.length > 0) {
+          const minX = Math.min(...positions.map(p => p.x - s)) - INTER_PAD
+          const maxX = Math.max(...positions.map(p => p.x + s)) + INTER_PAD
+          const minY = Math.min(...positions.map(p => p.y - s)) - INTER_PAD
+          const maxY = Math.max(...positions.map(p => p.y + s)) + INTER_PAD
+          result.push({ cell: t.cell, x: minX, y: minY, w: maxX - minX, h: maxY - minY })
+        }
+      }
+      for (const [, child] of t.children) walk(child, false)
+    }
+    walk(diagram.root, true)
+    return result
+  })())
+
   // ── Drop boxes — one per drop, stacking upward above the leaf for k > 1 ─────
 
   type DropRect = { rootId: string; x: number; y: number; w: number; h: number }
@@ -256,6 +298,22 @@
         class:highlighted={diagram.root!.cell.id === highlight}
       >{diagram.root!.cell.label}</text>
     </g>
+    <!-- Intermediate boxes (wrapper disks added by encircle) -->
+    {#each intermediateBoxes as ib (ib.cell.id)}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <g
+        onmouseenter={() => { onhover?.(ib.cell.id); onnodehover?.(ib.cell.id) }}
+        onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+      >
+        <rect x={ib.x} y={ib.y} width={ib.w} height={ib.h} rx="5" ry="5"
+          class="box-rect"
+          class:highlighted={ib.cell.id === highlight || ib.cell.id === highlightNode}
+        />
+        <text x={ib.x + ib.w - 7} y={ib.y + 18} class="box-label"
+          class:highlighted={ib.cell.id === highlight}
+        >{ib.cell.label}</text>
+      </g>
+    {/each}
     <!-- Drop boxes: outside the frame <g> so their hover doesn't bubble to the frame -->
     {#each dropLayout.rects as dr (dr.rootId)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -354,11 +412,13 @@
         onmouseleave={() => onnodehover?.(null)}
         onclick={(e) => {
           e.stopPropagation()
-          if (e.ctrlKey && d.parent) {
-            e.preventDefault()
+          onselect?.(d.data.id === selected ? null : d.data.id)
+        }}
+        oncontextmenu={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (d.data.id === selected) {
             ctxMenu = { x: e.clientX, y: e.clientY, cellId: d.data.id }
-          } else {
-            onselect?.(d.data.id === selected ? null : d.data.id)
           }
         }}
       />
@@ -429,10 +489,17 @@
     cursor: default;
   }
   :global(.edge-label.highlighted) { fill: #a02480; font-weight: bold; }
-  :global(.tree-node) { fill: #333; stroke: none; cursor: pointer; pointer-events: all; }
-  :global(.tree-node.selected) { cursor: context-menu; }
-  :global(.tree-node.highlighted) { fill: #a02480; }
-  :global(.tree-node.selected) { fill: #a02480; }
+  :global(.tree-node) {
+    fill: white;
+    stroke: #333;
+    stroke-width: 1.5;
+    cursor: pointer;
+    pointer-events: all;
+    vector-effect: non-scaling-stroke;
+    transition: fill 0.1s, stroke 0.1s;
+  }
+  :global(.tree-node.highlighted) { stroke: #a02480; stroke-width: 2.25; }
+  :global(.tree-node.selected) { fill: #e53935; cursor: context-menu; }
 
   .ctx-overlay {
     position: fixed; inset: 0; z-index: 99;
