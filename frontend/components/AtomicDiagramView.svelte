@@ -9,8 +9,10 @@
     width = 380,
     height = 340,
     highlight = undefined,
+    highlightNode = undefined,
     selected = undefined,
     onhover = undefined,
+    onnodehover = undefined,
     onselect = undefined,
     ondropinsert = undefined,
     onencircle = undefined,
@@ -20,8 +22,10 @@
     width?: number
     height?: number
     highlight?: string
+    highlightNode?: string
     selected?: string
     onhover?: (cellId: string | null) => void
+    onnodehover?: (cellId: string | null) => void
     onselect?: (cellId: string | null) => void
     ondropinsert?: (cellId: string) => void
     onencircle?: (cellId: string) => void
@@ -236,14 +240,14 @@
   <g class="box-layer">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <g
-      onmouseenter={() => onhover?.(diagram.root!.cell.id)}
-      onmouseleave={() => onhover?.(null)}
+      onmouseenter={() => { onhover?.(diagram.root!.cell.id); onnodehover?.(diagram.root!.cell.id) }}
+      onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
       opacity={diagram.root!.cell.nascent ?? 1}
     >
       <rect
         x={adjustedFrameRect.x} y={adjustedFrameRect.y} width={adjustedFrameRect.w} height={adjustedFrameRect.h} rx="5" ry="5"
         class="box-rect"
-        class:highlighted={diagram.root!.cell.id === highlight}
+        class:highlighted={diagram.root!.cell.id === highlight || diagram.root!.cell.id === highlightNode}
         class:leaf={diagram.root!.children === null || diagram.root!.children.length === 0}
       />
       {#each dropLayout.rects as dr (dr.rootId)}
@@ -339,8 +343,10 @@
         width={DROP_BOX_H} height={DROP_BOX_H}
         rx="3" ry="3"
         class="tree-node"
-        class:highlighted={d.data.id === highlight}
+        class:highlighted={d.data.id === highlightNode}
         class:selected={d.data.id === selected}
+        onmouseenter={() => onnodehover?.(d.data.id)}
+        onmouseleave={() => onnodehover?.(null)}
         onclick={(e) => {
           e.stopPropagation()
           if (e.ctrlKey && d.parent) {

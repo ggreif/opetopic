@@ -262,7 +262,7 @@ export function subtreeFor(tree: Tree, cellId: string): Tree | null {
  */
 export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
   if (tree.cell.id === leafId && tree.children === null) {
-    return { ...tree, children: [['src', { cell: newCell, away: new Set(), drops: [], children: null }]] }
+    return { ...tree, children: [[freshId(), { cell: newCell, away: new Set(), drops: [], children: null }]] }
   }
   if (tree.children === null) return tree
   return {
@@ -362,7 +362,7 @@ export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): AtomicDiagr
   const f = cell(fLabel, 1)
   const x = cell(srcLabel, 0)
   const y = cell(tgtLabel, 0)
-  const edgeRoot = node(f, [['src', leaf(x)], ['tgt', leaf(y)]])
+  const edgeRoot = node(f, [[freshId(), leaf(x)], [freshId(), leaf(y)]])
   return { root: edgeRoot, edgeRoot }
 }
 
@@ -389,9 +389,9 @@ export function simplex(
   const h = cell(hLabel, 1)
 
   const edgeRoot = node(alpha, [
-    [fLabel, node(f, [['src', leaf(cell(f_src, 0))], ['tgt', leaf(cell(f_tgt, 0))]])],
-    [gLabel, node(g, [['src', leaf(cell(g_src, 0))], ['tgt', leaf(cell(g_tgt, 0))]])],
-    [hLabel, node(h, [['src', leaf(cell(h_src, 0))], ['tgt', leaf(cell(h_tgt, 0))]])],
+    [freshId(), node(f, [[freshId(), leaf(cell(f_src, 0))], [freshId(), leaf(cell(f_tgt, 0))]])],
+    [freshId(), node(g, [[freshId(), leaf(cell(g_src, 0))], [freshId(), leaf(cell(g_tgt, 0))]])],
+    [freshId(), node(h, [[freshId(), leaf(cell(h_src, 0))], [freshId(), leaf(cell(h_tgt, 0))]])],
   ])
 
   return { root: edgeRoot, edgeRoot }
@@ -423,9 +423,9 @@ export function boxtree(): AtomicDiagram {
   const e = cell('e', 0)
 
   const tree: Tree = node(j, [
-    ['g', node(g, [['a', leaf(a)], ['b', leaf(b)], ['c', leaf(c)]])],
-    ['i', node(i, [['t', leaf(t)]])],
-    ['u', node(u, [['d', leaf(d)], ['e', leaf(e)]])],
+    [freshId(), node(g, [[freshId(), leaf(a)], [freshId(), leaf(b)], [freshId(), leaf(c)]])],
+    [freshId(), node(i, [[freshId(), leaf(t)]])],
+    [freshId(), node(u, [[freshId(), leaf(d)], [freshId(), leaf(e)]])],
   ])
 
   return { root: tree, edgeRoot: tree }

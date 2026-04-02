@@ -237,7 +237,6 @@
       width={LOLLIPOP_S} height={LOLLIPOP_S}
       rx="3" ry="3"
       class="tree-node"
-      class:highlighted={d.data.id === highlight}
       onclick={() => oncellclick?.(d.data.id)}
       onmouseenter={() => onhover?.(d.data.id)}
       onmouseleave={() => onhover?.(null)}

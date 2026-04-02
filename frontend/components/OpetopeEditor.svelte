@@ -18,8 +18,9 @@
     onencircle?: (cellId: string) => void
   } = $props()
 
-  let hoveredId = $state<string | null>(null)
-  let selectedId = $state<string | null>(null)
+  let hoveredId     = $state<string | null>(null)  // Prev / Focus hover → edge highlighting
+  let succHoveredId = $state<string | null>(null)  // Succ hover → node highlighting in Focus
+  let selectedId    = $state<string | null>(null)
 
   const drops = $derived(collectDrops(focus.edgeRoot))
 
@@ -49,8 +50,10 @@
       diagram={focus}
       {drops}
       highlight={hoveredId ?? undefined}
+      highlightNode={succHoveredId ?? undefined}
       selected={selectedId ?? undefined}
       onhover={(id) => { hoveredId = id }}
+      onnodehover={(id) => { succHoveredId = id }}
       onselect={(id) => { selectedId = id ?? null }}
       ondropinsert={(cellId) => ondropinsert?.(cellId)}
       onencircle={(cellId) => onencircle?.(cellId)}
@@ -66,8 +69,8 @@
       drops={[]}
       width={280}
       height={340}
-      highlight={selectedId ?? hoveredId ?? undefined}
-      onhover={(id) => { hoveredId = id }}
+      highlight={selectedId ?? succHoveredId ?? undefined}
+      onhover={(id) => { succHoveredId = id }}
       oncellclick={handleCellClick}
     />
   </div>
