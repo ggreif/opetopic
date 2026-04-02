@@ -238,8 +238,6 @@
       rx="3" ry="3"
       class="tree-node"
       onclick={() => oncellclick?.(d.data.id)}
-      onmouseenter={() => onhover?.(d.data.id)}
-      onmouseleave={() => onhover?.(null)}
     />
   {/each}
 </svg>

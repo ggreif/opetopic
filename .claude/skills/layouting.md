@@ -118,6 +118,14 @@ The `nullary` flag in the hierarchy data distinguishes lollipops from open leave
 
 ---
 
+## Succ node hover sensitivity — pending dimension hopping
+
+Nodes in the Succ `TreeDiagram` currently have **no hover sensitivity** (`onmouseenter`/`onmouseleave` removed). This is correct for now: Succ nodes bond rightward (to the next dimension), which is not yet accessible.
+
+When **dimension hopping** (◀▶ navigation between atomic diagrams) is implemented, Succ nodes must gain hover sensitivity: hovering a Succ node should highlight the corresponding **base disk** in the next Focus pane to the right — the same pattern as Focus node → Succ stem, one level up. At that point, restore `onmouseenter`/`onmouseleave` on the `TreeDiagram` node rects and wire them through a `onnodehover` prop (mirroring the `AtomicDiagramView` pattern).
+
+---
+
 ## Shared concept: EdgeTreeView
 
 `TreeDiagram` (Succ pane) and the tree layer of `AtomicDiagramView` (Focus pane) both render edge trees using the same logic: `buildHier`, `computeLayout`, `corollaElements`, node roundrects, branch paths, hover/click wiring. They are the **same concept**.
