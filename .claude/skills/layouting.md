@@ -173,6 +173,58 @@ Planned refactor: extract a shared `EdgeTreeView` component. `TreeDiagram` becom
 
 ---
 
+## Real-estate plan: VPSC-based constraint layout
+
+### Library choice: WebCola's VPSC solver (already bundled)
+
+**d3-force** is wrong: iterative/async, no hard constraint guarantees, cannot enforce strict upside-down tree topology or box containment. **Dagre** handles sibling separation but not containment groups. **ELK** (WASM) is excellent but adds 2MB, async API, and breaks Svelte's synchronous reactive pipeline.
+
+**WebCola's VPSC layer** (`Solver`, `Variable`, `Constraint` from `webcola/dist/src/vpsc`) is already in the bundle (used by `toGraph()` in `opetope.ts`). It is **synchronous**, runs in O(n log n), and solves to a global optimum for convex constraint sets — making it a drop-in inside a `$derived`.
+
+### New pipeline: `computeLayout2` (single pure function)
+
+Replaces the current split between `computeLayout` + `intermediateBoxes` + `dropLayout`:
+
+```
+Pass A — measure minimum spans (post-order walk of focus.root box tree)
+Pass B — assign desired leaf x via recursive measure+place (like BoxDiagram)
+Pass C — VPSC x-axis pass (enforce sibling separation + box containment)
+Pass D — y by depth + drop correction (existing logic, largely unchanged)
+Pass E — derive intermediateBoxes from VPSC-solved node positions
+Pass F — nascent lerp (runs last, as today)
+```
+
+Returns a single `LayoutResult` used by the SVG template — no template changes needed.
+
+### Constraint vocabulary
+
+| Constraint | Expression |
+|---|---|
+| Sibling separation | `right.x − left.x ≥ NODE_W + H_GAP` |
+| Box containment | innermost pair: `c_n.x − c_0.x ≥ 2*INTER_PAD + NODE_W`; nested boxes cascade naturally |
+| Drop width | `MIN_SEP = max(NODE_W, DROP_W) + H_GAP` for nodes with drops |
+| Tree topology (parent x = median) | Soft constraint — high-weight desired position, not hard |
+| Straight vertical branches | Structural guarantee — x set once per node, branch paths recomputed from solved positions |
+| Drop stacking (y-axis) | Existing `eachBefore` lift logic unchanged |
+
+**Key insight**: box bounds are derived functions (`box_left = leftmost_descendant.x − INTER_PAD`), not independent VPSC variables. Only tree node x positions are variables. This keeps the constraint system small.
+
+### New file: `frontend/lib/layout.ts`
+
+Extracts `computeConstrainedLayout(edgeRoot, root, drops, svgW, svgH): LayoutResult` as a pure, independently testable module. Both `AtomicDiagramView` and `TreeDiagram` import from it.
+
+### Migration steps
+
+1. Extract current `computeLayout` into `frontend/lib/layout.ts` (no behaviour change)
+2. Add `measureMinSpans(root: Tree): Map<string, number>` to `opetope.ts`
+3. Replace Phase 1 equal-interval with recursive measure+place
+4. Add VPSC x-pass after desired positions are set
+5. Move `intermediateBoxes` derivation inside `computeLayout2` (feeds from VPSC-solved coords)
+6. Port x-VPSC to `TreeDiagram` (sibling separation only — no boxes)
+7. Optional: y-VPSC if multi-depth encircled groups cause vertical overlaps
+
+---
+
 ## Layout constraints (not yet implemented)
 
 ### Constraint 1 — Optical centering
