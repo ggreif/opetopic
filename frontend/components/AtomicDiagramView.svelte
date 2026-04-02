@@ -250,19 +250,24 @@
         class:highlighted={diagram.root!.cell.id === highlight || diagram.root!.cell.id === highlightNode}
         class:leaf={diagram.root!.children === null || diagram.root!.children.length === 0}
       />
-      {#each dropLayout.rects as dr (dr.rootId)}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <g onmouseenter={() => onhover?.(dr.rootId)} onmouseleave={() => onhover?.(null)}>
-          <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
-            class="box-rect leaf" class:highlighted={dr.rootId === highlight} />
-        </g>
-      {/each}
       <text
         x={adjustedFrameRect.x + adjustedFrameRect.w - 7} y={adjustedFrameRect.y + 18}
         class="box-label"
         class:highlighted={diagram.root!.cell.id === highlight}
       >{diagram.root!.cell.label}</text>
     </g>
+    <!-- Drop boxes: outside the frame <g> so their hover doesn't bubble to the frame -->
+    {#each dropLayout.rects as dr (dr.rootId)}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <g
+        onmouseenter={() => { onhover?.(dr.rootId); onnodehover?.(dr.rootId) }}
+        onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+      >
+        <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
+          class="box-rect leaf"
+          class:highlighted={dr.rootId === highlight || dr.rootId === highlightNode} />
+      </g>
+    {/each}
   </g>
   {/if}
 
