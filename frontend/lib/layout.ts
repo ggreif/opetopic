@@ -117,11 +117,17 @@ export function computeLayout(
   // ── VPSC x-pass ────────────────────────────────────────────────────────────
   //
   // Variables: one per edge-tree node, desired = Phase 1 x.
-  // Constraints:
-  //   (a) Sibling separation: for each corolla, adjacent children (sorted by x)
-  //       must be at least NODE_W + H_GAP apart.
-  //   (b) Box containment: for each intermediate box, the leftmost and rightmost
-  //       edge-tree nodes it covers must span at least minSpan - 2*INTER_PAD.
+  //
+  // For each edge-tree node, compute its effective half-width:
+  //   - unwrapped node: NODE_W/2
+  //   - node wrapped in intermediate box(es): half of the outermost wrapper's
+  //     minSpan (the largest wrapper wins, so nested wrappers don't shrink it)
+  //
+  // Sibling separation: adjacent children must be at least
+  //   leftEffectiveHW + rightEffectiveHW + H_GAP apart.
+  //
+  // Multi-node box containment: for intermediate boxes spanning 2+ edge-tree
+  //   nodes, add a span constraint: rightmost.x - leftmost.x >= minSpan - 2*INTER_PAD.
   {
     const allNodes = root.descendants() as any[]
     const varMap = new Map<string, Variable>()
@@ -129,52 +135,62 @@ export function computeLayout(
       varMap.set(d.data.id as string, new Variable(d.x as number, 1))
     }
 
-    const constraints: Constraint[] = []
-
-    // (a) sibling separation — for every corolla node
-    for (const d of allNodes) {
-      if (!d.children) continue
-      const ch = (d.children as any[]).slice().sort((a: any, b: any) => a.x - b.x)
-      for (let i = 0; i < ch.length - 1; i++) {
-        const vL = varMap.get(ch[i].data.id as string)!
-        const vR = varMap.get(ch[i + 1].data.id as string)!
-        constraints.push(new Constraint(vL, vR, NODE_W + H_GAP))
-      }
+    // Collect all edge-tree leaf IDs under a box-tree subtree
+    function edgeLeafIds(bt: Tree): string[] {
+      if (!bt.children || bt.children.length === 0) return [bt.cell.id]
+      return bt.children.flatMap(([, c]) => edgeLeafIds(c))
     }
 
-    // (b) intermediate box containment
+    // Build effective half-width map: for each edge-tree variable,
+    // the maximum half-width imposed by any intermediate wrapper around it.
+    const halfWidthMap = new Map<Variable, number>()
+    for (const v of varMap.values()) halfWidthMap.set(v, NODE_W / 2)
+
+    const constraints: Constraint[] = []
+
     if (boxRoot) {
       const minSpans = measureMinSpans(boxRoot)
 
-      // Collect all edge-tree node IDs under a box-tree subtree
-      function edgeIds(bt: Tree): string[] {
-        if (!bt.children || bt.children.length === 0) return [bt.cell.id]
-        return bt.children.flatMap(([, c]) => edgeIds(c))
-      }
-
+      // Walk box tree top-down; for each intermediate box update half-widths
+      // and add multi-node containment constraints.
       function walkBox(bt: Tree, isRoot: boolean) {
         if (!bt.children || bt.children.length === 0) return
         for (const [, child] of bt.children) walkBox(child, false)
         if (isRoot) return
         const minSpan = minSpans.get(bt.cell.id)
         if (minSpan === undefined) return
-        const ids = edgeIds(bt)
+        const hw = minSpan / 2
+        const ids = edgeLeafIds(bt)
         const vars = ids.map(id => varMap.get(id)).filter(Boolean) as Variable[]
-        if (vars.length < 2) return
-        // Sort by desired position to find leftmost/rightmost
-        vars.sort((a, b) => a.desiredPosition - b.desiredPosition)
-        const vL = vars[0], vR = vars[vars.length - 1]
-        // rightmost - leftmost >= minSpan - 2*INTER_PAD
-        constraints.push(new Constraint(vL, vR, minSpan - 2 * INTER_PAD))
+        // Inflate effective half-width of all covered nodes (max wins across nesting levels)
+        for (const v of vars) halfWidthMap.set(v, Math.max(halfWidthMap.get(v)!, hw))
+        // Multi-node containment: push outermost nodes apart
+        if (vars.length >= 2) {
+          vars.sort((a, b) => a.desiredPosition - b.desiredPosition)
+          constraints.push(new Constraint(vars[0], vars[vars.length - 1], minSpan - 2 * INTER_PAD))
+        }
       }
       walkBox(boxRoot, true)
+    }
+
+    // Sibling separation using effective half-widths
+    for (const d of allNodes) {
+      if (!d.children) continue
+      const ch = (d.children as any[]).slice().sort((a: any, b: any) => a.x - b.x)
+      for (let i = 0; i < ch.length - 1; i++) {
+        const vL = varMap.get(ch[i].data.id as string)!
+        const vR = varMap.get(ch[i + 1].data.id as string)!
+        const sep = (halfWidthMap.get(vL) ?? NODE_W / 2) + (halfWidthMap.get(vR) ?? NODE_W / 2) + H_GAP
+        constraints.push(new Constraint(vL, vR, sep))
+      }
     }
 
     if (constraints.length > 0) {
       const vars = [...varMap.values()]
       new Solver(vars, constraints).satisfy()
       for (const d of allNodes) {
-        d.x = varMap.get(d.data.id as string)!.position()
+        const v = varMap.get(d.data.id as string)
+        if (v) d.x = v.position()
       }
     }
   }

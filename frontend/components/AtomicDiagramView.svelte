@@ -160,16 +160,28 @@
     return { rects, extensions, minExtY }
   })())
 
-  // Expand the outer frame to cover all drop boxes (upward for child drops, downward for stem drops)
+  // Expand the outer frame to cover drop boxes AND intermediate boxes in all directions
   const adjustedFrameRect = $derived((() => {
     const fr = frameRect
     const frBot = fr.y + fr.h
-    const minRectY = dropLayout.rects.length > 0 ? Math.min(...dropLayout.rects.map(r => r.y))           : null
-    const maxRectB = dropLayout.rects.length > 0 ? Math.max(...dropLayout.rects.map(r => r.y + r.h))     : null
-    const newTop = minRectY !== null && minRectY < fr.y   ? minRectY - DROP_SPACER : fr.y
-    const newBot = maxRectB !== null && maxRectB > frBot   ? maxRectB + DROP_SPACER : frBot
-    if (newTop === fr.y && newBot === frBot) return fr
-    return { ...fr, y: newTop, h: newBot - newTop }
+
+    // All rects that must be contained (drops + intermediate boxes)
+    const allRects = [
+      ...dropLayout.rects.map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h })),
+      ...intermediateBoxes.map(ib => ({ x: ib.x, y: ib.y, w: ib.w, h: ib.h })),
+    ]
+
+    const minRectX = allRects.length > 0 ? Math.min(...allRects.map(r => r.x))         : null
+    const maxRectR = allRects.length > 0 ? Math.max(...allRects.map(r => r.x + r.w))   : null
+    const minRectY = allRects.length > 0 ? Math.min(...allRects.map(r => r.y))         : null
+    const maxRectB = allRects.length > 0 ? Math.max(...allRects.map(r => r.y + r.h))   : null
+
+    const newLeft = minRectX !== null && minRectX < fr.x           ? minRectX - DROP_SPACER : fr.x
+    const newRight = maxRectR !== null && maxRectR > fr.x + fr.w   ? maxRectR + DROP_SPACER : fr.x + fr.w
+    const newTop = minRectY !== null && minRectY < fr.y             ? minRectY - DROP_SPACER : fr.y
+    const newBot = maxRectB !== null && maxRectB > frBot            ? maxRectB + DROP_SPACER : frBot
+
+    return { x: newLeft, y: newTop, w: newRight - newLeft, h: newBot - newTop }
   })())
 
   // All leaf tips should reach this y — same overhang above frame as stem below
