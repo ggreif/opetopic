@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
-  import { computeLayout, corollaElements, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT } from '../lib/layout'
+  import { computeLayout, corollaElements, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, INTER_PAD } from '../lib/layout'
 
 
   let {
@@ -77,15 +77,13 @@
     return m
   })())
 
-  const hier  = $derived(computeLayout(diagram.edgeRoot, width, height, dropCountsByEdge))
+  const hier  = $derived(computeLayout(diagram.edgeRoot, width, height, dropCountsByEdge, diagram.root))
   const nodes = $derived(hier.descendants() as any[])
 
   // ── Intermediate boxes — non-root, non-leaf nodes of focus.root ──────────────
   // After encircle, focus.root gains wrapper nodes that have no counterpart in
   // edgeRoot. We render them as nested box rects around their leaf descendants'
   // tree-node rects.
-  const INTER_PAD = 10
-
   type InterBox = { cell: { id: string; label: string; dim: number }; x: number; y: number; w: number; h: number }
 
   const intermediateBoxes = $derived((() => {
