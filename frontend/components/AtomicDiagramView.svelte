@@ -2,6 +2,7 @@
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
 
+
   let {
     diagram,
     drops = [] as DropInfo[],
@@ -54,6 +55,12 @@
 
   const PAD = 28, NODE_R = 4, ARC_R = 6, TREE_H = 88
 
+  // Drop box geometry — defined here so computeLayout can use them
+  const DROP_W     = H_PAD_L + H_PAD_R
+  const DROP_BOX_H = 16
+  const DROP_SPACER = 4
+  const DROP_UNIT   = DROP_BOX_H + DROP_SPACER
+
   function buildHier(t: Tree): any {
     return {
       id: t.cell.id, label: t.cell.label, dim: t.cell.dim, nascent: t.cell.nascent,
@@ -61,7 +68,7 @@
     }
   }
 
-  function computeLayout(t: Tree) {
+  function computeLayout(t: Tree, dropCounts: Map<string, number> = new Map()) {
     const root = d3.hierarchy(buildHier(t))
     const innerW = (width - 2 * PAD) * 0.9
     const leaves = root.leaves()
@@ -81,6 +88,33 @@
       d.y = topOff + TREE_H - (d.depth / maxDepth) * TREE_H
     })
     ;(root as any)._stemLen = stemLen
+    // Drop correction — must run BEFORE nascent so nascent children interpolate
+    // toward already-lifted parent positions.
+    // Root case: extend the stem downward by lifting the whole tree upward.
+    const rootK = dropCounts.get((root.data as any).id as string) ?? 0
+    if (rootK >= 1) {
+      const neededStem = DROP_SPACER + rootK * DROP_UNIT + DROP_BOX_H
+      if (stemLen < neededStem) {
+        const ext = neededStem - stemLen
+        root.each((n: any) => { (n as any).y -= ext })
+        ;(root as any)._stemLen = neededStem
+      }
+    }
+    // Non-root case: lift each node (and its subtree) so all k drop boxes fit
+    // on the branch toward its parent.
+    root.eachBefore((d: any) => {
+      const k = dropCounts.get(d.data.id as string) ?? 0
+      if (k < 1 || !d.parent) return
+      const dY = d.y as number
+      const vertBot = (d.parent.y as number) - ARC_R
+      const needed = DROP_SPACER + k * DROP_UNIT + DROP_BOX_H
+      const maxY = vertBot - needed
+      if (dY > maxY) {
+        const shift = dY - maxY
+        d.each((n: any) => { (n as any).y -= shift })
+      }
+    })
+    // Nascent adjustment — after correction so children slide toward corrected parent
     root.each((d: any) => {
       if (d.data.nascent !== undefined && d.parent) {
         const n = d.data.nascent as number
@@ -119,33 +153,62 @@
     return { branches }
   }
 
-  const hier  = $derived(computeLayout(diagram.edgeRoot))
+  const dropCountsByEdge = $derived((() => {
+    const m = new Map<string, number>()
+    for (const d of drops) m.set(d.edgeId, (m.get(d.edgeId) ?? 0) + 1)
+    return m
+  })())
+
+  const hier  = $derived(computeLayout(diagram.edgeRoot, dropCountsByEdge))
   const nodes = $derived(hier.descendants() as any[])
 
-  // ── Drop segment boxes — one slashed rect per drop, tracking its branch ─────
+  // ── Drop boxes — one per drop, stacking upward above the leaf for k > 1 ─────
 
-  const DROP_W = H_PAD_L + H_PAD_R  // total width of a drop box
+  type DropRect = { rootId: string; x: number; y: number; w: number; h: number }
+  type DropExt  = { x: number; yTop: number; yBot: number }
 
-  const dropRects = $derived(drops.map(({ edgeId, rootId }) => {
-    const d = nodes.find((n: any) => n.data.id === edgeId) as any
-    if (!d) return null
-    let segY0: number, segY1: number
-    if (!d.parent) {
-      const stemLen = (hier as any)._stemLen as number
-      segY0 = (d.y as number) + stemLen / 8
-      segY1 = (d.y as number) + stemLen * 3 / 8
-    } else {
-      // vertical segment runs from leaf (d.y) up to bus level minus arc (d.parent.y - ARC_R)
-      // Place in upper quarter to avoid the midpoint label
-      const vertTop = d.y as number
-      const vertBot = (d.parent.y as number) - ARC_R
-      segY0 = vertTop + (vertBot - vertTop) / 8
-      segY1 = vertTop + (vertBot - vertTop) * 3 / 8
+  const dropLayout = $derived((() => {
+    const rects: DropRect[] = []
+    const extensions = new Map<string, DropExt>()  // edgeId → extension line
+
+    // Group by edgeId, preserving insertion order
+    const byEdge = new Map<string, DropInfo[]>()
+    for (const d of drops) {
+      if (!byEdge.has(d.edgeId)) byEdge.set(d.edgeId, [])
+      byEdge.get(d.edgeId)!.push(d)
     }
-    const cx = d.x as number
-    const w = d.parent ? DROP_W : DROP_W / 2
-    return { edgeId, rootId, x: cx - w / 3, y: segY0, w, h: segY1 - segY0 }
-  }).filter(Boolean) as { edgeId: string; rootId: string; x: number; y: number; w: number; h: number }[])
+
+    for (const [edgeId, edgeDrops] of byEdge) {
+      const d = nodes.find((n: any) => n.data.id === edgeId) as any
+      if (!d) continue
+      const cx  = d.x as number
+      const w   = d.parent ? DROP_W : DROP_W / 2
+      const k   = edgeDrops.length
+      const nodeY = d.y as number
+
+      // Stack boxes downward from the node into its outgoing branch (toward parent / stem).
+      // Box i top: nodeY + DROP_SPACER + i * DROP_UNIT  (all below nodeY, no extension needed)
+      for (let i = 0; i < k; i++) {
+        rects.push({ rootId: edgeDrops[i].rootId, x: cx - w / 3, y: nodeY + DROP_SPACER + i * DROP_UNIT, w, h: DROP_BOX_H })
+      }
+    }
+
+    // Minimum y reached by any extension (for frame expansion)
+    const minExtY = extensions.size > 0
+      ? Math.min(...[...extensions.values()].map(e => e.yTop))
+      : null
+
+    return { rects, extensions, minExtY }
+  })())
+
+  // Expand the outer frame upward to cover any drop extensions above the leaves
+  const adjustedFrameRect = $derived((() => {
+    const fr = frameRect
+    const extTop = dropLayout.minExtY
+    if (extTop === null || extTop >= fr.y) return fr
+    const newY = extTop - DROP_SPACER
+    return { ...fr, y: newY, h: fr.h + (fr.y - newY) }
+  })())
 </script>
 
 <svg {width} {height} class="atomic-diagram">
@@ -158,12 +221,12 @@
       opacity={diagram.root.cell.nascent ?? 1}
     >
       <rect
-        x={frameRect.x} y={frameRect.y} width={frameRect.w} height={frameRect.h} rx="5" ry="5"
+        x={adjustedFrameRect.x} y={adjustedFrameRect.y} width={adjustedFrameRect.w} height={adjustedFrameRect.h} rx="5" ry="5"
         class="box-rect"
         class:highlighted={diagram.root.cell.id === highlight}
         class:leaf={diagram.root.children === null || diagram.root.children.length === 0}
       />
-      {#each dropRects as dr (dr.edgeId)}
+      {#each dropLayout.rects as dr (dr.rootId)}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <g onmouseenter={() => onhover?.(dr.rootId)} onmouseleave={() => onhover?.(null)}>
           <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
@@ -171,7 +234,7 @@
         </g>
       {/each}
       <text
-        x={frameRect.x + frameRect.w - 7} y={frameRect.y + 18}
+        x={adjustedFrameRect.x + adjustedFrameRect.w - 7} y={adjustedFrameRect.y + 18}
         class="box-label"
         class:highlighted={diagram.root.cell.id === highlight}
       >{diagram.root.cell.label}</text>
@@ -180,6 +243,23 @@
 
   <!-- ── Tree layer ────────────────────────────────────────────────────────── -->
   <g class="tree-layer">
+    <!-- Branch extensions for multi-drop stacking -->
+    {#each [...dropLayout.extensions.entries()] as [edgeId, ext]}
+      {@const p = `M${ext.x},${ext.yTop} V${ext.yBot}`}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <g
+        onmouseenter={() => onhover?.(edgeId)}
+        onmouseleave={() => onhover?.(null)}
+      >
+        <path d={p} class="corolla-link" class:highlighted={edgeId === highlight} />
+        <path d={p} class="corolla-hit" />
+        {#if ondropinsert}
+          <path d={p} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(edgeId)} />
+        {/if}
+      </g>
+    {/each}
+
     {#each nodes.filter((d: any) => d.children || !d.parent) as d (d.data.id)}
       {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
       {#each branches as branch (branch.id)}
