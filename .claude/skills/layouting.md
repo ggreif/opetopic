@@ -118,6 +118,37 @@ The `nullary` flag in the hierarchy data distinguishes lollipops from open leave
 
 ---
 
+## `intermediateBoxes` — critical implementation details
+
+Computed as a `$derived` in `AtomicDiagramView`. Renders wrapper disks added by `encircle` as
+nested box-rects in Focus. Four invariants that must be preserved:
+
+1. **Lollipop guard**: bail on `t.children === null || t.children.length === 0`. Without the
+   `length === 0` check, drops (lollipops in `focus.root`) produce spurious intermediate boxes.
+
+2. **Post-order traversal**: recurse into children *before* computing the parent bounding rect.
+   Pre-order breaks at depth ≥ 2 because the child's extent hasn't been registered yet.
+
+3. **`extMap` stores half-extents `{cx, cy, hw, hh}`**, not just centers. Using a fixed
+   `hw = hh = DROP_BOX_H/2` for all levels makes every encircling produce an identical-sized
+   rect. Seed with:
+   - Edge-tree nodes: `hw = hh = DROP_BOX_H/2`
+   - Drop rects: `hw = dr.w/2, hh = dr.h/2`
+   - Each computed intermediate box: `hw = ib.w/2, hh = ib.h/2` (registered post-order)
+
+4. **Direct children only**: use `t.children.map(([,c]) => extMap.get(c.cell.id))`, NOT a
+   recursive `leafIds()` walk. Recursing to leaves makes all nesting levels collapse to the
+   same innermost positions.
+
+### Known visual issue (pending fix)
+
+The current layout is functional but messy — nested intermediate boxes overlap and don't push
+surrounding nodes away. Proper layout requires the edge-tree positions to be adjusted so that
+encircled groups have real estate: either expand `computeLayout` to account for wrapper sizes,
+or use a constraint-based approach (see Constraints section below).
+
+---
+
 ## Succ interactivity — both pending dimension hopping
 
 ### Node hover sensitivity
@@ -131,14 +162,6 @@ When **dimension hopping** (◀▶ navigation between atomic diagrams) is implem
 Succ branches also cannot yet receive drops. The reason is structural: a drop on a Succ branch would require a lollipop in `succ.root` (the next atomic diagram's box tree), and that diagram does not exist yet — there is no `succ.tree` to hold it and assign it a fresh id.
 
 When dimension hopping lands and `succ.tree` is accessible, enable `ondropinsert` on the Succ `TreeDiagram` (currently passed as `drops={[]}` and no `ondropinsert`). The handler follows the same pattern as `handleDropInsert` in `OpetopeBuilder`, operating one level to the right.
-
----
-
-## Shared concept: EdgeTreeView
-
-Nodes in the Succ `TreeDiagram` currently have **no hover sensitivity** (`onmouseenter`/`onmouseleave` removed). This is correct for now: Succ nodes bond rightward (to the next dimension), which is not yet accessible.
-
-When **dimension hopping** (◀▶ navigation between atomic diagrams) is implemented, Succ nodes must gain hover sensitivity: hovering a Succ node should highlight the corresponding **base disk** in the next Focus pane to the right — the same pattern as Focus node → Succ stem, one level up. At that point, restore `onmouseenter`/`onmouseleave` on the `TreeDiagram` node rects and wire them through a `onnodehover` prop (mirroring the `AtomicDiagramView` pattern).
 
 ---
 
