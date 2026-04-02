@@ -104,6 +104,34 @@ After `adjustedFrameRect` is computed, a `leafCeiling = adjustedFrameRect.y − 
 
 ---
 
+## Layout constraints (not yet implemented)
+
+### Constraint 1 — Optical centering
+
+The **optical center** of each pane's diagram (the center of its bounding box) must coincide with the **geometric center** of its pane. All three pane centers should lie on the same horizontal line.
+
+Consequences:
+- `computeLayout` must produce coordinates such that `(diagramBBoxLeft + diagramBBoxRight) / 2 = paneWidth / 2` and `(diagramBBoxTop + diagramBBoxBottom) / 2 = paneHeight / 2`.
+- Currently `topOff = (height - TREE_H - stemLen) / 2` only centers the tree's y range, not the full bounding box (which includes the frame and drop boxes). The correct centering must use `adjustedFrameRect` as the bounding box, so it must be a two-pass computation: lay out → compute bbox → shift everything to center the bbox.
+- The x centering is similarly off: `innerW` is fixed at `(width - 2*PAD) * 0.9`, but the frame left/right may not be centered in the SVG width.
+
+### Constraint 2 — Minimum margin and auto-scaling
+
+Each pane has a **minimum margin** `PANE_MARGIN` on all four sides. When the diagram's bounding box (after centering) would violate these margins, the diagram must **scale down uniformly** until it fits.
+
+Concretely: after the two-pass centering, if `bboxW > paneWidth - 2*PANE_MARGIN` or `bboxH > paneHeight - 2*PANE_MARGIN`, compute:
+```
+scale = min(
+  (paneWidth  - 2*PANE_MARGIN) / bboxW,
+  (paneHeight - 2*PANE_MARGIN) / bboxH
+)
+```
+and apply an SVG `transform="scale(scale)"` (around the bbox center, or equivalently translate → scale → translate back). This is an SVG-level transform; the coordinate values in `computeLayout` do not change.
+
+Both constraints apply to all three panes (Prev `BoxDiagram`, Focus `AtomicDiagramView`, Succ `TreeDiagram`) independently.
+
+---
+
 ## Why root is different
 
 The root's outgoing branch is the **stem** (going downward), not a branch toward a parent node. There is no `d.parent` in the d3 hierarchy, so the non-root correction cannot apply. Instead, the stem is lengthened and the tree is shifted upward uniformly. The visual effect is the same — more space for drop boxes — but the mechanism is different because the stem length is a derived constant (`_stemLen`) rather than an implicit distance to a parent node.
