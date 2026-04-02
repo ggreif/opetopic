@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
+  import { computeLayout, corollaElements, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT } from '../lib/layout'
 
 
   let {
@@ -65,107 +66,10 @@
     return { x, y, w, h }
   })())
 
-  // ── Tree layout (from TreeDiagram) ──────────────────────────────────────────
+  // ── Tree layout (from layout.ts) ─────────────────────────────────────────────
 
-  const PAD = 28, NODE_R = 4, ARC_R = 6, TREE_H = 88
-
-  // Drop box geometry — defined here so computeLayout can use them
-  const DROP_W     = H_PAD_L + H_PAD_R
-  const DROP_BOX_H = 16
-  const DROP_SPACER = 4
-  const DROP_UNIT   = DROP_BOX_H + DROP_SPACER
-
-  function buildHier(t: Tree): any {
-    return {
-      id: t.cell.id, label: t.cell.label, dim: t.cell.dim, nascent: t.cell.nascent,
-      children: t.children !== null ? t.children.map(([, s]) => buildHier(s)) : undefined,
-    }
-  }
-
-  function computeLayout(t: Tree, dropCounts: Map<string, number> = new Map()) {
-    const root = d3.hierarchy(buildHier(t))
-    const innerW = (width - 2 * PAD) * 0.9
-    const leaves = root.leaves()
-    leaves.forEach((leaf, i) => {
-      ;(leaf as any).x = leaves.length <= 1 ? innerW / 2 : (i / (leaves.length - 1)) * innerW
-    })
-    root.eachAfter((d: any) => {
-      if (!d.children) return
-      const ch = (d.children as any[]).slice().sort((a, b) => a.x - b.x)
-      d.x = ch.length % 2 === 1 ? ch[Math.floor(ch.length / 2)].x : (ch[0].x + ch[ch.length - 1].x) / 2
-    })
-    const maxDepth = root.height || 1
-    const stemLen = TREE_H / maxDepth
-    const topOff = (height - TREE_H - stemLen) / 2
-    root.each((d: any) => {
-      d.x = (d.x as number) + PAD
-      d.y = topOff + TREE_H - (d.depth / maxDepth) * TREE_H
-    })
-    ;(root as any)._stemLen = stemLen
-    // Drop correction — must run BEFORE nascent so nascent children interpolate
-    // toward already-lifted parent positions.
-    // Root case: extend the stem downward by lifting the whole tree upward.
-    const rootK = dropCounts.get((root.data as any).id as string) ?? 0
-    if (rootK >= 1) {
-      const neededStem = DROP_SPACER + rootK * DROP_UNIT + DROP_BOX_H
-      if (stemLen < neededStem) {
-        const ext = neededStem - stemLen
-        root.each((n: any) => { (n as any).y -= ext })
-        ;(root as any)._stemLen = neededStem
-      }
-    }
-    // Non-root case: lift each node (and its subtree) so all k drop boxes fit
-    // on the branch toward its parent.
-    root.eachBefore((d: any) => {
-      const k = dropCounts.get(d.data.id as string) ?? 0
-      if (k < 1 || !d.parent) return
-      const dY = d.y as number
-      const vertBot = (d.parent.y as number) - ARC_R
-      const needed = DROP_SPACER + k * DROP_UNIT + DROP_BOX_H
-      const maxY = vertBot - needed
-      if (dY > maxY) {
-        const shift = dY - maxY
-        d.each((n: any) => { (n as any).y -= shift })
-      }
-    })
-    // Nascent adjustment — after correction so children slide toward corrected parent
-    root.each((d: any) => {
-      if (d.data.nascent !== undefined && d.parent) {
-        const n = d.data.nascent as number
-        d.x = d.parent.x + n * (d.x - d.parent.x)
-        d.y = d.parent.y + n * (d.y - d.parent.y)
-      }
-    })
-    return root
-  }
-
-  function corollaElements(d: any, stemLen = 0): { branches: { id: string; path: string; vertPath: string }[] } {
-    const py = d.y as number, px = d.x as number, r = ARC_R
-    const branches: { id: string; path: string; vertPath: string }[] = []
-    if (d.children) {
-      const children = (d.children as any[]).slice().sort((a: any, b: any) => a.x - b.x)
-      if (children.length === 1) {
-        const p = `M${px},${py} V${children[0].y}`
-        branches.push({ id: children[0].data.id, path: p, vertPath: p })
-      } else {
-        const xN = children[children.length - 1].x as number
-        children.forEach((c: any, i: number) => {
-          let path: string
-          if (i === 0)                        path = `M${c.x},${c.y} V${py - r} Q${c.x},${py} ${c.x + r},${py} H${px}`
-          else if (i === children.length - 1) path = `M${px},${py} H${xN - r} Q${xN},${py} ${xN},${py - r} V${c.y}`
-          else                                path = `M${c.x},${c.y} V${py}`
-          // vertPath: only the vertical segment from leaf tip to bus level
-          const vertPath = `M${c.x},${c.y} V${py - r}`
-          branches.push({ id: c.data.id, path, vertPath })
-        })
-      }
-    }
-    if (stemLen > 0) {
-      const p = `M${px},${py} V${py + stemLen}`
-      branches.push({ id: d.data.id, path: p, vertPath: p })
-    }
-    return { branches }
-  }
+  const NODE_R = 4
+  const DROP_W = H_PAD_L + H_PAD_R
 
   const dropCountsByEdge = $derived((() => {
     const m = new Map<string, number>()
@@ -173,7 +77,7 @@
     return m
   })())
 
-  const hier  = $derived(computeLayout(diagram.edgeRoot, dropCountsByEdge))
+  const hier  = $derived(computeLayout(diagram.edgeRoot, width, height, dropCountsByEdge))
   const nodes = $derived(hier.descendants() as any[])
 
   // ── Intermediate boxes — non-root, non-leaf nodes of focus.root ──────────────

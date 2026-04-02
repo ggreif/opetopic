@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as d3 from 'd3'
   import type { Tree } from '../lib/opetope'
+  import { computeLayout, PAD, ARC_R, TREE_H } from '../lib/layout'
 
   let {
     tree,
@@ -32,66 +32,9 @@
   }
   const dropCounts = $derived(countDrops(drops))
 
-  const PAD       = 28
-  const NODE_R    = 4
-  const ARC_R     = 6
-  const TREE_H    = 88
+  const NODE_R     = 4
   const LOLLIPOP_S = 16  // lollipop roundrect size (matches AtomicDiagramView)
 
-  function buildHier(t: Tree): any {
-    return {
-      id:      t.cell.id,
-      label:   t.cell.label,
-      dim:     t.cell.dim,
-      nascent: t.cell.nascent,
-      nullary: t.children !== null && t.children.length === 0,
-      children: t.children !== null && t.children.length > 0
-        ? t.children.map(([, s]) => buildHier(s))
-        : undefined,
-    }
-  }
-
-  function computeLayout(t: Tree) {
-    const root = d3.hierarchy(buildHier(t))
-    const innerW = (width - 2 * PAD) * 0.9
-
-    const leaves = root.leaves()
-    leaves.forEach((leaf, i) => {
-      ;(leaf as any).x =
-        leaves.length <= 1 ? innerW / 2 : (i / (leaves.length - 1)) * innerW
-    })
-
-    root.eachAfter((d: any) => {
-      if (!d.children) return
-      const ch = (d.children as any[]).slice().sort((a, b) => a.x - b.x)
-      if (ch.length % 2 === 1) {
-        d.x = ch[Math.floor(ch.length / 2)].x
-      } else {
-        d.x = (ch[0].x + ch[ch.length - 1].x) / 2
-      }
-    })
-
-    const maxDepth = root.height || 1
-    const stemLen  = TREE_H / maxDepth
-    const totalH   = TREE_H + stemLen
-    const topOff   = (height - totalH) / 2
-    root.each((d: any) => {
-      d.x = (d.x as number) + PAD
-      d.y = topOff + TREE_H - (d.depth / maxDepth) * TREE_H
-    })
-    ;(root as any)._stemLen = stemLen
-
-    // Nascent nodes start at their parent's dot position and lerp toward target.
-    root.each((d: any) => {
-      if (d.data.nascent !== undefined && d.parent) {
-        const n = d.data.nascent as number
-        d.x = d.parent.x + n * (d.x - d.parent.x)
-        d.y = d.parent.y + n * (d.y - d.parent.y)
-      }
-    })
-
-    return root
-  }
 
   /**
    * Decompose a corolla into per-child branch paths.
@@ -144,7 +87,7 @@
     return { branches }
   }
 
-  const hier  = $derived(computeLayout(tree))
+  const hier  = $derived(computeLayout(tree, width, height))
   const nodes = $derived(hier.descendants() as any[])
 </script>
 
