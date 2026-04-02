@@ -70,6 +70,38 @@ export function measureMinSpans(boxRoot: Tree | null): Map<string, number> {
   return spans
 }
 
+// ── measureBoxHH ─────────────────────────────────────────────────────────────
+//
+// Walk focus.root (box tree) post-order. For each edge-tree leaf wrapped by one
+// or more intermediate boxes, return the outermost box's half-height:
+//   hh = DROP_BOX_H/2 + nestingLevel * INTER_PAD
+//
+// This is purely structural — no positions needed. Returns Map<edgeNodeId, hh>;
+// absent entries mean the node is not wrapped (no y-correction needed).
+
+export function measureBoxHH(boxRoot: Tree | null): Map<string, number> {
+  const result = new Map<string, number>()
+  if (!boxRoot) return result
+
+  function walk(t: Tree, isRoot: boolean): number {
+    if (!t.children || t.children.length === 0) return DROP_BOX_H / 2  // leaf seed hh
+    const childHHs = t.children.map(([, c]) => walk(c, false))
+    const hh = Math.max(...childHHs) + INTER_PAD
+    if (!isRoot) {
+      // Stamp all edge-tree leaves under this intermediate box with the outermost hh
+      function markLeaves(bt: Tree) {
+        if (!bt.children || bt.children.length === 0) { result.set(bt.cell.id, hh); return }
+        for (const [, c] of bt.children) markLeaves(c)
+      }
+      markLeaves(t)
+    }
+    return hh
+  }
+
+  walk(boxRoot, true)
+  return result
+}
+
 // ── Step 3+4: computeLayout with VPSC x-pass ─────────────────────────────────
 //
 // Produces a d3 hierarchy with .x / .y set on every node, plus ._stemLen on
@@ -169,6 +201,35 @@ export function computeLayout(
           vars.sort((a, b) => a.desiredPosition - b.desiredPosition)
           constraints.push(new Constraint(vars[0], vars[vars.length - 1], minSpan - 2 * INTER_PAD))
         }
+        // Single-node wrap: the wrapped node and its entire subtree must move as a
+        // rigid body, and the edge-tree parent must stay aligned above the node.
+        if (ids.length === 1) {
+          const nodeD = allNodes.find((d: any) => d.data.id === ids[0])
+          // Equality: edge-tree parent.x == wrapped.x  (keeps branch vertical below)
+          if (nodeD?.parent) {
+            const parentVar = varMap.get(nodeD.parent.data.id as string)
+            if (parentVar && parentVar !== vars[0]) {
+              constraints.push(new Constraint(vars[0], parentVar, 0))
+              constraints.push(new Constraint(parentVar, vars[0], 0))
+            }
+          }
+          // Rigid body: each child of wrapped node keeps its Phase-1 x-offset from its parent,
+          // so open branches and inner nodes above move together with the wrapped node.
+          function addRigid(anc: any) {
+            if (!anc.children) return
+            for (const child of anc.children as any[]) {
+              const aVar = varMap.get(anc.data.id as string)
+              const cVar = varMap.get(child.data.id as string)
+              if (aVar && cVar) {
+                const offset = cVar.desiredPosition - aVar.desiredPosition
+                constraints.push(new Constraint(aVar, cVar, offset))   // child >= parent + offset
+                constraints.push(new Constraint(cVar, aVar, -offset))  // parent >= child - offset
+              }
+              addRigid(child)
+            }
+          }
+          if (nodeD) addRigid(nodeD)
+        }
       }
       walkBox(boxRoot, true)
     }
@@ -195,25 +256,35 @@ export function computeLayout(
     }
   }
 
-  // Phase 3a — root drop correction (extend stem downward = lift whole tree)
-  const rootK = dropCounts.get((root.data as any).id as string) ?? 0
-  if (rootK >= 1) {
-    const neededStem = DROP_SPACER + rootK * DROP_UNIT + DROP_BOX_H
-    if (stemLen < neededStem) {
+  // Compute intermediate box half-heights for y-correction (purely structural)
+  const boxHH = measureBoxHH(boxRoot)
+
+  // Phase 3a — root correction: extend stem if drops or intermediate box need room
+  const rootK  = dropCounts.get((root.data as any).id as string) ?? 0
+  const rootHH = boxHH.get((root.data as any).id as string) ?? 0
+  {
+    const neededForDrops = rootK >= 1 ? DROP_SPACER + rootK * DROP_UNIT + DROP_BOX_H : 0
+    const neededForBox   = rootHH > 0 ? rootHH + DROP_SPACER : 0
+    const neededStem = Math.max(neededForDrops, neededForBox)
+    if (neededStem > stemLen) {
       const ext = neededStem - stemLen
       root.each((n: any) => { (n as any).y -= ext })
       ;(root as any)._stemLen = neededStem
     }
   }
 
-  // Phase 3b — non-root drop correction (lift subtree so drops fit on branch)
+  // Phase 3b — non-root correction: lift subtree so drops AND intermediate box fit on branch
   root.eachBefore((d: any) => {
-    const k = dropCounts.get(d.data.id as string) ?? 0
-    if (k < 1 || !d.parent) return
-    const dY      = d.y as number
+    if (!d.parent) return
+    const k  = dropCounts.get(d.data.id as string) ?? 0
+    const hh = boxHH.get(d.data.id as string) ?? 0
+    const neededForDrops = k > 0 ? DROP_SPACER + k * DROP_UNIT + DROP_BOX_H : 0
+    const neededForBox   = hh > 0 ? hh + INTER_PAD : 0
+    const needed = Math.max(neededForDrops, neededForBox)
+    if (needed < 1) return
+    const dY     = d.y as number
     const vertBot = (d.parent.y as number) - ARC_R
-    const needed  = DROP_SPACER + k * DROP_UNIT + DROP_BOX_H
-    const maxY    = vertBot - needed
+    const maxY   = vertBot - needed
     if (dY > maxY) {
       const shift = dY - maxY
       d.each((n: any) => { (n as any).y -= shift })

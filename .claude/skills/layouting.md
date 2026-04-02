@@ -140,12 +140,102 @@ nested box-rects in Focus. Four invariants that must be preserved:
    recursive `leafIds()` walk. Recursing to leaves makes all nesting levels collapse to the
    same innermost positions.
 
-### Known visual issue (pending fix)
+### Invariant 5 — Branch extension for wrapped nodes (`measureBoxHH` + Phase 3 correction)
 
-The current layout is functional but messy — nested intermediate boxes overlap and don't push
-surrounding nodes away. Proper layout requires the edge-tree positions to be adjusted so that
-encircled groups have real estate: either expand `computeLayout` to account for wrapper sizes,
-or use a constraint-based approach (see Constraints section below).
+Intermediate boxes extend downward (toward parent nodes, larger y). For deep trees
+(`maxDepth ≥ 4`), `stemLen = TREE_H / maxDepth` can be as small as 22px, smaller than the
+box's `hh = DROP_BOX_H/2 + INTER_PAD = 18px`. The branch must be **lengthened** (subtree lifted)
+so the box clears the parent node, analogous to how drops extend branches.
+
+**`measureBoxHH(boxRoot)`** (in `layout.ts`) walks the box tree post-order and returns
+`Map<edgeNodeId, outermost-hh>`:
+
+```typescript
+hh(leaf)  = DROP_BOX_H / 2
+hh(box)   = max(children hh) + INTER_PAD   // = DROP_BOX_H/2 + nestingLevel * INTER_PAD
+```
+
+Each intermediate box stamps all its edge-tree leaf descendants with its (outermost) `hh`.
+Absent entries = node is not wrapped.
+
+**Phase 3a (root / stem)**: `neededStem = max(forDrops, forBox)` where `forBox = hh + DROP_SPACER`.
+
+**Phase 3b (non-root branch)**:
+```typescript
+neededForBox = hh + INTER_PAD   // clearance from node.y to parent.y - ARC_R
+needed       = max(neededForDrops, neededForBox)
+maxY         = (parent.y - ARC_R) - needed
+if (d.y > maxY) lift subtree by (d.y - maxY)
+```
+
+Drops and intermediate-box correction are unified: whichever demands more space wins.
+
+### Known remaining visual issues
+
+- **Branches passing through intermediate boxes**: The branch from a wrapped node to its parent
+  passes vertically through the intermediate box. This is inherent — the branch is drawn in the
+  tree layer (on top) so it remains visible through the semi-transparent box fill.
+
+---
+
+## Bugs / TODO
+
+### Sibling subtree buses trampled by intermediate boxes
+**Status**: not yet fixed.
+`halfWidthMap` seeds every sibling with `NODE_W/2 = 8`. VPSC therefore only pushes a sibling
+node 28 px outside the box edge. But the sibling may be an inner node whose children spread
+much wider than 8 px. The children stay at Phase-1 positions while the sibling node moves left,
+so the children end up *inside* the intermediate box's rectangle. This causes the corolla bus
+of the sibling to visually disappear behind the box.
+
+**Fix needed (two parts)**:
+1. Compute each node's Phase-1 *subtree half-width* bottom-up and seed `halfWidthMap` with
+   that value instead of `NODE_W/2`.
+2. Add rigid-body constraints for *sibling* subtrees too (not just the wrapped node's subtree)
+   so that when VPSC pushes a sibling, all its descendants follow as a unit.
+
+### Encircling the parent of a shifted tower jumps to the side
+**Status**: reproducible, not yet fixed.
+Steps to reproduce: build a tower (encircle one node several times). The tower shifts sideways
+due to VPSC. Then encircle the *parent* node (the one that the equality constraint pins to the
+tower). The new intermediate box for the parent appears at a different x-position — it "jumps".
+
+Root cause: when a new intermediate box is created for the parent, `intermediateBoxes` computes
+its centre from `extMap`, which uses the VPSC-solved positions. But `desiredPosition` in the
+new Variable for the parent is the Phase-1 x (not the VPSC-solved x), so Phase-2 layout
+re-centres things around the old desired x, not the current visual x.
+
+### Drop z-order must be topmost
+**Status**: not yet fixed.
+Drop roundrects (the slashed boxes) are rendered inside the box layer, below the tree layer.
+They should be rendered **above** everything else (on top of tree-node roundrects and
+intermediate boxes) so that they remain clickable and visually distinct. Fix: move the drop
+`<g>` blocks to after the `<g class="tree-layer">` in `AtomicDiagramView.svelte`, or give
+them their own top-level `<g class="drop-layer">`.
+
+### Multi-node encircle rigid-body (not yet implemented)
+The rigid-body constraints (`addRigid`) that keep open branches and inner nodes aligned are only
+applied for **single-node** intermediate boxes (`ids.length === 1`). For a box encircling
+**multiple** edge-tree nodes the containment constraint pushes the outermost pair apart, but the
+subtrees rooted at each enclosed node are not currently rigidly linked to their respective parents.
+This can produce diagonal branches above a multi-node encircled group. When multi-node encircle
+is exercised, extend `addRigid` to cover each node in `ids`.
+
+### Optical centering (not yet implemented)
+`topOff = (height - TREE_H - stemLen) / 2` only vertically centres the raw tree extent.
+The full bounding box (including frame, drops, intermediate boxes) is not centred. The
+x-centering similarly ignores `adjustedFrameRect`. Two-pass fix: lay out → compute bbox →
+translate everything so bbox centre equals pane centre.
+
+### Auto-scaling (not yet implemented)
+When `adjustedFrameRect` exceeds `paneWidth/Height - 2*PANE_MARGIN`, apply a uniform SVG
+`transform="scale(s)"` (around bbox centre) so the diagram always fits with minimum margins.
+
+### y-VPSC (not yet implemented)
+If a wrapped group at depth D has `hh > stemLen - ARC_R - INTER_PAD`, Phase 3b lifts the
+subtree. But this lift can cascade upward through ancestors, compressing sibling branches. A
+proper y-VPSC pass would enforce minimum branch lengths as constraints rather than a greedy
+top-down sweep. Relevant when deeply nested towers appear in deep trees.
 
 ---
 
@@ -215,13 +305,17 @@ Extracts `computeConstrainedLayout(edgeRoot, root, drops, svgW, svgH): LayoutRes
 
 ### Migration steps
 
-1. Extract current `computeLayout` into `frontend/lib/layout.ts` (no behaviour change)
-2. Add `measureMinSpans(root: Tree): Map<string, number>` to `opetope.ts`
-3. Replace Phase 1 equal-interval with recursive measure+place
-4. Add VPSC x-pass after desired positions are set
-5. Move `intermediateBoxes` derivation inside `computeLayout2` (feeds from VPSC-solved coords)
-6. Port x-VPSC to `TreeDiagram` (sibling separation only — no boxes)
-7. Optional: y-VPSC if multi-depth encircled groups cause vertical overlaps
+1. ✅ Extract current `computeLayout` into `frontend/lib/layout.ts` (no behaviour change)
+2. ✅ Add `measureMinSpans(root: Tree): Map<string, number>` to `layout.ts`
+3. ✅ Phase 1 equal-interval leaf spread + bottom-up median (unchanged from original)
+4. ✅ Add VPSC x-pass after desired positions are set (halfWidthMap + sibling sep + containment)
+   - ✅ Single-node wrap: equality constraint `parent.x == wrapped.x`
+   - ✅ Single-node wrap: rigid-body constraints for wrapped subtree
+   - ✅ Branch extension (Phase 3b / 3a) for intermediate box clearance (`measureBoxHH`)
+   - ⬜ Sibling subtree halfWidths + rigid body (see Bugs/TODO)
+5. ✅ `intermediateBoxes` derived in `AtomicDiagramView` from VPSC-solved coords (stays in view — too coupled to drop layout)
+6. ⬜ Port x-VPSC to `TreeDiagram` (sibling separation only — no boxes; unblocked by dimension hopping)
+7. ⬜ y-VPSC (see Bugs/TODO)
 
 ---
 

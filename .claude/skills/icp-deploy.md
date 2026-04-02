@@ -20,7 +20,8 @@ Add the export to `~/.zshrc` if you want it persistent.
 export PATH=~/.npm-global/bin:$PATH   # if not already in PATH
 
 icp network start -d                  # starts local replica on port 8000
-icp deploy                            # build + create canisters + install + sync
+npm run build                         # build the Svelte frontend first
+icp deploy                            # create/sync canisters + upload assets
 ```
 
 After deploy, two URLs are printed:
