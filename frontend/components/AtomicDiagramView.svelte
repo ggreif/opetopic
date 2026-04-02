@@ -132,17 +132,19 @@
     let segY0: number, segY1: number
     if (!d.parent) {
       const stemLen = (hier as any)._stemLen as number
-      segY0 = (d.y as number) + stemLen / 4
-      segY1 = (d.y as number) + stemLen * 3 / 4
+      segY0 = (d.y as number) + stemLen / 8
+      segY1 = (d.y as number) + stemLen * 3 / 8
     } else {
       // vertical segment runs from leaf (d.y) up to bus level minus arc (d.parent.y - ARC_R)
+      // Place in upper quarter to avoid the midpoint label
       const vertTop = d.y as number
       const vertBot = (d.parent.y as number) - ARC_R
-      segY0 = vertTop + (vertBot - vertTop) / 4
-      segY1 = vertTop + (vertBot - vertTop) * 3 / 4
+      segY0 = vertTop + (vertBot - vertTop) / 8
+      segY1 = vertTop + (vertBot - vertTop) * 3 / 8
     }
     const cx = d.x as number
-    return { edgeId, rootId, x: cx - DROP_W / 2, y: segY0, w: DROP_W, h: segY1 - segY0 }
+    const w = d.parent ? DROP_W : DROP_W / 2
+    return { edgeId, rootId, x: cx - w / 3, y: segY0, w, h: segY1 - segY0 }
   }).filter(Boolean) as { edgeId: string; rootId: string; x: number; y: number; w: number; h: number }[])
 </script>
 
@@ -166,7 +168,6 @@
         <g onmouseenter={() => onhover?.(dr.rootId)} onmouseleave={() => onhover?.(null)}>
           <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
             class="box-rect leaf" class:highlighted={dr.rootId === highlight} />
-          <line x1={dr.x + 4} y1={dr.y + 4} x2={dr.x + dr.w - 4} y2={dr.y + dr.h - 4} class="drop-slash-box" />
         </g>
       {/each}
       <text

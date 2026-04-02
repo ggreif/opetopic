@@ -173,8 +173,7 @@
     {@const my = y0 + stemLen / 2}
     {@const dw = 16}
     {@const dh = 11}
-    <rect x={cx - dw/2} y={my - dh/2} width={dw} height={dh} rx={3} ry={3} class="drop-marker" />
-    <line x1={cx - dw/2 + 2} y1={my - dh/2 + 2} x2={cx + dw/2 - 2} y2={my + dh/2 - 2} class="drop-slash" />
+    <rect x={cx - dw/3} y={my - dh/2} width={dw} height={dh} rx={3} ry={3} class="drop-marker" />
   {/if}
 
   <!-- Pass 2b: drop markers + subdivided hit segments for each non-root branch -->
@@ -200,8 +199,7 @@
     <!-- k slashed roundrect markers at the junctions between segments -->
     {#each Array.from({ length: k }, (_, i) => i) as i}
       {@const my = y0 + ((i + 1) / (k + 1)) * (y1 - y0)}
-      <rect x={cx - dw/2} y={my - dh/2} width={dw} height={dh} rx={3} ry={3} class="drop-marker" />
-      <line x1={cx - dw/2 + 2} y1={my - dh/2 + 2} x2={cx + dw/2 - 2} y2={my + dh/2 - 2} class="drop-slash" />
+      <rect x={cx - dw/3} y={my - dh/2} width={dw} height={dh} rx={3} ry={3} class="drop-marker" />
     {/each}
   {/each}
 
