@@ -85,13 +85,22 @@ This must run **after** the drop correction so the child interpolates toward the
 
 ## Frame rect
 
-The outer box frame is derived from the tree coordinates (not independently computed):
+The base `frameRect` is derived from tree coordinates:
 
-- **top**: `leafY + ¼ * (leafParentY − leafY)` — sits ¼ of the way from the leaf tips toward their parent bus
-- **bottom**: `rootY + ¾ * stemLen` — crosses the stem at ¾ of its length
+- **top**: `leafY + stemLen/4` — leaves poke above by `stemLen/4` (symmetric with bottom)
+- **bottom**: `rootY + stemLen * 3/4` — stem pokes below by `stemLen/4`
 - **left/right**: `min/max leaf x ± H_PAD_L/R`
 
-The frame expands upward (`adjustedFrameRect`) if any drop extension reaches above the current frame top.
+`adjustedFrameRect` then expands the frame to cover all drop boxes in both directions:
+
+- **Upward**: if any `dropLayout.rect.y < fr.y`, set `newTop = minRectY − DROP_SPACER`
+- **Downward**: if any `dropLayout.rect.y + h > fr.y + fr.h`, set `newBot = maxRectBottom + DROP_SPACER`
+
+This is symmetric: child-branch drops push the top up; stem drops push the bottom down.
+
+## Leaf tip extensions
+
+After `adjustedFrameRect` is computed, a `leafCeiling = adjustedFrameRect.y − DROP_SPACER` is derived. Every leaf node whose `y > leafCeiling` gets a vertical extension path drawn from `nodeY` up to `leafCeiling`. This keeps all branch tips flush with the top of the frame regardless of how much any one branch was lifted by its drops. These extensions carry full hover and droppable behavior.
 
 ---
 

@@ -45,7 +45,8 @@
     const minX = Math.min(...leafXs)
     const maxX = Math.max(...leafXs)
     const x = minX - H_PAD_L
-    const y = leafY + (1 / 4) * (leafParentY - leafY)
+    // Symmetric overhang: leaves poke above by stemLen/4, stem pokes below by stemLen/4
+    const y = leafY + stemLen / 4
     const w = Math.max(maxX - minX + H_PAD_L + H_PAD_R, LEAF_W)
     const h = (busY + stemLen * 3 / 4) - y
     return { x, y, w, h }
@@ -188,8 +189,9 @@
 
       // Stack boxes downward from the node into its outgoing branch (toward parent / stem).
       // Box i top: nodeY + DROP_SPACER + i * DROP_UNIT  (all below nodeY, no extension needed)
+      const bw = DROP_BOX_H * 1.5  // narrow box width — same for all branches
       for (let i = 0; i < k; i++) {
-        rects.push({ rootId: edgeDrops[i].rootId, x: cx - w / 3, y: nodeY + DROP_SPACER + i * DROP_UNIT, w, h: DROP_BOX_H })
+        rects.push({ rootId: edgeDrops[i].rootId, x: cx - bw / 3, y: nodeY + DROP_SPACER + i * DROP_UNIT, w: bw, h: DROP_BOX_H })
       }
     }
 
@@ -201,14 +203,20 @@
     return { rects, extensions, minExtY }
   })())
 
-  // Expand the outer frame upward to cover any drop extensions above the leaves
+  // Expand the outer frame to cover all drop boxes (upward for child drops, downward for stem drops)
   const adjustedFrameRect = $derived((() => {
     const fr = frameRect
-    const extTop = dropLayout.minExtY
-    if (extTop === null || extTop >= fr.y) return fr
-    const newY = extTop - DROP_SPACER
-    return { ...fr, y: newY, h: fr.h + (fr.y - newY) }
+    const frBot = fr.y + fr.h
+    const minRectY = dropLayout.rects.length > 0 ? Math.min(...dropLayout.rects.map(r => r.y))           : null
+    const maxRectB = dropLayout.rects.length > 0 ? Math.max(...dropLayout.rects.map(r => r.y + r.h))     : null
+    const newTop = minRectY !== null && minRectY < fr.y   ? minRectY - DROP_SPACER : fr.y
+    const newBot = maxRectB !== null && maxRectB > frBot   ? maxRectB + DROP_SPACER : frBot
+    if (newTop === fr.y && newBot === frBot) return fr
+    return { ...fr, y: newTop, h: newBot - newTop }
   })())
+
+  // All leaf tips should reach this y — same overhang above frame as stem below
+  const leafCeiling = $derived(adjustedFrameRect.y - DROP_SPACER)
 </script>
 
 <svg {width} {height} class="atomic-diagram">
@@ -243,6 +251,22 @@
 
   <!-- ── Tree layer ────────────────────────────────────────────────────────── -->
   <g class="tree-layer">
+    <!-- Leaf tip extensions: ensure every open branch tip reaches leafCeiling -->
+    {#each nodes.filter((d: any) => !d.children && d.parent) as d (d.data.id)}
+      {#if (d.y as number) > leafCeiling}
+        {@const p = `M${d.x as number},${d.y as number} V${leafCeiling}`}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <g onmouseenter={() => onhover?.(d.data.id)} onmouseleave={() => onhover?.(null)}>
+          <path d={p} class="corolla-link" class:highlighted={d.data.id === highlight} />
+          <path d={p} class="corolla-hit" />
+          {#if ondropinsert}
+            <path d={p} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(d.data.id)} />
+          {/if}
+        </g>
+      {/if}
+    {/each}
+
     <!-- Branch extensions for multi-drop stacking -->
     {#each [...dropLayout.extensions.entries()] as [edgeId, ext]}
       {@const p = `M${ext.x},${ext.yTop} V${ext.yBot}`}
