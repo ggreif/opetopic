@@ -30,10 +30,11 @@
   }
   const dropCounts = $derived(countDrops(drops))
 
-  const PAD    = 28
-  const NODE_R = 4
-  const ARC_R  = 6
-  const TREE_H = 88
+  const PAD       = 28
+  const NODE_R    = 4
+  const ARC_R     = 6
+  const TREE_H    = 88
+  const LOLLIPOP_S = 16  // lollipop roundrect size (matches AtomicDiagramView)
 
   function buildHier(t: Tree): any {
     return {
@@ -227,17 +228,19 @@
     onmouseleave={() => onhover?.(null)}
   >{hier.data.label}</text>
 
-  <!-- Pass 3: dots on top of all paths and labels (internal nodes + nullary corollas) -->
+  <!-- Pass 3: roundrects for all nodes (inner nodes + lollipops) -->
   {#each nodes.filter((d: any) => d.children || d.data.nullary) as d (d.data.id)}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <circle
-      cx={d.x} cy={d.y} r={NODE_R}
+    <rect
+      x={(d.x as number) - LOLLIPOP_S / 2} y={(d.y as number) - LOLLIPOP_S / 2}
+      width={LOLLIPOP_S} height={LOLLIPOP_S}
+      rx="3" ry="3"
       class="tree-node"
-      class:highlighted={d.data.nullary && d.data.id === highlight}
+      class:highlighted={d.data.id === highlight}
       onclick={() => oncellclick?.(d.data.id)}
-      onmouseenter={() => d.data.nullary ? onhover?.(d.data.id) : undefined}
-      onmouseleave={() => d.data.nullary ? onhover?.(null) : undefined}
+      onmouseenter={() => onhover?.(d.data.id)}
+      onmouseleave={() => onhover?.(null)}
     />
   {/each}
 </svg>
@@ -302,6 +305,7 @@
     cursor: pointer;
     fill: #333;
     stroke: none;
+    pointer-events: all;
     transition: fill 0.1s;
   }
 
