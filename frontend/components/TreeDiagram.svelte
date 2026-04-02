@@ -208,7 +208,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <text
       x={(d.x as number) + 5}
-      y={((d.y as number) + (d.parent.y as number)) / 2 + 4}
+      y={(d.y as number) + ((d.parent.y as number) - (d.y as number)) * 2 / 3 + 4}
       class="edge-label"
       class:highlighted={d.data.id === highlight}
       onmouseenter={() => onhover?.(d.data.id)}
@@ -220,7 +220,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <text
     x={(hier.x as number) + 5}
-    y={(hier.y as number) + (hier as any)._stemLen / 2 + 4}
+    y={(hier.y as number) + (hier as any)._stemLen * 2 / 3 + 4}
     class="edge-label"
     class:highlighted={hier.data.id === highlight}
     onmouseenter={() => onhover?.(hier.data.id)}
