@@ -118,7 +118,23 @@ The `nullary` flag in the hierarchy data distinguishes lollipops from open leave
 
 ---
 
-## Succ node hover sensitivity — pending dimension hopping
+## Succ interactivity — both pending dimension hopping
+
+### Node hover sensitivity
+
+Nodes in the Succ `TreeDiagram` currently have **no hover sensitivity** (`onmouseenter`/`onmouseleave` removed). Succ nodes bond rightward (to the next dimension), which is not yet accessible.
+
+When **dimension hopping** (◀▶ navigation between atomic diagrams) is implemented, Succ nodes must gain hover sensitivity: hovering a Succ node should highlight the corresponding **base disk** in the next Focus pane to the right — the same pattern as Focus node → Succ stem, one level up. At that point, restore `onmouseenter`/`onmouseleave` on the `TreeDiagram` node rects and wire them through a `onnodehover` prop (mirroring the `AtomicDiagramView` pattern).
+
+### Drop insertion on Succ branches
+
+Succ branches also cannot yet receive drops. The reason is structural: a drop on a Succ branch would require a lollipop in `succ.root` (the next atomic diagram's box tree), and that diagram does not exist yet — there is no `succ.tree` to hold it and assign it a fresh id.
+
+When dimension hopping lands and `succ.tree` is accessible, enable `ondropinsert` on the Succ `TreeDiagram` (currently passed as `drops={[]}` and no `ondropinsert`). The handler follows the same pattern as `handleDropInsert` in `OpetopeBuilder`, operating one level to the right.
+
+---
+
+## Shared concept: EdgeTreeView
 
 Nodes in the Succ `TreeDiagram` currently have **no hover sensitivity** (`onmouseenter`/`onmouseleave` removed). This is correct for now: Succ nodes bond rightward (to the next dimension), which is not yet accessible.
 
