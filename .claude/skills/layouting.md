@@ -1,4 +1,4 @@
-# AtomicDiagramView — Layout Strategy
+# Edge Tree Layout Strategy
 
 ## Coordinate system
 
@@ -101,6 +101,28 @@ This is symmetric: child-branch drops push the top up; stem drops push the botto
 ## Leaf tip extensions
 
 After `adjustedFrameRect` is computed, a `leafCeiling = adjustedFrameRect.y − DROP_SPACER` is derived. Every leaf node whose `y > leafCeiling` gets a vertical extension path drawn from `nodeY` up to `leafCeiling`. This keeps all branch tips flush with the top of the frame regardless of how much any one branch was lifted by its drops. These extensions carry full hover and droppable behavior.
+
+---
+
+## Node shapes
+
+Every node in an edge tree is a **16×16 roundrect** (`rx=3`). This is the single visual vocabulary for all node kinds:
+
+| Kind | `children` value | Shape |
+|---|---|---|
+| Open leaf (input branch tip) | `null` | no node rendered |
+| Lollipop (nullary corolla) | `[]` | 16×16 roundrect |
+| Inner node (corolla with inputs) | `[…]` | 16×16 roundrect |
+
+The `nullary` flag in the hierarchy data distinguishes lollipops from open leaves (both have no d3 children, but only lollipops get a node rendered). This invariant holds across **all** edge-tree renderers.
+
+---
+
+## Shared concept: EdgeTreeView
+
+`TreeDiagram` (Succ pane) and the tree layer of `AtomicDiagramView` (Focus pane) both render edge trees using the same logic: `buildHier`, `computeLayout`, `corollaElements`, node roundrects, branch paths, hover/click wiring. They are the **same concept**.
+
+Planned refactor: extract a shared `EdgeTreeView` component. `TreeDiagram` becomes a thin wrapper; `AtomicDiagramView` composes `EdgeTreeView` + the box layer.
 
 ---
 
