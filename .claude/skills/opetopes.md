@@ -139,6 +139,16 @@ For siblings in any `children` array, let `under` = parent's straddled set:
 
 Rule 3 permits the globular case: when `under = {}` at every level, `away = []` is forced, giving the self-similar chain.
 
+**Soundness rule 5 — Away-disjointness (parent vs. children)**:
+
+For any node with children, the node's own `away` set must be disjoint from the union of its children's `away` sets:
+
+```
+node.away  ∩  ⋃ child.away  =  ∅
+```
+
+**Grounding**: `away` entries are resource-like — a substrate branch ID can only be excluded once on any root-to-leaf path. If a parent already marks a branch as avoided, that branch is already outside the parent's support; a child cannot also mark it as avoided (it would be excluding something already excluded, a double-removal from a set-like resource). Encircle enforces this by moving `away` from the child up to the new wrapper and setting the child's `away` to `∅`.
+
 Rule 1 in action: in dimension 0, `under = {}`. Two sibling inner disks would both have `away = []` — equal — violation. Hence no branching at dimension 0 without substrate nodes to differentiate siblings.
 
 ### Drops

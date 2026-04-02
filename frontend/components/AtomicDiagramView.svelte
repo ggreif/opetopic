@@ -9,17 +9,26 @@
     width = 380,
     height = 340,
     highlight = undefined,
+    selected = undefined,
     onhover = undefined,
+    onselect = undefined,
     ondropinsert = undefined,
+    onencircle = undefined,
   }: {
     diagram: AtomicDiagram
     drops?: DropInfo[]
     width?: number
     height?: number
     highlight?: string
+    selected?: string
     onhover?: (cellId: string | null) => void
+    onselect?: (cellId: string | null) => void
     ondropinsert?: (cellId: string) => void
+    onencircle?: (cellId: string) => void
   } = $props()
+
+  // ── Context menu for encircle ────────────────────────────────────────────────
+  let ctxMenu = $state<{ x: number; y: number; cellId: string } | null>(null)
 
   const droppedEdgeIds = $derived(new Set(drops.map(d => d.edgeId)))
 
@@ -219,20 +228,23 @@
   const leafCeiling = $derived(adjustedFrameRect.y - DROP_SPACER)
 </script>
 
-<svg {width} {height} class="atomic-diagram">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<svg {width} {height} class="atomic-diagram" onclick={() => onselect?.(null)}>
   <!-- ── Box layer — outer frame positioned in tree coordinates ───────────── -->
+  {#if diagram.root}
   <g class="box-layer">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <g
-      onmouseenter={() => onhover?.(diagram.root.cell.id)}
+      onmouseenter={() => onhover?.(diagram.root!.cell.id)}
       onmouseleave={() => onhover?.(null)}
-      opacity={diagram.root.cell.nascent ?? 1}
+      opacity={diagram.root!.cell.nascent ?? 1}
     >
       <rect
         x={adjustedFrameRect.x} y={adjustedFrameRect.y} width={adjustedFrameRect.w} height={adjustedFrameRect.h} rx="5" ry="5"
         class="box-rect"
-        class:highlighted={diagram.root.cell.id === highlight}
-        class:leaf={diagram.root.children === null || diagram.root.children.length === 0}
+        class:highlighted={diagram.root!.cell.id === highlight}
+        class:leaf={diagram.root!.children === null || diagram.root!.children.length === 0}
       />
       {#each dropLayout.rects as dr (dr.rootId)}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -244,10 +256,11 @@
       <text
         x={adjustedFrameRect.x + adjustedFrameRect.w - 7} y={adjustedFrameRect.y + 18}
         class="box-label"
-        class:highlighted={diagram.root.cell.id === highlight}
-      >{diagram.root.cell.label}</text>
+        class:highlighted={diagram.root!.cell.id === highlight}
+      >{diagram.root!.cell.label}</text>
     </g>
   </g>
+  {/if}
 
   <!-- ── Tree layer ────────────────────────────────────────────────────────── -->
   <g class="tree-layer">
@@ -321,10 +334,36 @@
     {#each nodes.filter((d: any) => d.children) as d (d.data.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <circle cx={d.x} cy={d.y} r={NODE_R} class="tree-node" />
+      <rect
+        x={(d.x as number) - DROP_BOX_H / 2} y={(d.y as number) - DROP_BOX_H / 2}
+        width={DROP_BOX_H} height={DROP_BOX_H}
+        rx="3" ry="3"
+        class="tree-node"
+        class:highlighted={d.data.id === highlight}
+        class:selected={d.data.id === selected}
+        onclick={(e) => {
+          e.stopPropagation()
+          if (e.ctrlKey && d.parent) {
+            e.preventDefault()
+            ctxMenu = { x: e.clientX, y: e.clientY, cellId: d.data.id }
+          } else {
+            onselect?.(d.data.id === selected ? null : d.data.id)
+          }
+        }}
+      />
     {/each}
   </g>
 </svg>
+
+{#if ctxMenu}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <div class="ctx-overlay" onclick={() => ctxMenu = null}></div>
+  <div class="ctx-menu" style="left:{ctxMenu.x}px; top:{ctxMenu.y}px">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <button onclick={() => { onencircle?.(ctxMenu!.cellId); ctxMenu = null }}>Encircle</button>
+  </div>
+{/if}
 
 <style>
   .atomic-diagram {
@@ -379,6 +418,23 @@
     cursor: default;
   }
   :global(.edge-label.highlighted) { fill: #a02480; font-weight: bold; }
-  :global(.tree-node) { fill: #333; stroke: none; }
+  :global(.tree-node) { fill: #333; stroke: none; cursor: pointer; pointer-events: all; }
+  :global(.tree-node.selected) { cursor: context-menu; }
   :global(.tree-node.highlighted) { fill: #a02480; }
+  :global(.tree-node.selected) { fill: #a02480; }
+
+  .ctx-overlay {
+    position: fixed; inset: 0; z-index: 99;
+  }
+  .ctx-menu {
+    position: fixed; z-index: 100;
+    background: white; border: 1px solid #ccc; border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 4px 0;
+  }
+  .ctx-menu button {
+    display: block; width: 100%; padding: 6px 16px;
+    background: none; border: none; cursor: pointer;
+    font-size: 0.9em; text-align: left;
+  }
+  .ctx-menu button:hover { background: #f3e5f5; color: #a02480; }
 </style>

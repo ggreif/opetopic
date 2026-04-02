@@ -64,7 +64,7 @@ export type Tree = {
  * Use collectDrops() to derive the flat DropInfo[] needed by the rendering layer.
  */
 export type AtomicDiagram = {
-  root:     Tree
+  root:     Tree | null  // null when substrate has no inner nodes (e.g. Point)
   edgeRoot: Tree
 }
 
@@ -85,6 +85,26 @@ export function collectDrops(t: Tree): DropInfo[] {
   }
   traverse(t)
   return result
+}
+
+/**
+ * Compute the Succ edge tree from focus.root (the box tree).
+ * Bond bijection: each box → a node, box nesting → branch structure.
+ * Leaf boxes → leaf nodes (open input branches); outer frame → root (output stem).
+ */
+export function computeSucc(root: Tree): Tree {
+  if (root.children === null) {
+    return { cell: root.cell, away: new Set(), drops: [], children: null }  // open branch
+  }
+  if (root.children.length === 0) {
+    return { cell: root.cell, away: new Set(), drops: [], children: [] }    // lollipop (nullary corolla)
+  }
+  return {
+    cell: root.cell,
+    away: new Set(),
+    drops: [],
+    children: root.children.map(([branchId, child]) => [branchId, computeSucc(child)] as [string, Tree])
+  }
 }
 
 /** An opetope: sequence of n disk trees, one per dimension. */
@@ -201,7 +221,7 @@ export function toGraph(diagram: AtomicDiagram): Graph {
     })
     return gIdx
   }
-  collectGroups(diagram.root)
+  if (diagram.root) collectGroups(diagram.root)
 
   return { nodes, links, groups, constraints }
 }
@@ -281,9 +301,40 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
 
   return {
     ...diagram,
-    root:     addLollipopToRoot(diagram.root),
+    root:     diagram.root ? addLollipopToRoot(diagram.root) : null,
     edgeRoot: addDropToEdgeRoot(diagram.edgeRoot),
   }
+}
+
+/**
+ * Encircle — wraps a new outer disk around an existing non-root node's subtree.
+ *
+ * The child's `away` set is transferred to the new wrapper; the child's `away`
+ * becomes empty (it is now fully inside the wrapper, which owns the boundary).
+ * Only `root` changes; `edgeRoot` is returned as-is.
+ */
+export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell): AtomicDiagram {
+  if (!diagram.root || diagram.root.cell.id === cellId) return diagram  // cannot encircle the base disk
+
+  function walk(t: Tree): Tree {
+    if (!t.children) return t
+    const newChildren = t.children.map(([branchId, child]): [string, Tree] => {
+      if (child.cell.id === cellId) {
+        const childWithEmptyAway: Tree = { ...child, away: new Set() }
+        const wrapper: Tree = {
+          cell:     newCell,
+          away:     new Set(child.away),
+          drops:    [],
+          children: [[branchId, childWithEmptyAway]],
+        }
+        return [branchId, wrapper]
+      }
+      return [branchId, walk(child)]
+    })
+    return { ...t, children: newChildren }
+  }
+
+  return { ...diagram, root: walk(diagram.root) }
 }
 
 // ── Example diagrams ─────────────────────────────────────────────────────────

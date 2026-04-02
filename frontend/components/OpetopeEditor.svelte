@@ -2,21 +2,24 @@
   import BoxDiagram from './BoxDiagram.svelte'
   import TreeDiagram from './TreeDiagram.svelte'
   import AtomicDiagramView from './AtomicDiagramView.svelte'
-  import { collectDrops, type AtomicDiagram } from '../lib/opetope'
+  import { collectDrops, computeSucc, type AtomicDiagram } from '../lib/opetope'
 
   let {
     focus,
     oncellclick = undefined,
     onsourceextrude = undefined,
     ondropinsert = undefined,
+    onencircle = undefined,
   }: {
     focus: AtomicDiagram
     oncellclick?: (cellId: string) => void
     onsourceextrude?: (leafId: string) => void
     ondropinsert?: (cellId: string) => void
+    onencircle?: (cellId: string) => void
   } = $props()
 
   let hoveredId = $state<string | null>(null)
+  let selectedId = $state<string | null>(null)
 
   const drops = $derived(collectDrops(focus.edgeRoot))
 
@@ -46,24 +49,29 @@
       diagram={focus}
       {drops}
       highlight={hoveredId ?? undefined}
+      selected={selectedId ?? undefined}
       onhover={(id) => { hoveredId = id }}
+      onselect={(id) => { selectedId = id ?? null }}
       ondropinsert={(cellId) => ondropinsert?.(cellId)}
+      onencircle={(cellId) => onencircle?.(cellId)}
     />
   </div>
 
-  <!-- Succ pane: focus.root as tree; lollipops where drops were inserted -->
+  <!-- Succ pane: computeSucc(focus.root) as tree; hidden when focus.root is null -->
+  {#if focus.root}
   <div class="pane succ-pane">
     <div class="pane-label">succ</div>
     <TreeDiagram
-      tree={focus.root}
+      tree={computeSucc(focus.root)}
       drops={[]}
       width={280}
       height={340}
-      highlight={hoveredId ?? undefined}
+      highlight={selectedId ?? hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
       oncellclick={handleCellClick}
     />
   </div>
+  {/if}
 </div>
 
 <style>
