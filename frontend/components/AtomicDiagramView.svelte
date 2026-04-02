@@ -188,31 +188,31 @@
     if (!diagram.root) return [] as InterBox[]
     const s = DROP_BOX_H / 2
 
-    // Map edge-tree cell.id → layout position
-    const posMap = new Map<string, { x: number; y: number }>()
-    for (const d of nodes) posMap.set(d.data.id as string, { x: d.x as number, y: d.y as number })
-
-    // Collect all leaf-box cell IDs under a focus.root subtree
-    function leafIds(t: Tree): string[] {
-      if (!t.children || t.children.length === 0) return [t.cell.id]
-      return t.children.flatMap(([, c]) => leafIds(c))
-    }
+    // Map cell.id → bounding half-extents: { cx, cy, hw, hh }
+    // hw/hh = half-width/half-height so parent wrappers use the actual extent.
+    type Extent = { cx: number; cy: number; hw: number; hh: number }
+    const extMap = new Map<string, Extent>()
+    for (const d of nodes) extMap.set(d.data.id as string, { cx: d.x as number, cy: d.y as number, hw: s, hh: s })
+    for (const dr of dropLayout.rects) extMap.set(dr.rootId, { cx: dr.x + dr.w / 2, cy: dr.y + dr.h / 2, hw: dr.w / 2, hh: dr.h / 2 })
 
     const result: InterBox[] = []
     function walk(t: Tree, isRoot: boolean) {
-      if (!t.children) return  // leaf box in focus.root
+      if (!t.children || t.children.length === 0) return  // leaf box or lollipop in focus.root
+      // Post-order: recurse first so all children's extents are already in extMap
+      for (const [, child] of t.children) walk(child, false)
       if (!isRoot) {
-        const ids = leafIds(t)
-        const positions = ids.map(id => posMap.get(id)).filter(Boolean) as { x: number; y: number }[]
-        if (positions.length > 0) {
-          const minX = Math.min(...positions.map(p => p.x - s)) - INTER_PAD
-          const maxX = Math.max(...positions.map(p => p.x + s)) + INTER_PAD
-          const minY = Math.min(...positions.map(p => p.y - s)) - INTER_PAD
-          const maxY = Math.max(...positions.map(p => p.y + s)) + INTER_PAD
-          result.push({ cell: t.cell, x: minX, y: minY, w: maxX - minX, h: maxY - minY })
+        const extents = t.children.map(([, c]) => extMap.get(c.cell.id)).filter(Boolean) as Extent[]
+        if (extents.length > 0) {
+          const minX = Math.min(...extents.map(e => e.cx - e.hw)) - INTER_PAD
+          const maxX = Math.max(...extents.map(e => e.cx + e.hw)) + INTER_PAD
+          const minY = Math.min(...extents.map(e => e.cy - e.hh)) - INTER_PAD
+          const maxY = Math.max(...extents.map(e => e.cy + e.hh)) + INTER_PAD
+          const ib: InterBox = { cell: t.cell, x: minX, y: minY, w: maxX - minX, h: maxY - minY }
+          result.push(ib)
+          // Register this box's full extent so parent wrappers enclose it properly
+          extMap.set(t.cell.id, { cx: minX + ib.w / 2, cy: minY + ib.h / 2, hw: ib.w / 2, hh: ib.h / 2 })
         }
       }
-      for (const [, child] of t.children) walk(child, false)
     }
     walk(diagram.root, true)
     return result
