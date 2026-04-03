@@ -10,7 +10,7 @@
  */
 
 import type { Tree, AtomicDiagram, Cell, Drop } from './opetope'
-import { allBranchIds, collectDrops, subtreeFor } from './opetope'
+import { allBranchIds, collectDrops, subtreeFor, computeSucc } from './opetope'
 
 // ── Internal traversal helpers ────────────────────────────────────────────────
 
@@ -71,6 +71,15 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   // 6.2 root-dim-is-edgeroot+1
   if (root !== null && root !== edgeRoot && root.cell.dim !== edgeRoot.cell.dim + 1)
     return `root-dim-is-edgeroot+1: root.dim=${root.cell.dim} but edgeRoot.dim=${edgeRoot.cell.dim}`
+
+  // 9.1 root-required-for-dim-gte-2: a diagram at dimension ≥ 2 must have a root box tree
+  if (root === null && edgeRoot.cell.dim >= 2)
+    return `root-required-for-dim-gte-2: dim=${edgeRoot.cell.dim} diagram has no root box tree`
+
+  // 9.2 ADVISORY root-required-for-extrusion: if edgeRoot has inner nodes but root is null,
+  //     the base box is missing (auto-create in OpetopeBuilder should prevent this in practice)
+  if (root === null && edgeRoot.children !== null)
+    return `ADVISORY root-required-for-extrusion: edgeRoot has inner nodes but root is null`
 
   // ── Build shared data structures (single O(n) pass each) ───────────────────
 
@@ -316,4 +325,35 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   }
 
   return null  // all checks passed
+}
+
+// ── Multi-level validation ────────────────────────────────────────────────────
+
+function treeShapeEquals(a: Tree, b: Tree): boolean {
+  if (a.cell.id !== b.cell.id) return false
+  if ((a.children === null) !== (b.children === null)) return false
+  if (a.children === null || b.children === null) return true  // both null
+  if (a.children.length !== b.children.length) return false
+  for (let i = 0; i < a.children.length; i++) {
+    const [abid, achild] = a.children[i]
+    const [bbid, bchild] = b.children[i]
+    if (abid !== bbid) return false
+    if (!treeShapeEquals(achild, bchild)) return false
+  }
+  return true
+}
+
+export function validateStack(diagrams: AtomicDiagram[]): string | null {
+  for (let i = 0; i < diagrams.length; i++) {
+    const v = validateDiagram(diagrams[i])
+    if (v) return `[level ${i}] ${v}`
+  }
+  for (let i = 0; i < diagrams.length - 1; i++) {
+    const d = diagrams[i]
+    if (!d.root) continue
+    const expected = computeSucc(d.root)
+    if (!treeShapeEquals(expected, diagrams[i + 1].edgeRoot))
+      return `[bond ${i}→${i+1}] edgeRoot of level ${i+1} does not match computeSucc of level ${i}`
+  }
+  return null
 }

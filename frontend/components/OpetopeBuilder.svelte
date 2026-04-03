@@ -3,6 +3,7 @@
   import OpetopeEditor from './OpetopeEditor.svelte'
   import { simplex, arrow, point, boxtree, cell, freshId, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree } from '../lib/opetope'
   import { validateDiagram } from '../lib/validate'
+  import { store } from '../lib/diagramStore.svelte'
 
   // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
   const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
@@ -31,18 +32,25 @@
     return { edgeRoot: diagram.edgeRoot, root: { cell: frameCell, away: new Set(), drops: [], children } }
   }
 
-  let focus     = $state<AtomicDiagram>(withOuterFrame(boxtree()))
-  let violation = $state<string | null>(null)
+  // Initialise store with default example
+  store.resetTo(withOuterFrame(boxtree()))
+
+  // Auto-create the base box whenever Focus lands on a diagram with root === null
+  // but an edge tree that has inner nodes. This fires on hopRight into a new level.
+  $effect(() => {
+    const f = store.focus
+    if (!f || f.root !== null) return
+    const framed = withOuterFrame(f)
+    if (framed.root !== null) store.updateFocusDiagram(framed)
+  })
 
   function setFocus(next: AtomicDiagram) {
     const v = validateDiagram(next)
     if (v) {
       console.log('[validateDiagram] VIOLATION:', v)
-      violation = v
       return
     }
-    violation = null
-    focus = next
+    store.updateFocusDiagram(next)
   }
 
   // Example gallery switcher
@@ -54,10 +62,11 @@
   ]
 
   function loadExample(make: () => AtomicDiagram) {
-    setFocus(withOuterFrame(make()))
+    store.resetTo(withOuterFrame(make()))
   }
 
   function handleSourceExtrude(leafId: string) {
+    const focus = store.focus
     // Find the dim of the extruded leaf so the new child has dim - 1
     function findDim(tree: typeof focus.edgeRoot): number {
       if (tree.cell.id === leafId) return tree.cell.dim
@@ -90,7 +99,7 @@
     setFocus({ edgeRoot: newEdgeRoot, root: newRoot })
 
     // Navigate to newCell through the reactive $state proxy so mutations trigger Svelte reactivity
-    const reactiveCell = subtreeFor(focus.edgeRoot, newCell.id)!.cell
+    const reactiveCell = subtreeFor(store.focus.edgeRoot, newCell.id)!.cell
     reactiveCell.nascent = 0.05  // immediately perceptible
 
     // Grow nascent 0.05 → 1 over ~500ms
@@ -106,6 +115,7 @@
   }
 
   function handleDropInsert(edgeCellId: string) {
+    const focus = store.focus
     // Create a fresh lollipop cell for the new child in root
     const newCell = cell(freshLabel(), 0)
     const branchId = freshId()  // shared between dropId and root branch key
@@ -121,6 +131,7 @@
   }
 
   function handleEncircle(cellIds: Set<string>) {
+    const focus = store.focus
     if (!focus.root || cellIds.size === 0) return
     // Use any member to determine dimension (all are in the same edge tree)
     const anyId = [...cellIds][0]
@@ -143,7 +154,7 @@
     {/each}
   </div>
 
-  <OpetopeEditor {focus} {violation} onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onencircle={handleEncircle} />
+  <OpetopeEditor onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onencircle={handleEncircle} />
 </section>
 
 <style>

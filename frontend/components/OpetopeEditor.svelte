@@ -1,30 +1,41 @@
 <script lang="ts">
   import BoxDiagram from './BoxDiagram.svelte'
-  import TreeDiagram from './TreeDiagram.svelte'
   import AtomicDiagramView from './AtomicDiagramView.svelte'
   import { collectDrops, computeSucc, minConnectedSubtree, isValidEncircleSet, type AtomicDiagram } from '../lib/opetope'
+  import { store } from '../lib/diagramStore.svelte'
+  import { validateStack } from '../lib/validate'
 
   let {
-    focus,
-    violation = null,
     oncellclick = undefined,
     onsourceextrude = undefined,
     ondropinsert = undefined,
     onencircle = undefined,
   }: {
-    focus: AtomicDiagram
-    violation?: string | null
     oncellclick?: (cellId: string) => void
     onsourceextrude?: (leafId: string) => void
     ondropinsert?: (cellId: string) => void
     onencircle?: (cellIds: Set<string>) => void
   } = $props()
 
-  let hoveredId     = $state<string | null>(null)  // Prev / Focus hover → edge highlighting
-  let succHoveredId = $state<string | null>(null)  // Succ hover → node highlighting in Focus
+  let hoveredId     = $state<string | null>(null)
+  let succHoveredId = $state<string | null>(null)
   let selectedIds   = $state<Set<string>>(new Set())
 
-  const drops = $derived(collectDrops(focus.edgeRoot))
+  const violation = $derived(validateStack(store.diagrams))
+  const drops     = $derived(collectDrops(store.focus.edgeRoot))
+
+  // Succ AtomicDiagram:
+  //   1. null                               → hide pane (no box tree)
+  //   2. store.succDiagram                  → next level already exists, show verbatim
+  //   3. { edgeRoot: computeSucc(root), root: null } → preview before first hop right
+  const succAtomicDiagram = $derived<AtomicDiagram | null>(
+    !store.focus.root ? null
+    : store.succDiagram
+      ?? { edgeRoot: computeSucc(store.focus.root), root: null }
+  )
+
+  const canHopLeft  = $derived(store.focusIdx > 0)
+  const canHopRight = $derived(store.focus.root !== null)
 
   function handleCellClick(cellId: string) {
     oncellclick?.(cellId)
@@ -33,41 +44,52 @@
   function handleSelect(id: string | null, add = false) {
     if (id === null) { selectedIds = new Set(); return }
     if (add) {
-      // Shift+click: accumulate, auto-extend to connected subtree
       const candidate = new Set([...selectedIds, id])
-      const extended  = minConnectedSubtree(focus.edgeRoot, candidate)
-      if (isValidEncircleSet(focus.edgeRoot, extended)) {
+      const extended  = minConnectedSubtree(store.focus.edgeRoot, candidate)
+      if (isValidEncircleSet(store.focus.edgeRoot, extended)) {
         selectedIds = extended
       }
-      // else: incompatible node — keep prior selection unchanged (Shift+click silently rejected)
     } else {
-      // Plain click: fresh single selection
       selectedIds = new Set([id])
     }
+  }
+
+  function onHopLeft() {
+    hoveredId = null; succHoveredId = null; selectedIds = new Set()
+    store.hopLeft()
+  }
+
+  function onHopRight() {
+    hoveredId = null; succHoveredId = null; selectedIds = new Set()
+    store.hopRight()
   }
 </script>
 
 <svelte:window onclick={(e) => { if (!e.ctrlKey) selectedIds = new Set() }} />
 
 <div class="editor">
-  <!-- Prev pane: substrate as BoxDiagram; slashed box where drop latches on -->
+  <!-- Prev pane -->
   <div class="pane prev-pane">
     <div class="pane-label">prev</div>
     <BoxDiagram
-      tree={focus.edgeRoot}
+      tree={store.focus.edgeRoot}
       width={280}
       height={340}
       highlight={hoveredId ?? undefined}
       onhover={(id) => { hoveredId = id }}
       onsourceextrude={(leafId) => onsourceextrude?.(leafId)}
     />
+    <div class="dim-badge">dim {store.focus.edgeRoot.cell.dim}</div>
   </div>
 
-  <!-- Focus pane: atomic diagram — tree (left bond) + boxes (right bond) -->
+  <!-- ◀ hop left -->
+  <button class="hop-arrow" disabled={!canHopLeft} onclick={onHopLeft}>◀</button>
+
+  <!-- Focus pane -->
   <div class="pane focus-pane" class:violated={!!violation}>
     <div class="pane-label">focus</div>
     <AtomicDiagramView
-      diagram={focus}
+      diagram={store.focus}
       {drops}
       highlight={hoveredId ?? undefined}
       highlightNode={succHoveredId ?? undefined}
@@ -81,22 +103,31 @@
     {#if violation}
       <div class="violation-msg" title={violation}>⚠ invalid</div>
     {/if}
+    <div class="dim-badge">dim {store.focus.root?.cell.dim ?? store.focus.edgeRoot.cell.dim + 1}</div>
   </div>
 
-  <!-- Succ pane: computeSucc(focus.root) as tree; hidden when focus.root is null -->
-  {#if focus.root}
+  <!-- ▶ hop right -->
+  <button class="hop-arrow" disabled={!canHopRight} onclick={onHopRight}>▶</button>
+
+  <!-- Succ pane -->
+  {#if succAtomicDiagram}
   <div class="pane succ-pane">
     <div class="pane-label">succ</div>
-    <TreeDiagram
-      tree={computeSucc(focus.root)}
-      drops={[]}
+    <AtomicDiagramView
+      diagram={succAtomicDiagram}
+      drops={collectDrops(succAtomicDiagram.edgeRoot)}
       width={280}
       height={340}
       highlight={succHoveredId ?? undefined}
-      selectionHighlights={selectedIds}
+      highlightNode={undefined}
+      selected={new Set()}
       onhover={(id) => { succHoveredId = id }}
-      oncellclick={handleCellClick}
+      onnodehover={undefined}
+      onselect={undefined}
+      ondropinsert={undefined}
+      onencircle={undefined}
     />
+    <div class="dim-badge">{succAtomicDiagram.root ? `dim ${succAtomicDiagram.root.cell.dim}` : `dim ${succAtomicDiagram.edgeRoot.cell.dim}`}</div>
   </div>
   {/if}
 </div>
@@ -104,15 +135,16 @@
 <style>
   .editor {
     display: flex;
-    gap: 20px;
-    align-items: flex-start;
+    gap: 4px;
+    align-items: center;
     padding: 8px 0;
   }
 
   .pane {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    position: relative;
   }
 
   .prev-pane, .succ-pane {
@@ -139,5 +171,42 @@
     letter-spacing: 0.08em;
     color: #888;
     text-align: center;
+  }
+
+  .dim-badge {
+    font-size: 0.7em;
+    color: #aaa;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-align: right;
+    padding: 1px 4px;
+    user-select: none;
+  }
+
+  .hop-arrow {
+    align-self: center;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #666;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .hop-arrow:hover:not(:disabled) {
+    background: #f3e5f5;
+    color: #a02480;
+    border-color: #a02480;
+  }
+
+  .hop-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
   }
 </style>
