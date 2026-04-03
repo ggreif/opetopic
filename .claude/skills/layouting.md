@@ -216,6 +216,17 @@ its centre from `extMap`, which uses the VPSC-solved positions. But `desiredPosi
 new Variable for the parent is the Phase-1 x (not the VPSC-solved x), so Phase-2 layout
 re-centres things around the old desired x, not the current visual x.
 
+### ⚠️ Edge labels creep into drop zone on long branches — FIXED
+Was: `d.y + branchLen * 2/3 + 4` — proportional to actual branch length, so Phase 3 lifting
+caused the label to drift upward and break alignment with sibling labels on the same bus.
+
+Fix: fixed offset from the **parent** using the *initial* branch pitch:
+```
+label.y = parent.y - (TREE_H / maxDepth) / 3 + 4
+```
+The initial Δy is `stemLen / 3` above the parent. This never changes regardless of lifting,
+keeping all labels on the same bus horizontally aligned. Same formula for the stem label.
+
 ### Drop z-order must be topmost
 **Status**: not yet fixed.
 Drop roundrects (the slashed boxes) are rendered inside the box layer, below the tree layer.

@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
-  import { computeLayout, corollaElements, measureDropOffsets, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, NODE_W, INTER_PAD } from '../lib/layout'
+  import { computeLayout, corollaElements, measureDropOffsets, measureNodeHH, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, NODE_W, INTER_PAD } from '../lib/layout'
 
 
   let {
@@ -87,6 +87,7 @@
   type InterBox = { cell: { id: string; label: string; dim: number }; x: number; y: number; w: number; h: number }
 
   const dropOffsets = $derived(measureDropOffsets(diagram.root, diagram.edgeRoot))
+  const edgeNodeHH  = $derived(measureNodeHH(diagram.root))
 
   const intermediateBoxes = $derived((() => {
     if (!diagram.root) return [] as InterBox[]
@@ -315,7 +316,7 @@
     {#each nodes.filter((d: any) => d.parent) as d (d.data.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <text
-        x={(d.x as number) + 5} y={(d.y as number) + ((d.parent.y as number) - (d.y as number)) * 2 / 3 + 4}
+        x={(d.x as number) + 5} y={(d.parent.y as number) - (TREE_H / (hier.height || 1)) / 3 + 4}
         class="edge-label" class:highlighted={d.data.id === highlight}
         onmouseenter={() => onhover?.(d.data.id)} onmouseleave={() => onhover?.(null)}
       >{d.data.label}</text>
@@ -323,7 +324,7 @@
 
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <text
-      x={(hier.x as number) + 5} y={(hier.y as number) + (hier as any)._stemLen * 2 / 3 + 4}
+      x={(hier.x as number) + 5} y={(hier.y as number) + (TREE_H / (hier.height || 1)) / 3 + 4}
       class="edge-label" class:highlighted={hier.data.id === highlight}
       onmouseenter={() => onhover?.(hier.data.id)} onmouseleave={() => onhover?.(null)}
     >{hier.data.label}</text>
