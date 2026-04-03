@@ -11,3 +11,11 @@ When a node is already selected, Shift-clicking it should deselect it **and** re
 **How to apply:** Implement in `handleSelect` in `OpetopeEditor.svelte`: when `add=true` and `id` is already in `selectedIds`, remove it and recompute validity of the remainder via `isValidEncircleSet(focus.edgeRoot, remaining)`.
 
 **Not yet implemented.**
+
+## Known layout glitch: sibling nodes overlap intermediate box
+
+When encircling a multi-node set (e.g. {j, i} in the boxtree), non-encircled siblings whose edge-tree position falls geometrically between the selected nodes get visually swallowed by the wrapper bounding rect.
+
+Root cause: `intermediateBoxes` in `AtomicDiagramView.svelte` computes bounds post-layout (bounding rect of selected nodes ± INTER_PAD). Non-selected nodes that happen to sit spatially between selected nodes are not pushed outside.
+
+Fix needed: pass intermediate box membership into `computeLayout` (layout.ts) so non-enclosed nodes can be fenced outside wrapper bounds — similar to the existing clearance fence system for drops.

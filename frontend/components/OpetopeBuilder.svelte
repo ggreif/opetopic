@@ -1,7 +1,8 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, boxtree, cell, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree } from '../lib/opetope'
+  import { simplex, arrow, point, boxtree, cell, freshId, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree } from '../lib/opetope'
+  import { validateDiagram } from '../lib/validate'
 
   // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
   const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
@@ -25,12 +26,24 @@
     if (innerNodes.length === 0) return { edgeRoot: diagram.edgeRoot, root: null }
     const frameCell = cell(freshLabel(), diagram.edgeRoot.cell.dim + 1)
     const children: [string, Tree][] = innerNodes.map(c =>
-      [c.id, { cell: c, away: new Set(), drops: [], children: null } as Tree]
+      [freshId(), { cell: { ...c, label: freshLabel() }, away: new Set(), drops: [], children: null } as Tree]
     )
     return { edgeRoot: diagram.edgeRoot, root: { cell: frameCell, away: new Set(), drops: [], children } }
   }
 
-  let focus = $state<AtomicDiagram>(withOuterFrame(boxtree()))
+  let focus     = $state<AtomicDiagram>(withOuterFrame(boxtree()))
+  let violation = $state<string | null>(null)
+
+  function setFocus(next: AtomicDiagram) {
+    const v = validateDiagram(next)
+    if (v) {
+      console.log('[validateDiagram] VIOLATION:', v)
+      violation = v
+      return
+    }
+    violation = null
+    focus = next
+  }
 
   // Example gallery switcher
   const examples: { label: string; make: () => AtomicDiagram }[] = [
@@ -41,7 +54,7 @@
   ]
 
   function loadExample(make: () => AtomicDiagram) {
-    focus = withOuterFrame(make())
+    setFocus(withOuterFrame(make()))
   }
 
   function handleSourceExtrude(leafId: string) {
@@ -62,19 +75,19 @@
     // newly-inner node (leafId turns from a leaf into an inner node).
     const newEdgeRoot = sourceExtrude(focus.edgeRoot, leafId, newCell)
     const newlyInnerCell = subtreeFor(newEdgeRoot, leafId)!.cell
-    const newLeafBox: Tree = { cell: newlyInnerCell, away: new Set(), drops: [], children: null }
+    const newLeafBox: Tree = { cell: { ...newlyInnerCell, label: freshLabel() }, away: new Set(), drops: [], children: null }
     const oldRoot = focus.root
     let newRoot: Tree
     if (!oldRoot) {
       // Point case: first inner node → create outer frame
       const frameCell = cell(freshLabel(), newlyInnerCell.dim + 1)
-      newRoot = { cell: frameCell, away: new Set(), drops: [], children: [[leafId, newLeafBox]] }
+      newRoot = { cell: frameCell, away: new Set(), drops: [], children: [[freshId(), newLeafBox]] }
     } else if (oldRoot.children === null) {
-      newRoot = { ...oldRoot, children: [[leafId, newLeafBox]] }
+      newRoot = { ...oldRoot, children: [[freshId(), newLeafBox]] }
     } else {
-      newRoot = { ...oldRoot, children: [...oldRoot.children, [leafId, newLeafBox]] }
+      newRoot = { ...oldRoot, children: [...oldRoot.children, [freshId(), newLeafBox]] }
     }
-    focus = { edgeRoot: newEdgeRoot, root: newRoot }
+    setFocus({ edgeRoot: newEdgeRoot, root: newRoot })
 
     // Navigate to newCell through the reactive $state proxy so mutations trigger Svelte reactivity
     const reactiveCell = subtreeFor(focus.edgeRoot, newCell.id)!.cell
@@ -95,14 +108,15 @@
   function handleDropInsert(edgeCellId: string) {
     // Create a fresh lollipop cell for the new child in root
     const newCell = cell(freshLabel(), 0)
-    const newFocus = dropInsert(focus, edgeCellId, newCell)
+    const branchId = freshId()  // shared between dropId and root branch key
+    const newFocus = dropInsert(focus, edgeCellId, newCell, branchId)
     if (newFocus.root) {
-      focus = newFocus
+      setFocus(newFocus)
     } else {
       // Point case: focus.root was null → create outer frame with lollipop as first child
       const frameCell = cell(freshLabel(), newFocus.edgeRoot.cell.dim + 1)
       const lollipop: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
-      focus = { ...newFocus, root: { cell: frameCell, away: new Set(), drops: [], children: [[newCell.id, lollipop]] } }
+      setFocus({ ...newFocus, root: { cell: frameCell, away: new Set(), drops: [], children: [[branchId, lollipop]] } })
     }
   }
 
@@ -112,7 +126,7 @@
     const anyId = [...cellIds][0]
     const sub = subtreeFor(focus.edgeRoot, anyId)
     if (!sub) return
-    focus = encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1))
+    setFocus(encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1)))
   }
 </script>
 
@@ -129,7 +143,7 @@
     {/each}
   </div>
 
-  <OpetopeEditor {focus} onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onencircle={handleEncircle} />
+  <OpetopeEditor {focus} {violation} onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onencircle={handleEncircle} />
 </section>
 
 <style>

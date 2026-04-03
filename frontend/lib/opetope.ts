@@ -280,13 +280,14 @@ export function sourceExtrude(tree: Tree, leafId: string, newCell: Cell): Tree {
  *      - For a child branch (edgeCellId = child.cell.id): stored in that branch's Drop[].
  *      - For the output stem (edgeCellId = root.cell.id): stored in root.stemDrops.
  */
-export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: Cell): AtomicDiagram {
+export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: Cell, branchId = freshId()): AtomicDiagram {
+  // branchId: branch key in root AND dropId — always separate from any cell id
   const lollipop: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
-  const newDrop: Drop = { dropId: newCell.id }
+  const newDrop: Drop = { dropId: branchId }
 
   function addLollipopToRoot(t: Tree): Tree {
-    if (t.children === null) return { ...t, children: [[newCell.id, lollipop]] }
-    return { ...t, children: [...t.children, [newCell.id, lollipop]] }
+    if (t.children === null) return { ...t, children: [[branchId, lollipop]] }
+    return { ...t, children: [...t.children, [branchId, lollipop]] }
   }
 
   // Add newDrop to whichever node in edgeRoot has cell.id === edgeCellId.
