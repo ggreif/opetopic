@@ -29,11 +29,11 @@
     onnodehover?: (cellId: string | null) => void
     onselect?: (cellId: string | null, add?: boolean) => void
     ondropinsert?: (cellId: string) => void
-    onencircle?: () => void
+    onencircle?: (ids: Set<string>) => void
   } = $props()
 
   // ── Context menu for encircle ────────────────────────────────────────────────
-  let ctxMenu = $state<{ x: number; y: number; cellId: string } | null>(null)
+  let ctxMenu = $state<{ x: number; y: number; cellId: string; snapshot: Set<string> } | null>(null)
 
   const droppedEdgeIds = $derived(new Set(drops.map(d => d.edgeId)))
 
@@ -348,7 +348,7 @@
           e.preventDefault()
           e.stopPropagation()
           if (selected.has(d.data.id) && selected.size > 0) {
-            ctxMenu = { x: e.clientX, y: e.clientY, cellId: d.data.id }
+            ctxMenu = { x: e.clientX, y: e.clientY, cellId: d.data.id, snapshot: new Set(selected) }
           }
         }}
       />
@@ -362,7 +362,7 @@
   <div class="ctx-overlay" onclick={() => ctxMenu = null}></div>
   <div class="ctx-menu" style="left:{ctxMenu.x}px; top:{ctxMenu.y}px">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <button onclick={() => { onencircle?.(); ctxMenu = null }}>Encircle</button>
+    <button onclick={() => { onencircle?.(ctxMenu!.snapshot); ctxMenu = null }}>Encircle</button>
   </div>
 {/if}
 

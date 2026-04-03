@@ -76,7 +76,7 @@
       onnodehover={(id) => { succHoveredId = id }}
       onselect={handleSelect}
       ondropinsert={(cellId) => ondropinsert?.(cellId)}
-      onencircle={() => { onencircle?.(selectedIds); selectedIds = new Set() }}
+      onencircle={(ids) => { onencircle?.(ids); selectedIds = new Set() }}
     />
     {#if violation}
       <div class="violation-msg" title={violation}>⚠ invalid</div>

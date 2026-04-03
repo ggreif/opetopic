@@ -394,16 +394,15 @@ export function encircleMulti(diagram: AtomicDiagram, cellIds: Set<string>, newC
       }
     }
     if (selectedChildren.length === 0) return { ...t, children: otherChildren }
-    // Wrapper uses the subtree root's branch ID in the parent
-    const rootEntry = selectedChildren.find(([, c]) => c.cell.id === subtreeRootId)
-    const wrapperBranchId = (rootEntry ?? selectedChildren[0])[0]
+    // Wrapper gets a fresh branch ID — reusing a selectedChild's branch ID would
+    // create a duplicate (same ID in both the parent and inside the wrapper).
     const wrapper: Tree = {
       cell:     newCell,
       away:     new Set(),
       drops:    [],
       children: selectedChildren,
     }
-    return { ...t, children: [...otherChildren, [wrapperBranchId, wrapper]] }
+    return { ...t, children: [...otherChildren, [freshId(), wrapper]] }
   }
 
   return { ...diagram, root: walk(diagram.root) }
