@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
-  import { computeLayout, corollaElements, measureDropOffsets, measureNodeHH, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, NODE_W, INTER_PAD } from '../lib/layout'
+  import { computeLayout, corollaElements, measureDropOffsets, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, NODE_W, INTER_PAD } from '../lib/layout'
 
 
   let {
@@ -87,7 +87,6 @@
   type InterBox = { cell: { id: string; label: string; dim: number }; x: number; y: number; w: number; h: number }
 
   const dropOffsets = $derived(measureDropOffsets(diagram.root, diagram.edgeRoot))
-  const edgeNodeHH  = $derived(measureNodeHH(diagram.root))
 
   const intermediateBoxes = $derived((() => {
     if (!diagram.root) return [] as InterBox[]
