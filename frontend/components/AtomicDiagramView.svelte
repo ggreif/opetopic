@@ -103,7 +103,10 @@
       // Post-order: recurse first so all children's extents are already in extMap
       for (const [, child] of t.children) walk(child, false)
       if (!isRoot) {
-        const extents = t.children.map(([, c]) => extMap.get(c.cell.id)).filter(Boolean) as Extent[]
+        const extents = [
+          ...t.children.map(([, c]) => extMap.get(c.cell.id)),
+          extMap.get(t.cell.id),  // include own edge-tree position (C's corolla bus); undefined for fresh wrapper IDs → filtered
+        ].filter(Boolean) as Extent[]
         if (extents.length > 0) {
           const minX = Math.min(...extents.map(e => e.cx - e.hw)) - INTER_PAD
           const maxX = Math.max(...extents.map(e => e.cx + e.hw)) + INTER_PAD

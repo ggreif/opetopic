@@ -79,21 +79,42 @@ export function measureMinSpans(boxRoot: Tree | null): Map<string, number> {
 // This is purely structural — no positions needed. Returns Map<edgeNodeId, hh>;
 // absent entries mean the node is not wrapped (no y-correction needed).
 
-export function measureBoxHH(boxRoot: Tree | null): Map<string, number> {
+export function measureBoxHH(boxRoot: Tree | null, edgeRoot: Tree | null = null): Map<string, number> {
   const result = new Map<string, number>()
   if (!boxRoot) return result
+
+  // Build dropId → ownerCellId map from the edge tree so we can stamp the
+  // owner node when a wrapped intermediate box contains a drop lollipop.
+  const dropOwner = new Map<string, string>()  // dropId → ownerCellId
+  if (edgeRoot) {
+    function collectDropOwners(t: Tree) {
+      for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
+      if (t.children) for (const [, c] of t.children) collectDropOwners(c)
+    }
+    collectDropOwners(edgeRoot)
+  }
 
   function walk(t: Tree, isRoot: boolean): number {
     if (!t.children || t.children.length === 0) return DROP_BOX_H / 2  // leaf seed hh
     const childHHs = t.children.map(([, c]) => walk(c, false))
     const hh = Math.max(...childHHs) + INTER_PAD
     if (!isRoot) {
-      // Stamp all edge-tree leaves under this intermediate box with the outermost hh
-      function markLeaves(bt: Tree) {
-        if (!bt.children || bt.children.length === 0) { result.set(bt.cell.id, hh); return }
-        for (const [, c] of bt.children) markLeaves(c)
+      // Stamp ALL nodes (not just leaves) under this intermediate box with the outermost hh.
+      // This ensures internal edge-tree nodes (e.g. after source-extrude) also get the
+      // correct hh so Phase 3b can push their parent far enough.
+      // Also stamp the edge-tree owner of any drop lollipop found in the subtree,
+      // so Phase 3b lifts the owner node away from the bottom of the encircling tower.
+      function markAll(bt: Tree) {
+        result.set(bt.cell.id, Math.max(result.get(bt.cell.id) ?? 0, hh))
+        if (bt.children !== null && bt.children.length === 0) {
+          // nullary = drop lollipop; stamp its edge-tree owner
+          const ownerId = dropOwner.get(bt.cell.id)
+          if (ownerId) result.set(ownerId, Math.max(result.get(ownerId) ?? 0, hh))
+        }
+        if (!bt.children || bt.children.length === 0) return
+        for (const [, c] of bt.children) markAll(c)
       }
-      markLeaves(t)
+      markAll(t)
     }
     return hh
   }
@@ -203,7 +224,9 @@ export function computeLayout(
         }
         // Single-node wrap: the wrapped node and its entire subtree must move as a
         // rigid body, and the edge-tree parent must stay aligned above the node.
-        if (ids.length === 1) {
+        // Use vars.length (edge-tree nodes only) not ids.length — drops appear as
+        // extra lollipop IDs in ids but are absent from varMap and filtered out.
+        if (vars.length === 1) {
           const nodeD = allNodes.find((d: any) => d.data.id === ids[0])
           // Equality: edge-tree parent.x == wrapped.x  (keeps branch vertical below)
           if (nodeD?.parent) {
@@ -257,7 +280,7 @@ export function computeLayout(
   }
 
   // Compute intermediate box half-heights for y-correction (purely structural)
-  const boxHH = measureBoxHH(boxRoot)
+  const boxHH = measureBoxHH(boxRoot, t)
 
   // Phase 3a — root correction: extend stem if drops or intermediate box need room
   const rootK  = dropCounts.get((root.data as any).id as string) ?? 0

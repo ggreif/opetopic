@@ -194,6 +194,24 @@ of the sibling to visually disappear behind the box.
 2. Add rigid-body constraints for *sibling* subtrees too (not just the wrapped node's subtree)
    so that when VPSC pushes a sibling, all its descendants follow as a unit.
 
+### Tower + drop on same branch: parent not pushed far enough
+**Status**: not yet fixed.
+**Reproduce**: insert a drop on a branch, then encircle the node that owns that branch to build
+a tower. The base frame expands (`adjustedFrameRect` ✓), but the **parent corolla node** of
+that branch is not pushed further down to give the tower's bottom clearance.
+
+Root cause: Phase 3b uses `Math.max(neededForDrops, neededForBox)`. When drops demand more
+space than the tower (`DROP_SPACER + k*DROP_UNIT + DROP_BOX_H > hh + INTER_PAD`), the drops
+dominate and the tower seems to fit — but the tower's downward extent (`hh`) combined with the
+drop stack (`DROP_SPACER + k*DROP_UNIT + DROP_BOX_H`) must *both* fit below the node. They
+occupy the same space, so `Math.max` is correct in principle, but the intermediate box's `hh`
+value from `measureBoxHH` may be stale or smaller than the visual box because the drop lollipop
+is also a child of the wrapping box and inflates the box width but not height.
+
+**Fix direction**: verify that `measureBoxHH` correctly accounts for wrapping boxes that contain
+*both* the edge-tree leaf *and* drop lollipops. Check whether `hh` for the box is being
+under-estimated when the box has mixed children (leaf + lollipops).
+
 ### Encircling the parent of a shifted tower jumps to the side
 **Status**: reproducible, not yet fixed.
 Steps to reproduce: build a tower (encircle one node several times). The tower shifts sideways
@@ -213,9 +231,16 @@ intermediate boxes) so that they remain clickable and visually distinct. Fix: mo
 `<g>` blocks to after the `<g class="tree-layer">` in `AtomicDiagramView.svelte`, or give
 them their own top-level `<g class="drop-layer">`.
 
+### ⚠️ ids vs vars in single-node guard — FIXED
+`edgeLeafIds` returns **all** leaf IDs in the box-tree subtree, including drop-lollipop IDs.
+Drops are absent from `varMap`, so `vars` (filtered) correctly has length 1 for a single
+edge-tree node even when drops co-exist. The guard must be `vars.length === 1`, **not**
+`ids.length === 1`; using `ids` made towers co-located with drops skip the equality and
+rigid-body constraints entirely.
+
 ### Multi-node encircle rigid-body (not yet implemented)
 The rigid-body constraints (`addRigid`) that keep open branches and inner nodes aligned are only
-applied for **single-node** intermediate boxes (`ids.length === 1`). For a box encircling
+applied for **single-node** intermediate boxes (`vars.length === 1`). For a box encircling
 **multiple** edge-tree nodes the containment constraint pushes the outermost pair apart, but the
 subtrees rooted at each enclosed node are not currently rigidly linked to their respective parents.
 This can produce diagonal branches above a multi-node encircled group. When multi-node encircle
