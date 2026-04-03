@@ -2,7 +2,7 @@
   import BoxDiagram from './BoxDiagram.svelte'
   import TreeDiagram from './TreeDiagram.svelte'
   import AtomicDiagramView from './AtomicDiagramView.svelte'
-  import { collectDrops, computeSucc, type AtomicDiagram } from '../lib/opetope'
+  import { collectDrops, computeSucc, minConnectedSubtree, isValidEncircleSet, type AtomicDiagram } from '../lib/opetope'
 
   let {
     focus,
@@ -15,21 +15,37 @@
     oncellclick?: (cellId: string) => void
     onsourceextrude?: (leafId: string) => void
     ondropinsert?: (cellId: string) => void
-    onencircle?: (cellId: string) => void
+    onencircle?: (cellIds: Set<string>) => void
   } = $props()
 
   let hoveredId     = $state<string | null>(null)  // Prev / Focus hover → edge highlighting
   let succHoveredId = $state<string | null>(null)  // Succ hover → node highlighting in Focus
-  let selectedId    = $state<string | null>(null)
+  let selectedIds   = $state<Set<string>>(new Set())
 
   const drops = $derived(collectDrops(focus.edgeRoot))
 
   function handleCellClick(cellId: string) {
     oncellclick?.(cellId)
   }
+
+  function handleSelect(id: string | null, add = false) {
+    if (id === null) { selectedIds = new Set(); return }
+    if (add) {
+      // Shift+click: accumulate, auto-extend to connected subtree
+      const candidate = new Set([...selectedIds, id])
+      const extended  = minConnectedSubtree(focus.edgeRoot, candidate)
+      if (isValidEncircleSet(focus.edgeRoot, extended)) {
+        selectedIds = extended
+      }
+      // else: incompatible node — keep prior selection unchanged (Shift+click silently rejected)
+    } else {
+      // Plain click: fresh single selection
+      selectedIds = new Set([id])
+    }
+  }
 </script>
 
-<svelte:window onclick={() => { selectedId = null }} />
+<svelte:window onclick={() => { selectedIds = new Set() }} />
 
 <div class="editor">
   <!-- Prev pane: substrate as BoxDiagram; slashed box where drop latches on -->
@@ -53,12 +69,12 @@
       {drops}
       highlight={hoveredId ?? undefined}
       highlightNode={succHoveredId ?? undefined}
-      selected={selectedId ?? undefined}
+      selected={selectedIds}
       onhover={(id) => { hoveredId = id }}
       onnodehover={(id) => { succHoveredId = id }}
-      onselect={(id) => { selectedId = id ?? null }}
+      onselect={handleSelect}
       ondropinsert={(cellId) => ondropinsert?.(cellId)}
-      onencircle={(cellId) => onencircle?.(cellId)}
+      onencircle={() => { onencircle?.(selectedIds); selectedIds = new Set() }}
     />
   </div>
 
@@ -72,7 +88,7 @@
       width={280}
       height={340}
       highlight={succHoveredId ?? undefined}
-      selectionHighlight={selectedId ?? undefined}
+      selectionHighlights={selectedIds}
       onhover={(id) => { succHoveredId = id }}
       oncellclick={handleCellClick}
     />

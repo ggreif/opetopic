@@ -7,7 +7,7 @@
     width = 320,
     height = 340,
     highlight = undefined,
-    selectionHighlight = undefined,
+    selectionHighlights = new Set<string>(),
     drops = [] as string[],
     onhover = undefined,
     oncellclick = undefined,
@@ -17,7 +17,7 @@
     width?: number
     height?: number
     highlight?: string
-    selectionHighlight?: string
+    selectionHighlights?: Set<string>
     drops: string[]
     onhover?: (cellId: string | null) => void
     oncellclick?: (cellId: string) => void
@@ -105,7 +105,7 @@
         onmouseleave={() => onhover?.(null)}
         ondblclick={() => ondropinsert?.(branch.id)}
       >
-        <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} class:selection-highlighted={branch.id === selectionHighlight} />
+        <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} class:selection-highlighted={selectionHighlights.has(branch.id)} />
         <path d={branch.path} class="corolla-hit" class:droppable={!!ondropinsert} />
       </g>
     {/each}

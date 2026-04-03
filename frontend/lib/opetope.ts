@@ -306,35 +306,111 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
   }
 }
 
+// ── Multi-selection helpers ───────────────────────────────────────────────────
+
+/** Build a map of childCellId → parentCellId for the entire edge tree. */
+export function parentMap(tree: Tree): Map<string, string> {
+  const m = new Map<string, string>()
+  function walk(t: Tree) {
+    if (t.children) for (const [, child] of t.children) {
+      m.set(child.cell.id, t.cell.id)
+      walk(child)
+    }
+  }
+  walk(tree)
+  return m
+}
+
 /**
- * Encircle — wraps a new outer disk around an existing non-root node's subtree.
+ * Compute the minimal connected subtree of edgeRoot that contains all ids.
+ * Finds the LCA of all ids and includes every node on the path from LCA to each id.
+ */
+export function minConnectedSubtree(edgeRoot: Tree, ids: Set<string>): Set<string> {
+  if (ids.size === 0) return new Set()
+  const parents = parentMap(edgeRoot)
+
+  function chain(id: string): string[] {
+    const result: string[] = []
+    let cur: string | undefined = id
+    while (cur !== undefined) { result.push(cur); cur = parents.get(cur) }
+    return result
+  }
+
+  const chains = new Map([...ids].map(id => [id, chain(id)]))
+
+  // LCA = deepest node appearing in all chains
+  const firstChain = chains.values().next().value as string[]
+  let lca = firstChain[firstChain.length - 1]  // fallback: root
+  for (const node of firstChain) {
+    if ([...chains.values()].every(c => c.includes(node))) { lca = node; break }
+  }
+
+  // Include every node on path from lca down to each selected node
+  const result = new Set<string>()
+  for (const id of ids) {
+    let cur: string | undefined = id
+    while (cur !== undefined && cur !== lca) { result.add(cur); cur = parents.get(cur) }
+    result.add(lca)
+  }
+  return result
+}
+
+/**
+ * Check whether ids forms a valid encircleable set:
+ * - non-empty, no id is the edge root
+ * - exactly one node whose parent is not in ids (= the subtree root)
+ */
+export function isValidEncircleSet(edgeRoot: Tree, ids: Set<string>): boolean {
+  if (ids.size === 0) return false
+  const parents = parentMap(edgeRoot)
+  const externalParentCount = [...ids].filter(id => !ids.has(parents.get(id)!)).length
+  return externalParentCount === 1
+}
+
+/**
+ * Encircle — wraps a new outer disk around the connected subtree defined by cellIds.
  *
- * The child's `away` set is transferred to the new wrapper; the child's `away`
- * becomes empty (it is now fully inside the wrapper, which owns the boundary).
+ * The subtree root (the unique node in cellIds whose parent is not in cellIds)
+ * gets wrapped. For a single-node set this is identical to the old `encircle`.
  * Only `root` changes; `edgeRoot` is returned as-is.
  */
-export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell): AtomicDiagram {
-  if (!diagram.root || diagram.root.cell.id === cellId) return diagram  // cannot encircle the base disk
+export function encircleMulti(diagram: AtomicDiagram, cellIds: Set<string>, newCell: Cell): AtomicDiagram {
+  if (!diagram.root || cellIds.size === 0) return diagram
+  const parents = parentMap(diagram.edgeRoot)
+  const subtreeRootId = [...cellIds].find(id => !cellIds.has(parents.get(id)!))
+  if (!subtreeRootId || diagram.root.cell.id === subtreeRootId) return diagram
 
   function walk(t: Tree): Tree {
     if (!t.children) return t
-    const newChildren = t.children.map(([branchId, child]): [string, Tree] => {
-      if (child.cell.id === cellId) {
-        const childWithEmptyAway: Tree = { ...child, away: new Set() }
-        const wrapper: Tree = {
-          cell:     newCell,
-          away:     new Set(child.away),
-          drops:    [],
-          children: [[branchId, childWithEmptyAway]],
-        }
-        return [branchId, wrapper]
+    // Separate selected children from others at this level
+    const selectedChildren: [string, Tree][] = []
+    const otherChildren: [string, Tree][] = []
+    for (const [branchId, child] of t.children) {
+      if (cellIds.has(child.cell.id)) {
+        selectedChildren.push([branchId, { ...child, away: new Set() }])
+      } else {
+        otherChildren.push([branchId, walk(child)])
       }
-      return [branchId, walk(child)]
-    })
-    return { ...t, children: newChildren }
+    }
+    if (selectedChildren.length === 0) return { ...t, children: otherChildren }
+    // Wrapper uses the subtree root's branch ID in the parent
+    const rootEntry = selectedChildren.find(([, c]) => c.cell.id === subtreeRootId)
+    const wrapperBranchId = (rootEntry ?? selectedChildren[0])[0]
+    const wrapper: Tree = {
+      cell:     newCell,
+      away:     new Set(),
+      drops:    [],
+      children: selectedChildren,
+    }
+    return { ...t, children: [...otherChildren, [wrapperBranchId, wrapper]] }
   }
 
   return { ...diagram, root: walk(diagram.root) }
+}
+
+/** Single-node encircle — delegates to encircleMulti. */
+export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell): AtomicDiagram {
+  return encircleMulti(diagram, new Set([cellId]), newCell)
 }
 
 // ── Example diagrams ─────────────────────────────────────────────────────────

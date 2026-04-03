@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, boxtree, cell, sourceExtrude, subtreeFor, dropInsert, encircle, type AtomicDiagram, type Tree } from '../lib/opetope'
+  import { simplex, arrow, point, boxtree, cell, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree } from '../lib/opetope'
 
   // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
   const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
@@ -106,13 +106,13 @@
     }
   }
 
-  function handleEncircle(cellId: string) {
-    if (!focus.root) return
-    console.log('handleEncircle cellId:', cellId, 'root.cell.id:', focus.root.cell.id, 'root.children:', focus.root.children?.length)
-    const sub = subtreeFor(focus.root, cellId)
-    console.log('subtreeFor result:', sub?.cell.id)
+  function handleEncircle(cellIds: Set<string>) {
+    if (!focus.root || cellIds.size === 0) return
+    // Use any member to determine dimension (all are in the same edge tree)
+    const anyId = [...cellIds][0]
+    const sub = subtreeFor(focus.edgeRoot, anyId)
     if (!sub) return
-    focus = encircle(focus, cellId, cell(freshLabel(), sub.cell.dim + 1))
+    focus = encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1))
   }
 </script>
 

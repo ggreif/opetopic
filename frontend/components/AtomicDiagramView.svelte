@@ -11,7 +11,7 @@
     height = 340,
     highlight = undefined,
     highlightNode = undefined,
-    selected = undefined,
+    selected = new Set<string>(),
     onhover = undefined,
     onnodehover = undefined,
     onselect = undefined,
@@ -24,12 +24,12 @@
     height?: number
     highlight?: string
     highlightNode?: string
-    selected?: string
+    selected?: Set<string>
     onhover?: (cellId: string | null) => void
     onnodehover?: (cellId: string | null) => void
-    onselect?: (cellId: string | null) => void
+    onselect?: (cellId: string | null, add?: boolean) => void
     ondropinsert?: (cellId: string) => void
-    onencircle?: (cellId: string) => void
+    onencircle?: () => void
   } = $props()
 
   // ── Context menu for encircle ────────────────────────────────────────────────
@@ -225,14 +225,10 @@
       <g
         onmouseenter={() => { onhover?.(ib.cell.id); onnodehover?.(ib.cell.id) }}
         onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
-        onclick={(e) => { e.stopPropagation(); onselect?.(ib.cell.id === selected ? null : ib.cell.id) }}
-        oncontextmenu={(e) => { e.preventDefault(); e.stopPropagation(); if (ib.cell.id === selected) ctxMenu = { x: e.clientX, y: e.clientY, cellId: ib.cell.id } }}
       >
         <rect x={ib.x} y={ib.y} width={ib.w} height={ib.h} rx="5" ry="5"
           class="box-rect"
           class:highlighted={ib.cell.id === highlight || ib.cell.id === highlightNode}
-          class:selected={ib.cell.id === selected}
-          style="cursor: {ib.cell.id === selected ? 'context-menu' : 'pointer'}"
         />
         <text x={ib.x + ib.w - 7} y={ib.y + 18} class="box-label"
           class:highlighted={ib.cell.id === highlight}
@@ -246,14 +242,11 @@
       <g
         onmouseenter={() => { onhover?.(dr.rootId); onnodehover?.(dr.rootId) }}
         onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
-        onclick={(e) => { e.stopPropagation(); onselect?.(dr.rootId === selected ? null : dr.rootId) }}
-        oncontextmenu={(e) => { e.preventDefault(); e.stopPropagation(); if (dr.rootId === selected) ctxMenu = { x: e.clientX, y: e.clientY, cellId: dr.rootId } }}
       >
         <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
           class="box-rect leaf"
           class:highlighted={dr.rootId === highlight || dr.rootId === highlightNode}
-          class:selected={dr.rootId === selected}
-          style="cursor: {dr.rootId === selected ? 'context-menu' : 'pointer'}" />
+        />
       </g>
     {/each}
   </g>
@@ -337,17 +330,24 @@
         rx="3" ry="3"
         class="tree-node"
         class:highlighted={d.data.id === highlightNode}
-        class:selected={d.data.id === selected}
+        class:selected={selected.has(d.data.id)}
         onmouseenter={() => onnodehover?.(d.data.id)}
         onmouseleave={() => onnodehover?.(null)}
         onclick={(e) => {
           e.stopPropagation()
-          onselect?.(d.data.id === selected ? null : d.data.id)
+          if (e.shiftKey) {
+            // Shift+click: add to / toggle in multi-selection (all inner nodes including edge root)
+            onselect?.(d.data.id, true)
+          } else {
+            // Plain click: deselect if sole selection, otherwise fresh single-select
+            if (selected.size === 1 && selected.has(d.data.id)) onselect?.(null)
+            else onselect?.(d.data.id, false)
+          }
         }}
         oncontextmenu={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          if (d.data.id === selected) {
+          if (selected.has(d.data.id) && selected.size > 0) {
             ctxMenu = { x: e.clientX, y: e.clientY, cellId: d.data.id }
           }
         }}
@@ -362,7 +362,7 @@
   <div class="ctx-overlay" onclick={() => ctxMenu = null}></div>
   <div class="ctx-menu" style="left:{ctxMenu.x}px; top:{ctxMenu.y}px">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <button onclick={() => { onencircle?.(ctxMenu!.cellId); ctxMenu = null }}>Encircle</button>
+    <button onclick={() => { onencircle?.(); ctxMenu = null }}>Encircle</button>
   </div>
 {/if}
 
