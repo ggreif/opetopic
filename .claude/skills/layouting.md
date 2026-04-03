@@ -191,6 +191,22 @@ See the Phase 3 section for the complete two-constraint lift formula.
 
 ## Bugs / TODO
 
+### Vertical branch segments must be fenced by intermediate boxes
+**Status**: not yet fixed.
+Currently the x-VPSC fences only **node centres** (roundrects). But each node's vertical branch
+segment runs at its x-coordinate from the node down to the corolla bus — a vertical line that
+intermediate boxes can cross without VPSC reacting.
+
+Example: as a tower grows rightward, it eventually crosses a sibling's vertical branch segment,
+which should push that sibling (and its entire subtree) to the right. Siblings whose vertical
+branch is on the far side of the tower are unaffected — they stay put until the tower's
+opposite edge crosses their branch.
+
+**Fix direction**: when computing sibling separation in `halfWidthMap`, treat the sibling's
+effective half-width as `max(NODE_W/2, subtreeHalfWidth)` so the VPSC constraint fires when
+the tower edge reaches the sibling's vertical branch, not just when it reaches the node centre.
+This is the same fix needed for "sibling subtree buses trampled" — these are the same bug.
+
 ### Sibling subtree buses trampled by intermediate boxes
 **Status**: not yet fixed.
 `halfWidthMap` seeds every sibling with `NODE_W/2 = 8`. VPSC therefore only pushes a sibling
