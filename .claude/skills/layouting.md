@@ -251,6 +251,27 @@ intermediate boxes) so that they remain clickable and visually distinct. Fix: mo
 `<g>` blocks to after the `<g class="tree-layer">` in `AtomicDiagramView.svelte`, or give
 them their own top-level `<g class="drop-layer">`.
 
+### Disconnected edge-tree branches after multi-node encircle (reproducible)
+**Status**: not yet fixed.
+Steps to reproduce: "Point" example → extrude twice → select both nodes → encircle.
+The Focus tree's edge-tree lines appear severed — the vertical branches between the two
+encircled nodes are no longer drawn connected to their parent node.
+
+Root cause (suspected): `leafCeiling` is derived from `adjustedFrameRect.y − DROP_SPACER`.
+After encircle, the new intermediate box may push `adjustedFrameRect` upward (lower y),
+pulling `leafCeiling` above one or more node y-positions. The leaf-tip extension for such
+nodes runs from `node.y` up to `leafCeiling`, which may overshoot and visually disconnect
+the branch from the corolla bus drawn by `corollaElements`.
+
+**Minimal investigation needed**:
+1. After encircle, log `adjustedFrameRect.y`, `leafCeiling`, and each node's `y`.
+2. Check whether any node has `y < leafCeiling` — if so, its corolla bus path and the
+   tip extension never meet, leaving a gap.
+
+**Fix direction**: ensure `leafCeiling` is clamped to at most `min(node.y) − ε` so
+extensions never exceed the node positions, OR compute `leafCeiling` from the raw
+`frameRect.y` (before intermediate box expansion) so encircling cannot pull it up.
+
 ### Multi-node encircle rigid-body (not yet implemented)
 The rigid-body constraints (`addRigid`) that keep open branches and inner nodes aligned are only
 applied for **single-node** intermediate boxes (`vars.length === 1`). For a box encircling
