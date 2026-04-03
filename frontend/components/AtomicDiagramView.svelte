@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
-  import { computeLayout, corollaElements, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, INTER_PAD } from '../lib/layout'
+  import { computeLayout, corollaElements, measureDropOffsets, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, NODE_W, INTER_PAD } from '../lib/layout'
 
 
   let {
@@ -86,6 +86,8 @@
   // tree-node rects.
   type InterBox = { cell: { id: string; label: string; dim: number }; x: number; y: number; w: number; h: number }
 
+  const dropOffsets = $derived(measureDropOffsets(diagram.root, diagram.edgeRoot))
+
   const intermediateBoxes = $derived((() => {
     if (!diagram.root) return [] as InterBox[]
     const s = DROP_BOX_H / 2
@@ -151,7 +153,8 @@
       // Box i top: nodeY + DROP_SPACER + i * DROP_UNIT  (all below nodeY, no extension needed)
       const bw = DROP_BOX_H * 1.5  // narrow box width — same for all branches
       for (let i = 0; i < k; i++) {
-        rects.push({ rootId: edgeDrops[i].rootId, x: cx - bw / 3, y: nodeY + DROP_SPACER + i * DROP_UNIT, w: bw, h: DROP_BOX_H })
+        const yOff = dropOffsets.get(edgeDrops[i].rootId) ?? (NODE_W / 2 + DROP_SPACER)
+        rects.push({ rootId: edgeDrops[i].rootId, x: cx - bw / 3, y: nodeY + yOff + i * DROP_UNIT, w: bw, h: DROP_BOX_H })
       }
     }
 

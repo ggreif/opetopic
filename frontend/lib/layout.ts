@@ -70,22 +70,27 @@ export function measureMinSpans(boxRoot: Tree | null): Map<string, number> {
   return spans
 }
 
-// ── measureBoxHH ─────────────────────────────────────────────────────────────
+// ── measureDropOffsets ───────────────────────────────────────────────────────
 //
-// Walk focus.root (box tree) post-order. For each edge-tree leaf wrapped by one
-// or more intermediate boxes, return the outermost box's half-height:
-//   hh = DROP_BOX_H/2 + nestingLevel * INTER_PAD
+// For each drop lollipop (nullary node in the box tree), compute how far below
+// the owner node's centre the drop rect should start:
 //
-// This is purely structural — no positions needed. Returns Map<edgeNodeId, hh>;
-// absent entries mean the node is not wrapped (no y-correction needed).
+//   yOffset(drop) = max(NODE_W/2, ownerHH) + DROP_SPACER
+//                   + nestingDepthOfDrop * INTER_PAD
+//
+// ownerHH = hh of the outermost intermediate box wrapping the owner edge-tree
+//           node (0 if the owner is unwrapped).
+// This ensures that a drop placed on a branch below a towered node starts
+// below the tower bottom, not inside it.
+// The nestingDepthOfDrop term pushes the drop further down for each encircling
+// of the drop itself, keeping the encircling box top above the node bottom.
 
-export function measureBoxHH(boxRoot: Tree | null, edgeRoot: Tree | null = null): Map<string, number> {
-  const result = new Map<string, number>()
+export function measureDropOffsets(boxRoot: Tree | null, edgeRoot: Tree | null = null): Map<string, number> {
+  const result = new Map<string, number>()  // dropRootId → yOffset
   if (!boxRoot) return result
 
-  // Build dropId → ownerCellId map from the edge tree so we can stamp the
-  // owner node when a wrapped intermediate box contains a drop lollipop.
-  const dropOwner = new Map<string, string>()  // dropId → ownerCellId
+  // Build dropId → ownerCellId from edge tree
+  const dropOwner = new Map<string, string>()
   if (edgeRoot) {
     function collectDropOwners(t: Tree) {
       for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
@@ -94,31 +99,189 @@ export function measureBoxHH(boxRoot: Tree | null, edgeRoot: Tree | null = null)
     collectDropOwners(edgeRoot)
   }
 
-  function walk(t: Tree, isRoot: boolean): number {
-    if (!t.children || t.children.length === 0) return DROP_BOX_H / 2  // leaf seed hh
-    const childHHs = t.children.map(([, c]) => walk(c, false))
+  // Build nodeHH: outermost wrapper hh for each edge-tree node (0 = unwrapped).
+  // Post-order walk of box tree; each intermediate box stamps its hh onto all
+  // edge-tree nodes it covers (taking the max across nesting levels).
+  const nodeHH = new Map<string, number>()
+  function buildNodeHH(t: Tree, isRoot: boolean): number {
+    if (!t.children || t.children.length === 0) return DROP_BOX_H / 2
+    const childHHs = t.children.map(([, c]) => buildNodeHH(c, false))
     const hh = Math.max(...childHHs) + INTER_PAD
     if (!isRoot) {
-      // Stamp ALL nodes (not just leaves) under this intermediate box with the outermost hh.
-      // This ensures internal edge-tree nodes (e.g. after source-extrude) also get the
-      // correct hh so Phase 3b can push their parent far enough.
-      // Also stamp the edge-tree owner of any drop lollipop found in the subtree,
-      // so Phase 3b lifts the owner node away from the bottom of the encircling tower.
-      function markAll(bt: Tree) {
-        result.set(bt.cell.id, Math.max(result.get(bt.cell.id) ?? 0, hh))
-        if (bt.children !== null && bt.children.length === 0) {
-          // nullary = drop lollipop; stamp its edge-tree owner
-          const ownerId = dropOwner.get(bt.cell.id)
-          if (ownerId) result.set(ownerId, Math.max(result.get(ownerId) ?? 0, hh))
-        }
-        if (!bt.children || bt.children.length === 0) return
-        for (const [, c] of bt.children) markAll(c)
+      function mark(bt: Tree) {
+        if (bt.children !== null && bt.children.length === 0) return  // drop lollipop, skip
+        nodeHH.set(bt.cell.id, Math.max(nodeHH.get(bt.cell.id) ?? 0, hh))
+        if (!bt.children) return  // edge-tree leaf stamped above, stop recursion
+        for (const [, c] of bt.children) mark(c)
       }
-      markAll(t)
+      mark(t)
+    }
+    return hh
+  }
+  buildNodeHH(boxRoot, true)
+
+  // depth = number of non-root intermediate box ancestors of the drop lollipop
+  function walk(t: Tree, depth: number) {
+    if (!t.children) return  // open leaf
+    if (t.children.length === 0) {
+      // nullary = drop lollipop
+      const ownerId = dropOwner.get(t.cell.id)
+      const ownerHH = ownerId ? (nodeHH.get(ownerId) ?? 0) : 0
+      result.set(t.cell.id, Math.max(NODE_W / 2, ownerHH) + DROP_SPACER + depth * INTER_PAD)
+      return
+    }
+    for (const [, child] of t.children) walk(child, depth + 1)
+  }
+
+  walk(boxRoot, -1)  // root at -1 so direct children start at depth 0
+  return result
+}
+
+// ── computeClearances ────────────────────────────────────────────────────────
+//
+// Compute the minimum downward clearance each edge-tree node needs on its
+// outgoing branch (between the node and its parent arc). A single map lookup
+// replaces the separate drop / box calculations in Phase 3a and 3b.
+//
+//   clearance(n) = max(dropNeeded, boxNeeded)
+//
+//   yOff       = max(NODE_W/2, nodeHH) + DROP_SPACER + dropDepth * INTER_PAD
+//   dropNeeded = yOff + k * DROP_UNIT + DROP_BOX_H   (0 when k = 0)
+//   boxNeeded  = hh + INTER_PAD                       (0 when unwrapped)
+//   hh         = DROP_BOX_H/2 + nestingDepth * INTER_PAD
+//   nodeHH     = outermost wrapper hh for this edge-tree node (0 if unwrapped)
+//
+// Purely structural — no positions needed.
+
+export function computeClearances(
+  boxRoot: Tree | null,
+  edgeRoot: Tree | null,
+  dropCounts: Map<string, number>,
+): Map<string, number> {
+  const result = new Map<string, number>()
+
+  // Reuse measureDropOffsets to get consistent yOffsets per drop lollipop.
+  // Build dropId → ownerId map and nodeHH map from the same source.
+  const dropOwner = new Map<string, string>()
+  const nodeHH    = new Map<string, number>()  // outermost wrapper hh per edge-tree node
+
+  if (edgeRoot) {
+    function collectDropOwners(t: Tree) {
+      for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
+      if (t.children) for (const [, c] of t.children) collectDropOwners(c)
+    }
+    collectDropOwners(edgeRoot)
+  }
+
+  if (boxRoot) {
+    function buildNodeHH(t: Tree, isRoot: boolean): number {
+      if (!t.children || t.children.length === 0) return DROP_BOX_H / 2
+      const childHHs = t.children.map(([, c]) => buildNodeHH(c, false))
+      const hh = Math.max(...childHHs) + INTER_PAD
+      if (!isRoot) {
+        function mark(bt: Tree) {
+          if (bt.children !== null && bt.children.length === 0) return  // drop lollipop, skip
+          nodeHH.set(bt.cell.id, Math.max(nodeHH.get(bt.cell.id) ?? 0, hh))
+          if (!bt.children) return  // edge-tree leaf stamped above, no children to recurse
+          for (const [, c] of bt.children) mark(c)
+        }
+        mark(t)
+      }
+      return hh
+    }
+    buildNodeHH(boxRoot, true)
+  }
+
+  // yOffset for drops on a given edge-tree node:
+  // clears the node's tower bottom (if any) plus DROP_SPACER gap.
+  function dropYOff(nodeId: string, dropDepth: number): number {
+    return Math.max(NODE_W / 2, nodeHH.get(nodeId) ?? 0) + DROP_SPACER + dropDepth * INTER_PAD
+  }
+
+  // Seed clearances for all nodes with drops from the edge tree.
+  if (edgeRoot) {
+    function seedDrops(t: Tree) {
+      const k = dropCounts.get(t.cell.id) ?? 0
+      if (k > 0) {
+        const yOff = dropYOff(t.cell.id, 0)
+        result.set(t.cell.id, yOff + k * DROP_UNIT + DROP_BOX_H)
+      }
+      if (t.children) for (const [, c] of t.children) seedDrops(c)
+    }
+    seedDrops(edgeRoot)
+  }
+
+  if (!boxRoot) return result
+
+  // Post-order walk of box tree. depth = absolute depth in box tree (-1 for root).
+  // Returns hh of the subtree rooted at t.
+  function walk(t: Tree, depth: number): number {
+    if (!t.children || t.children.length === 0) return DROP_BOX_H / 2
+    const childHHs = t.children.map(([, c]) => walk(c, depth + 1))
+    const hh = Math.max(...childHHs) + INTER_PAD
+    if (depth >= 0) {  // skip root
+      // markAll: stamp every edge-tree node and drop owner covered by this wrapper.
+      // btDepth = absolute depth of bt in the box tree.
+      function markAll(bt: Tree, btDepth: number) {
+        if (bt.children !== null && bt.children.length === 0) {
+          // nullary = drop lollipop at depth btDepth; stamp its edge-tree owner.
+          // Tower bottom = yOff + DROP_BOX_H + btDepth * INTER_PAD.
+          // Drop stack bottom = yOff + k*DROP_UNIT (+ gap = DROP_UNIT).
+          const ownerId = dropOwner.get(bt.cell.id)
+          if (ownerId) {
+            const k = dropCounts.get(ownerId) ?? 0
+            const yOff = dropYOff(ownerId, btDepth)
+            const dropStackNeeded = k > 0 ? yOff + k * DROP_UNIT + DROP_BOX_H : 0
+            const towerNeeded     = yOff + DROP_BOX_H + btDepth * INTER_PAD + INTER_PAD
+            const boxNeeded       = hh + INTER_PAD
+            result.set(ownerId, Math.max(result.get(ownerId) ?? 0,
+              Math.max(dropStackNeeded, towerNeeded, boxNeeded)))
+          }
+          return
+        }
+        // Stamp edge-tree node (leaf: children=null) or wrapper node.
+        // Leaf must be stamped before early return — Phase 3b looks up these ids.
+        const k = dropCounts.get(bt.cell.id) ?? 0
+        const yOff = dropYOff(bt.cell.id, 0)  // drops on this node are at depth 0
+        const dropNeeded = k > 0 ? yOff + k * DROP_UNIT + DROP_BOX_H : 0
+        const boxNeeded  = hh + INTER_PAD
+        result.set(bt.cell.id, Math.max(result.get(bt.cell.id) ?? 0, Math.max(dropNeeded, boxNeeded)))
+        if (!bt.children) return  // edge-tree leaf, no children to recurse into
+        for (const [, c] of bt.children) markAll(c, btDepth + 1)
+      }
+      markAll(t, depth)
     }
     return hh
   }
 
+  walk(boxRoot, -1)
+  return result
+}
+
+// ── measureNodeHH ─────────────────────────────────────────────────────────────
+//
+// Returns Map<edgeNodeId, hh> where hh = DROP_BOX_H/2 + nestingDepth * INTER_PAD
+// is the outermost wrapper half-height for each wrapped edge-tree node.
+// Used by Phase 3b to enforce upward clearance from a parent's tower top.
+
+export function measureNodeHH(boxRoot: Tree | null): Map<string, number> {
+  const result = new Map<string, number>()
+  if (!boxRoot) return result
+  function walk(t: Tree, isRoot: boolean): number {
+    if (!t.children || t.children.length === 0) return DROP_BOX_H / 2
+    const childHHs = t.children.map(([, c]) => walk(c, false))
+    const hh = Math.max(...childHHs) + INTER_PAD
+    if (!isRoot) {
+      function mark(bt: Tree) {
+        if (bt.children !== null && bt.children.length === 0) return  // drop lollipop
+        result.set(bt.cell.id, Math.max(result.get(bt.cell.id) ?? 0, hh))
+        if (!bt.children) return
+        for (const [, c] of bt.children) mark(c)
+      }
+      mark(t)
+    }
+    return hh
+  }
   walk(boxRoot, true)
   return result
 }
@@ -130,7 +293,7 @@ export function measureBoxHH(boxRoot: Tree | null, edgeRoot: Tree | null = null)
 //   1. x: leaves evenly spread, parents at median of children (bottom-up)
 //   2. y: by depth, root at bottom, leaves at top
 //   VPSC: enforce sibling separation + intermediate box containment on x-axis
-//   3. drop correction (top-down, before nascent)
+//   3. clearance correction (top-down, before nascent) — uses computeClearances
 //   4. nascent lerp (after correction)
 
 export function computeLayout(
@@ -279,16 +442,13 @@ export function computeLayout(
     }
   }
 
-  // Compute intermediate box half-heights for y-correction (purely structural)
-  const boxHH = measureBoxHH(boxRoot, t)
+  // Compute per-node downward clearances and parent tower hh (purely structural)
+  const clearances = computeClearances(boxRoot, t, dropCounts)
+  const nodeHH     = measureNodeHH(boxRoot)
 
-  // Phase 3a — root correction: extend stem if drops or intermediate box need room
-  const rootK  = dropCounts.get((root.data as any).id as string) ?? 0
-  const rootHH = boxHH.get((root.data as any).id as string) ?? 0
+  // Phase 3a — root correction: extend stem if root's clearance exceeds stemLen
   {
-    const neededForDrops = rootK >= 1 ? DROP_SPACER + rootK * DROP_UNIT + DROP_BOX_H : 0
-    const neededForBox   = rootHH > 0 ? rootHH + DROP_SPACER : 0
-    const neededStem = Math.max(neededForDrops, neededForBox)
+    const neededStem = clearances.get((root.data as any).id as string) ?? 0
     if (neededStem > stemLen) {
       const ext = neededStem - stemLen
       root.each((n: any) => { (n as any).y -= ext })
@@ -296,20 +456,28 @@ export function computeLayout(
     }
   }
 
-  // Phase 3b — non-root correction: lift subtree so drops AND intermediate box fit on branch
+  // Phase 3b — non-root correction: lift subtree to satisfy two constraints:
+  //   1. Downward: node's bottom extent (drops/tower) clears parent's top edge.
+  //   2. Upward: node's top clears the top of parent's tower (if parent is towered).
+  // Both use parent.y - NODE_W/2 - INTER_PAD as the "fence bottom" of the parent.
   root.eachBefore((d: any) => {
     if (!d.parent) return
-    const k  = dropCounts.get(d.data.id as string) ?? 0
-    const hh = boxHH.get(d.data.id as string) ?? 0
-    const neededForDrops = k > 0 ? DROP_SPACER + k * DROP_UNIT + DROP_BOX_H : 0
-    const neededForBox   = hh > 0 ? hh + INTER_PAD : 0
-    const needed = Math.max(neededForDrops, neededForBox)
-    if (needed < 1) return
-    const dY     = d.y as number
-    const vertBot = (d.parent.y as number) - ARC_R
-    const maxY   = vertBot - needed
-    if (dY > maxY) {
-      const shift = dY - maxY
+    const parentY   = d.parent.y as number
+    const parentHH  = nodeHH.get(d.parent.data.id as string) ?? 0
+    const fenceBot  = parentY - NODE_W / 2 - INTER_PAD  // parent's fence bottom
+
+    // Constraint 1: downward clearance — d must sit above fenceBot by its own clearance
+    const needed = clearances.get(d.data.id as string) ?? 0
+    const maxY1  = needed > 0 ? fenceBot - needed : Infinity
+
+    // Constraint 2: upward clearance — d must sit above parent's tower top
+    // Tower top = parentY - parentHH; d's node bottom = d.y + NODE_W/2
+    // Required: d.y + NODE_W/2 + INTER_PAD ≤ parentY - parentHH
+    const maxY2  = parentHH > 0 ? parentY - parentHH - NODE_W / 2 - INTER_PAD : Infinity
+
+    const maxY = Math.min(maxY1, maxY2)
+    if (maxY < Infinity && (d.y as number) > maxY) {
+      const shift = (d.y as number) - maxY
       d.each((n: any) => { (n as any).y -= shift })
     }
   })

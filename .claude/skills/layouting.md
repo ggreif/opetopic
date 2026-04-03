@@ -31,42 +31,75 @@ All nodes at the same depth land on the same y. The root is at `topOff + TREE_H`
 
 ---
 
-## Phase 3 — Drop correction (BEFORE nascent, top-down)
+## Phase 3 — Clearance correction (BEFORE nascent, top-down)
 
-Each node has a **k** drops stored on its outgoing branch. Those k drop boxes are placed **below** the node (into the branch toward the parent / stem), stacked at:
+Each node has a **fence** — the minimum unobstructed space it claims around itself. The layouter enforces two fence constraints for every non-root node relative to its parent:
+
+1. **Downward**: the node's bottom extent (drop stack or tower bottom) must clear the parent's top fence edge.
+2. **Upward**: the node's own top must clear the parent's tower top (when the parent is wrapped).
+
+Both are enforced in a single `eachBefore` (top-down) pass so parent lifts propagate before children are corrected.
+
+### Drop box rendering
+
+Drop boxes are placed **below** the node, stacked downward. The first drop's top is:
 
 ```
-box i top  = nodeY + DROP_SPACER + i * DROP_UNIT
-box i bot  = nodeY + DROP_SPACER + i * DROP_UNIT + DROP_BOX_H
+box i top = nodeY + yOff + i * DROP_UNIT
+yOff      = max(NODE_W/2, nodeHH) + DROP_SPACER + dropNestingDepth * INTER_PAD
 ```
 
-where `DROP_UNIT = DROP_BOX_H + DROP_SPACER = 20`, `DROP_BOX_H = 16`, `DROP_SPACER = 4`.
+- `nodeHH`: outermost tower half-height of the owner node (0 if unwrapped). Ensures drops start below the tower bottom.
+- `dropNestingDepth`: number of encircling wrappers around the drop lollipop itself. Each encircling pushes the drop further down so the encircling box top clears the node bottom.
+- `DROP_UNIT = DROP_BOX_H + DROP_SPACER = 20`
 
-For all k boxes to fit before the parent arc:
+`measureDropOffsets(boxRoot, edgeRoot)` computes `Map<dropRootId, yOff>` structurally (no positions needed) and is used by the renderer. `measureNodeHH(boxRoot)` computes `Map<edgeNodeId, hh>` where `hh = DROP_BOX_H/2 + nestingDepth * INTER_PAD`.
+
+### `computeClearances` — downward fence per node
+
+`computeClearances(boxRoot, edgeRoot, dropCounts)` returns `Map<edgeNodeId, clearance>` — how far below `node.y` the node's lowest visual element reaches, measured to `parent.y - NODE_W/2 - INTER_PAD` (the parent's fence bottom). Both drops and towers are accounted for in one value:
 
 ```
-needed = DROP_SPACER + k * DROP_UNIT + DROP_BOX_H   // = (k+1) * DROP_UNIT
+yOff         = max(NODE_W/2, nodeHH) + DROP_SPACER + dropDepth * INTER_PAD
+dropNeeded   = k > 0 ? yOff + k * DROP_UNIT + DROP_BOX_H : 0
+towerNeeded  = yOff + DROP_BOX_H + dropDepth * INTER_PAD + INTER_PAD  // for drop towers
+boxNeeded    = hh + INTER_PAD                                           // for node towers
+clearance(n) = max(dropNeeded, towerNeeded, boxNeeded)
 ```
 
-**Non-root nodes** (`eachBefore`, top-down so parent positions are already set):
+**Drop lollipops inside a tower**: `computeClearances` detects nullary box-tree nodes (drop lollipops), looks up their edge-tree owner via `dropId → ownerCellId` (built from `edgeRoot`), and stamps the owner.
+
+**Unwrapped nodes with drops**: seeded directly from `edgeRoot` before the box-tree walk.
+
+**Box-tree leaf nodes** (edge-tree nodes, `children: null`): stamped before the early-return so Phase 3b finds their ids in the map.
+
+### Phase 3b — two-constraint lift
+
 ```
-vertBot = parent.y − ARC_R
-maxY    = vertBot − needed
+parentHH = measureNodeHH(boxRoot).get(parent.id) ?? 0
+fenceBot  = parent.y − NODE_W/2 − INTER_PAD
+
+// Constraint 1: downward — node's bottom clears fenceBot
+maxY1 = clearance > 0 ? fenceBot − clearance : ∞
+
+// Constraint 2: upward — node's top clears parent's tower top
+maxY2 = parentHH > 0 ? parent.y − parentHH − NODE_W/2 − INTER_PAD : ∞
+
+maxY = min(maxY1, maxY2)
 if node.y > maxY:
-    shift = node.y − maxY
-    lift node AND its entire subtree by shift   (d.each: n.y −= shift)
+    shift entire subtree up by (node.y − maxY)
 ```
-Processing top-down means if a parent was lifted, its children moved with it, and their own corrections are computed relative to the new (already lifted) parent position.
 
-**Root node** (no parent — outgoing branch is the stem):
+Processing `eachBefore` (top-down) means parent lifts propagate before children are corrected.
+
+### Phase 3a — root / stem
+
 ```
-neededStem = DROP_SPACER + rootK * DROP_UNIT + DROP_BOX_H
+neededStem = clearances.get(root.id) ?? 0
 if stemLen < neededStem:
-    ext = neededStem − stemLen
-    lift entire tree by ext   (root.each: n.y −= ext)
+    lift entire tree by (neededStem − stemLen)
     root._stemLen = neededStem
 ```
-Lifting the whole tree effectively grows the stem downward within the SVG viewport.
 
 ---
 
@@ -140,35 +173,13 @@ nested box-rects in Focus. Four invariants that must be preserved:
    recursive `leafIds()` walk. Recursing to leaves makes all nesting levels collapse to the
    same innermost positions.
 
-### Invariant 5 — Branch extension for wrapped nodes (`measureBoxHH` + Phase 3 correction)
+### Invariant 5 — Branch extension for wrapped nodes
 
-Intermediate boxes extend downward (toward parent nodes, larger y). For deep trees
-(`maxDepth ≥ 4`), `stemLen = TREE_H / maxDepth` can be as small as 22px, smaller than the
-box's `hh = DROP_BOX_H/2 + INTER_PAD = 18px`. The branch must be **lengthened** (subtree lifted)
-so the box clears the parent node, analogous to how drops extend branches.
+Intermediate boxes extend both upward and downward from their owner node. Phase 3 correction ensures:
+- The tower/drop bottom clears the parent node's fence (downward constraint).
+- The tower top clears the parent's own tower top (upward constraint).
 
-**`measureBoxHH(boxRoot)`** (in `layout.ts`) walks the box tree post-order and returns
-`Map<edgeNodeId, outermost-hh>`:
-
-```typescript
-hh(leaf)  = DROP_BOX_H / 2
-hh(box)   = max(children hh) + INTER_PAD   // = DROP_BOX_H/2 + nestingLevel * INTER_PAD
-```
-
-Each intermediate box stamps all its edge-tree leaf descendants with its (outermost) `hh`.
-Absent entries = node is not wrapped.
-
-**Phase 3a (root / stem)**: `neededStem = max(forDrops, forBox)` where `forBox = hh + DROP_SPACER`.
-
-**Phase 3b (non-root branch)**:
-```typescript
-neededForBox = hh + INTER_PAD   // clearance from node.y to parent.y - ARC_R
-needed       = max(neededForDrops, neededForBox)
-maxY         = (parent.y - ARC_R) - needed
-if (d.y > maxY) lift subtree by (d.y - maxY)
-```
-
-Drops and intermediate-box correction are unified: whichever demands more space wins.
+See the Phase 3 section for the complete two-constraint lift formula.
 
 ### Known remaining visual issues
 
@@ -194,24 +205,6 @@ of the sibling to visually disappear behind the box.
 2. Add rigid-body constraints for *sibling* subtrees too (not just the wrapped node's subtree)
    so that when VPSC pushes a sibling, all its descendants follow as a unit.
 
-### Tower + drop on same branch: parent not pushed far enough
-**Status**: not yet fixed.
-**Reproduce**: insert a drop on a branch, then encircle the node that owns that branch to build
-a tower. The base frame expands (`adjustedFrameRect` ✓), but the **parent corolla node** of
-that branch is not pushed further down to give the tower's bottom clearance.
-
-Root cause: Phase 3b uses `Math.max(neededForDrops, neededForBox)`. When drops demand more
-space than the tower (`DROP_SPACER + k*DROP_UNIT + DROP_BOX_H > hh + INTER_PAD`), the drops
-dominate and the tower seems to fit — but the tower's downward extent (`hh`) combined with the
-drop stack (`DROP_SPACER + k*DROP_UNIT + DROP_BOX_H`) must *both* fit below the node. They
-occupy the same space, so `Math.max` is correct in principle, but the intermediate box's `hh`
-value from `measureBoxHH` may be stale or smaller than the visual box because the drop lollipop
-is also a child of the wrapping box and inflates the box width but not height.
-
-**Fix direction**: verify that `measureBoxHH` correctly accounts for wrapping boxes that contain
-*both* the edge-tree leaf *and* drop lollipops. Check whether `hh` for the box is being
-under-estimated when the box has mixed children (leaf + lollipops).
-
 ### Encircling the parent of a shifted tower jumps to the side
 **Status**: reproducible, not yet fixed.
 Steps to reproduce: build a tower (encircle one node several times). The tower shifts sideways
@@ -230,13 +223,6 @@ They should be rendered **above** everything else (on top of tree-node roundrect
 intermediate boxes) so that they remain clickable and visually distinct. Fix: move the drop
 `<g>` blocks to after the `<g class="tree-layer">` in `AtomicDiagramView.svelte`, or give
 them their own top-level `<g class="drop-layer">`.
-
-### ⚠️ ids vs vars in single-node guard — FIXED
-`edgeLeafIds` returns **all** leaf IDs in the box-tree subtree, including drop-lollipop IDs.
-Drops are absent from `varMap`, so `vars` (filtered) correctly has length 1 for a single
-edge-tree node even when drops co-exist. The guard must be `vars.length === 1`, **not**
-`ids.length === 1`; using `ids` made towers co-located with drops skip the equality and
-rigid-body constraints entirely.
 
 ### Multi-node encircle rigid-body (not yet implemented)
 The rigid-body constraints (`addRigid`) that keep open branches and inner nodes aligned are only
@@ -336,7 +322,7 @@ Extracts `computeConstrainedLayout(edgeRoot, root, drops, svgW, svgH): LayoutRes
 4. ✅ Add VPSC x-pass after desired positions are set (halfWidthMap + sibling sep + containment)
    - ✅ Single-node wrap: equality constraint `parent.x == wrapped.x`
    - ✅ Single-node wrap: rigid-body constraints for wrapped subtree
-   - ✅ Branch extension (Phase 3b / 3a) for intermediate box clearance (`measureBoxHH`)
+   - ✅ Branch extension (Phase 3b / 3a) for intermediate box clearance (`computeClearances`, `measureNodeHH`, `measureDropOffsets`)
    - ⬜ Sibling subtree halfWidths + rigid body (see Bugs/TODO)
 5. ✅ `intermediateBoxes` derived in `AtomicDiagramView` from VPSC-solved coords (stays in view — too coupled to drop layout)
 6. ⬜ Port x-VPSC to `TreeDiagram` (sibling separation only — no boxes; unblocked by dimension hopping)
