@@ -47,7 +47,7 @@
   }
 </script>
 
-<svelte:window onclick={() => { selectedIds = new Set() }} />
+<svelte:window onclick={(e) => { if (!e.ctrlKey) selectedIds = new Set() }} />
 
 <div class="editor">
   <!-- Prev pane: substrate as BoxDiagram; slashed box where drop latches on -->

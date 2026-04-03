@@ -335,6 +335,7 @@
         onmouseleave={() => onnodehover?.(null)}
         onclick={(e) => {
           e.stopPropagation()
+          if (e.ctrlKey) return  // Safari fires onclick for Ctrl+click (context menu) — ignore
           if (e.shiftKey) {
             // Shift+click: add to / toggle in multi-selection (all inner nodes including edge root)
             onselect?.(d.data.id, true)
