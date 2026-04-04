@@ -49,6 +49,12 @@
   // Initialise store with default example
   loadExample(boxtree)
 
+  // Dump Focus diagram to console on every dimension hop.
+  $effect(() => {
+    const idx = store.focusIdx  // tracked reactive dependency
+    dumpOpetope(`hop → level ${idx}`)
+  })
+
   // Auto-create the base box whenever Focus lands on a diagram with root === null
   // but an edge tree that has inner nodes. This fires on hopRight into a new level.
   $effect(() => {
@@ -137,7 +143,27 @@
     })
   }
 
+  function fmtTree(t: Tree, indent = ''): string {
+    const id = `@${t.cell.id}`
+    const drops = t.drops.length ? ` drops=[${t.drops.map(d => d.dropId).join(',')}]` : ''
+    if (t.children === null) return `${indent}leaf(${t.cell.label}${id}:${t.cell.dim})${drops}`
+    if (t.children.length === 0) return `${indent}lolli(${t.cell.label}${id}:${t.cell.dim})${drops}`
+    const kids = t.children.map(([bid, child]) => fmtTree(child, indent + '  ') + ` @${bid}`).join('\n')
+    return `${indent}node(${t.cell.label}${id}:${t.cell.dim})${drops}\n${kids}`
+  }
+  function dumpOpetope(label: string) {
+    console.group(`[opetope] ${label}`)
+    store.diagrams.forEach((d, i) => {
+      console.group(`level ${i}`)
+      console.log('edgeRoot:\n' + fmtTree(d.edgeRoot))
+      console.log('root:    \n' + (d.root ? fmtTree(d.root) : 'null'))
+      console.groupEnd()
+    })
+    console.groupEnd()
+  }
+
   function handleDropInsert(edgeCellId: string) {
+    dumpOpetope(`before dropInsert (edgeCellId=${edgeCellId})`)
     const focus = store.focus
     // Create a fresh lollipop cell for the new child in root
     const newCell = cell(freshLabel(), 0)
@@ -151,6 +177,7 @@
       const lollipop: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
       setFocus({ ...newFocus, root: { cell: frameCell, away: new Set(), drops: [], children: [[branchId, lollipop]] } })
     }
+    dumpOpetope(`after dropInsert (branchId=${branchId})`)
   }
 
   function handleEncircle(cellIds: Set<string>) {

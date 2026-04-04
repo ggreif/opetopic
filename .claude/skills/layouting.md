@@ -251,6 +251,19 @@ intermediate boxes) so that they remain clickable and visually distinct. Fix: mo
 `<g>` blocks to after the `<g class="tree-layer">` in `AtomicDiagramView.svelte`, or give
 them their own top-level `<g class="drop-layer">`.
 
+### Nullary edgeRoot node rendered outside base box after stem drop (known bug)
+**Status**: not yet fixed.
+When a stem drop is inserted (drop on the root node of `edgeRoot`), `computeSucc` produces
+a lollipop child in the next level's edgeRoot. After dimension hopping, `withOuterFrame`
+correctly excludes that lollipop from `innerNodes` (it has `children.length === 0`), so it
+gets no leaf box in `root`. However, `AtomicDiagramView` still renders a `tree-node` roundrect
+for it (line 340 filter: `d.children || d.data.nullary`). Since the lollipop has no leaf box,
+no force pulls its visual position inside the base box — it floats at its raw edge-tree y
+position, which is typically above (outside) the frame rect.
+
+**Fix direction**: either suppress the roundrect for lollipops that have no corresponding leaf
+box in `focus.root`, or expand `adjustedFrameRect` to enclose all `nullary` edgeRoot nodes.
+
 ### Disconnected edge-tree branches after multi-node encircle (reproducible)
 **Status**: not yet fixed.
 Steps to reproduce: "Point" example → extrude twice → select both nodes → encircle.

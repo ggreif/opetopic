@@ -21,8 +21,9 @@
   let succHoveredId = $state<string | null>(null)
   let selectedIds   = $state<Set<string>>(new Set())
 
-  const violation = $derived(validateStack(store.diagrams))
-  const drops     = $derived(collectDrops(store.focus.edgeRoot))
+  const violation     = $derived(validateStack(store.diagrams))
+  const hardViolation = $derived(violation && !violation.includes('ADVISORY') ? violation : null)
+  const drops         = $derived(collectDrops(store.focus.edgeRoot))
 
   // Map lollipop cell ID → its branch ID in focus.root (for bond hover via cell ID)
   const lolliCellToBranchId = $derived((() => {
@@ -104,7 +105,7 @@
   <button class="hop-arrow" disabled={!canHopLeft} onclick={onHopLeft}>◀</button>
 
   <!-- Focus pane -->
-  <div class="pane focus-pane" class:violated={!!violation}>
+  <div class="pane focus-pane" class:violated={!!hardViolation}>
     <div class="pane-label">focus</div>
     <AtomicDiagramView
       diagram={store.focus}
@@ -118,8 +119,8 @@
       ondropinsert={(cellId) => ondropinsert?.(cellId)}
       onencircle={(ids) => { onencircle?.(ids); selectedIds = new Set() }}
     />
-    {#if violation}
-      <div class="violation-msg" title={violation}>⚠ invalid</div>
+    {#if hardViolation}
+      <div class="violation-msg" title={hardViolation}>⚠ invalid</div>
     {/if}
     <div class="dim-badge">dim {store.focus.root?.cell.dim ?? store.focus.edgeRoot.cell.dim + 1}</div>
   </div>
