@@ -12,6 +12,7 @@
     highlight = undefined,
     highlightNode = undefined,
     selected = new Set<string>(),
+    selectionHighlightIds = new Set<string>(),
     onhover = undefined,
     onnodehover = undefined,
     onselect = undefined,
@@ -25,6 +26,7 @@
     highlight?: string
     highlightNode?: string
     selected?: Set<string>
+    selectionHighlightIds?: Set<string>
     onhover?: (cellId: string | null) => void
     onnodehover?: (cellId: string | null) => void
     onselect?: (cellId: string | null, add?: boolean) => void
@@ -275,7 +277,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <g onmouseenter={() => onhover?.(d.data.id)} onmouseleave={() => onhover?.(null)}>
-          <path d={p} class="corolla-link" class:highlighted={d.data.id === highlight} />
+          <path d={p} class="corolla-link" class:highlighted={d.data.id === highlight} class:selection-highlighted={selectionHighlightIds.has(d.data.id)} />
           <path d={p} class="corolla-hit" />
           {#if ondropinsert}
             <path d={p} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(d.data.id)} />
@@ -293,7 +295,7 @@
         onmouseenter={() => onhover?.(edgeId)}
         onmouseleave={() => onhover?.(null)}
       >
-        <path d={p} class="corolla-link" class:highlighted={edgeId === highlight} />
+        <path d={p} class="corolla-link" class:highlighted={edgeId === highlight} class:selection-highlighted={selectionHighlightIds.has(edgeId)} />
         <path d={p} class="corolla-hit" />
         {#if ondropinsert}
           <path d={p} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(edgeId)} />
@@ -310,7 +312,7 @@
           onmouseenter={() => onhover?.(branch.id)}
           onmouseleave={() => onhover?.(null)}
         >
-          <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} />
+          <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} class:selection-highlighted={selectionHighlightIds.has(branch.id)} />
           <path d={branch.path} class="corolla-hit" />
           {#if ondropinsert}
             <path d={branch.vertPath} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(branch.id)} />
@@ -422,6 +424,7 @@
     fill: none; stroke: #444; stroke-width: 1.5; stroke-linecap: round; pointer-events: none;
   }
   :global(.corolla-link.highlighted) { stroke: #a02480; stroke-width: 2.25; }
+  :global(.corolla-link.selection-highlighted) { stroke: #e53935; stroke-width: 2.25; }
   :global(.corolla-hit) {
     fill: none; stroke: transparent; stroke-width: 10; stroke-linecap: round; pointer-events: stroke;
   }

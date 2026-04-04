@@ -125,6 +125,7 @@
       highlight={succHoveredId ?? undefined}
       highlightNode={undefined}
       selected={new Set()}
+      selectionHighlightIds={selectedIds}
       onhover={(id) => { succHoveredId = id }}
       onnodehover={undefined}
       onselect={undefined}
