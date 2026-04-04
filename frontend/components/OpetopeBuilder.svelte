@@ -160,7 +160,8 @@
     const anyId = [...cellIds][0]
     const sub = subtreeFor(focus.edgeRoot, anyId) ?? subtreeFor(focus.root, anyId)
     if (!sub) return
-    setFocus(encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1)))
+    const next = encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1))
+    if (next !== focus) setFocus(next)
   }
 </script>
 

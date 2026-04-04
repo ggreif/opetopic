@@ -9,8 +9,8 @@
  * clearly labelled ADVISORY in their violation strings.
  */
 
-import type { Tree, AtomicDiagram, Cell, Drop } from './opetope'
-import { allBranchIds, collectDrops, subtreeFor, computeSucc } from './opetope'
+import type { Tree, AtomicDiagram } from './opetope'
+import { collectDrops, computeSucc } from './opetope'
 
 // ── Internal traversal helpers ────────────────────────────────────────────────
 
@@ -96,7 +96,6 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   const rootNodes  = root ? collectAllNodes(root) : []
 
   const edgeCellMap = buildCellMap(edgeRoot)
-  const rootCellMap = root ? buildCellMap(root) : new Map<string, Tree>()
 
   const edgeInnerIds = new Set<string>(
     edgeNodes.filter(n => n.children !== null).map(n => n.cell.id)
@@ -300,20 +299,33 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
     }
 
 
-    // 5.4 drop-lollipop-same-owner: the leaf box for the drop-owner and the lollipop
-    //     must share the same parent node in root.
+    // 5.4 drop-lollipop-ancestor-owner: the lollipop's parent in root must be an ancestor
+    //     (or equal) of the leaf box's parent. After encircle the leaf box moves one level
+    //     deeper (inside a wrapper) while the lollipop correctly stays at the outer frame.
     {
+      const rootNodeParent = new Map<string, string>()  // cellId → parentCellId in root
       const rootLeafParent = new Map<string, string>()  // leafCellId → parentCellId in root
       const rootBranchParent = new Map<string, string>() // branchId → parentCellId in root
       function walkRootParents(t: Tree) {
         if (!t.children) return
         for (const [bid, child] of t.children) {
+          rootNodeParent.set(child.cell.id, t.cell.id)
           rootBranchParent.set(bid, t.cell.id)
           if (child.children === null) rootLeafParent.set(child.cell.id, t.cell.id)
           walkRootParents(child)
         }
       }
       walkRootParents(root)
+
+      // Walk up from a node to check if candidate is an ancestor-or-equal
+      function isAncestorOrEqual(candidate: string, descendant: string): boolean {
+        let cur: string | undefined = descendant
+        while (cur !== undefined) {
+          if (cur === candidate) return true
+          cur = rootNodeParent.get(cur)
+        }
+        return false
+      }
 
       const dropOwnerToRootId = new Map<string, string>()
       for (const d of allDrops) {
@@ -329,8 +341,8 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
         const leafParent = rootLeafParent.get(ownerCellId)
         const lolliParent = rootBranchParent.get(lolliBranchId)
         if (leafParent === undefined || lolliParent === undefined) continue
-        if (leafParent !== lolliParent)
-          return `drop-lollipop-same-owner: drop owner "${ownerCellId}" is under "${leafParent}" but lollipop branch "${lolliBranchId}" is under "${lolliParent}"`
+        if (!isAncestorOrEqual(lolliParent, leafParent))
+          return `drop-lollipop-ancestor-owner: drop owner "${ownerCellId}" leaf parent "${leafParent}" is not a descendant of lollipop parent "${lolliParent}"`
       }
     }
   }

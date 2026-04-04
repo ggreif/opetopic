@@ -285,7 +285,8 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
   const lollipop: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
   const newDrop: Drop = { dropId: branchId }
 
-  function addLollipopToRoot(t: Tree): Tree {
+  function addLollipopToRoot(t: Tree, isRoot: boolean): Tree {
+    if (!isRoot) return t  // only add to the root node (outer frame)
     if (t.children === null) return { ...t, children: [[branchId, lollipop]] }
     return { ...t, children: [...t.children, [branchId, lollipop]] }
   }
@@ -302,7 +303,7 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
 
   return {
     ...diagram,
-    root:     diagram.root ? addLollipopToRoot(diagram.root) : null,
+    root:     diagram.root ? addLollipopToRoot(diagram.root, true) : null,
     edgeRoot: addDropToEdgeRoot(diagram.edgeRoot),
   }
 }
@@ -383,7 +384,7 @@ export function encircleMulti(diagram: AtomicDiagram, cellIds: Set<string>, newC
 
   function walk(t: Tree): Tree {
     if (!t.children) return t
-    // Separate selected children from others at this level
+    // Separate selected leaf-box children from others; lollipops always stay outside.
     const selectedChildren: [string, Tree][] = []
     const otherChildren: [string, Tree][] = []
     for (const [branchId, child] of t.children) {
