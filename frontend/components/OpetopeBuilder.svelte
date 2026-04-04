@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, boxtree, cell, freshId, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
+  import { simplex, ypsilon, point, boxtree, cell, freshId, substrate, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
   import { validateDiagram } from '../lib/validate'
   import { store } from '../lib/diagramStore.svelte'
 
@@ -41,7 +41,7 @@
     }
     const frameCell = cell(safeLabel(), diagram.edgeRoot.cell.dim + 1)
     const children: [string, Tree][] = innerNodes.map(c =>
-      [freshId(), { cell: { ...c, label: safeLabel() }, away: new Set(), drops: [], children: null } as Tree]
+      [freshId(), { cell: substrate(safeLabel(), c), away: new Set(), drops: [], children: null } as Tree]
     )
     return { edgeRoot: diagram.edgeRoot, root: { cell: frameCell, away: new Set(), drops: [], children } }
   }
@@ -71,7 +71,7 @@
   const examples: { label: string; make: () => Opetope }[] = [
     { label: 'Boxtree',          make: () => boxtree() },
     { label: 'Simplex (2-cell)', make: () => simplex() },
-    { label: 'Ypsilon (2-cell)', make: () => arrow() },
+    { label: 'Ypsilon (2-cell)', make: () => ypsilon() },
     { label: 'Point (0-cell)',   make: () => point() },
   ]
 

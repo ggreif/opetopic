@@ -418,7 +418,7 @@ export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell):
 export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
 function leaf(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: null } }
 function lollipop(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: [] } }
-function substrate(label: string, c: Cell): Cell { return { ...c, label } }
+export function substrate(label: string, c: Cell): Cell { return { ...c, label } }
 function node(c: Cell, children: [string, Tree][]): Tree {
   return { cell: c, away: new Set(), drops: [], children }
 }
@@ -435,7 +435,7 @@ export function point(label = 'a'): Opetope {
  * A 2-cell: an Y.
  * Edge tree: f is output, a and b inputs (source/target).
  */
-export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): Opetope {
+export function ypsilon(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): Opetope {
   const f = cell(fLabel, 1)
   const points = [cell('0', 0), cell('1', 0), cell('2', 0)]
   const x = substrate(srcLabel, points[0])
