@@ -71,7 +71,7 @@
   const examples: { label: string; make: () => Opetope }[] = [
     { label: 'Boxtree',          make: () => boxtree() },
     { label: 'Simplex (2-cell)', make: () => simplex() },
-    { label: 'Arrow (1-cell)',   make: () => arrow() },
+    { label: 'Ypsilon (2-cell)', make: () => arrow() },
     { label: 'Point (0-cell)',   make: () => point() },
   ]
 

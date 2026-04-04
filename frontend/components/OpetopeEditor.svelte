@@ -129,7 +129,7 @@
       ondropinsert={undefined}
       onencircle={undefined}
     />
-    <div class="dim-badge">{succAtomicDiagram.root ? `dim ${succAtomicDiagram.root.cell.dim}` : `dim ${succAtomicDiagram.edgeRoot.cell.dim}`}</div>
+    <div class="dim-badge">{succAtomicDiagram.root ? `dim ${succAtomicDiagram.root.cell.dim}` : `dim ${succAtomicDiagram.edgeRoot.cell.dim + 1}`}</div>
   </div>
   {/if}
 </div>
