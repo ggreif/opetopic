@@ -446,7 +446,11 @@ export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): Opetope {
 
   // dim1: f base, x y substrate (open leaves x,y match inner nodes of dim0)
   const dim1 = node(f, [[freshId(), leaf(x)], [freshId(), leaf(y)]])
-  return [dim0, dim1]
+  
+  // dim2: The space between pasting diagram upper edges `a` and `b`
+  //       and the morphism composite `f`
+  const dim2 = node(cell('Φ', 2), [[freshId(), leaf(substrate('Y', f))]])
+  return [dim0, dim1, dim2]
 }
 
 /**
