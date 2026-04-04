@@ -50,9 +50,16 @@
   loadExample(boxtree)
 
   // Dump Focus diagram to console on every dimension hop.
+  let _prevFocusIdx = store.focusIdx
+  let _firstHopEffect = true
   $effect(() => {
     const idx = store.focusIdx  // tracked reactive dependency
     dumpOpetope(`hop → level ${idx}`)
+    if (!_firstHopEffect) {
+      console.log('[EDSL]', JSON.stringify({ op: 'hop', delta: idx > _prevFocusIdx ? 1 : -1 }))
+    }
+    _firstHopEffect = false
+    _prevFocusIdx = idx
   })
 
   // Auto-create the base box whenever Focus lands on a diagram with root === null
@@ -96,6 +103,9 @@
 
   function handleSourceExtrude(leafId: string) {
     const focus = store.focus
+    // Find the leaf label for EDSL logging
+    const _extrudedLeaf = subtreeFor(focus.edgeRoot, leafId)
+    if (_extrudedLeaf) console.log('[EDSL]', JSON.stringify({ op: 'extrude', label: _extrudedLeaf.cell.label }))
     // Find the dim of the extruded leaf so the new child has dim - 1
     function findDim(tree: typeof focus.edgeRoot): number {
       if (tree.cell.id === leafId) return tree.cell.dim
@@ -163,6 +173,8 @@
   }
 
   function handleDropInsert(edgeCellId: string) {
+    const _dropNode = subtreeFor(store.focus.edgeRoot, edgeCellId)
+    if (_dropNode) console.log('[EDSL]', JSON.stringify({ op: 'drop', label: _dropNode.cell.label }))
     dumpOpetope(`before dropInsert (edgeCellId=${edgeCellId})`)
     const focus = store.focus
     // Create a fresh lollipop cell for the new child in root
@@ -180,6 +192,67 @@
     dumpOpetope(`after dropInsert (branchId=${branchId})`)
   }
 
+  // ── Recording ────────────────────────────────────────────────────────────────
+  let recording = $state(false)
+  let _recordSteps: string[] = []         // EDSL JSON strings, each `[EDSL] {...}`
+  let _recordSnapshots: string[] = []     // SVG innerHTML of Focus pane at each step
+  let _recordObserver: MutationObserver | null = null
+  let _editorEl: HTMLElement | undefined  // bound to the .builder section
+
+  function _captureSnapshot(): string {
+    if (!_editorEl) return ''
+    const focusSvg = _editorEl.querySelector('.focus-pane .atomic-diagram svg')
+    return focusSvg ? (focusSvg as SVGElement).innerHTML : ''
+  }
+
+  function startRecording() {
+    _recordSteps = []
+    _recordSnapshots = []
+    recording = true
+    if (!_editorEl) return
+    _recordObserver = new MutationObserver(() => {
+      // Snapshot captured after each mutation batch (i.e. after each operation)
+    })
+    const panes = _editorEl.querySelectorAll('.prev-pane, .focus-pane, .succ-pane')
+    panes.forEach(p => _recordObserver!.observe(p, { childList: true, subtree: true, attributes: true, characterData: true }))
+  }
+
+  function _recordStep(jsonLine: string) {
+    if (!recording) return
+    _recordSteps.push(jsonLine)
+    // Defer snapshot capture to after the DOM has updated
+    requestAnimationFrame(() => { _recordSnapshots.push(_captureSnapshot()) })
+  }
+
+  function stopRecording() {
+    recording = false
+    _recordObserver?.disconnect()
+    _recordObserver = null
+    const output = {
+      steps: _recordSteps.map(l => { try { return JSON.parse(l.replace(/^\[EDSL\]\s+/, '')) } catch { return l } }),
+      snapshots: _recordSnapshots,
+    }
+    console.group('[EDSL] Recording stopped — copy below into Tape.fromLog()')
+    console.log(JSON.stringify(output, null, 2))
+    console.groupEnd()
+  }
+
+  // Intercept console.log to capture [EDSL] lines during recording
+  const _origConsoleLog = console.log.bind(console)
+  $effect(() => {
+    if (recording) {
+      ;(console as any).log = (...args: any[]) => {
+        _origConsoleLog(...args)
+        if (typeof args[0] === 'string' && args[0] === '[EDSL]') {
+          _recordStep(args[0] + ' ' + args[1])
+        }
+      }
+    } else {
+      ;(console as any).log = _origConsoleLog
+    }
+    return () => { ;(console as any).log = _origConsoleLog }
+  })
+
   function handleEncircle(cellIds: Set<string>) {
     const focus = store.focus
     if (!focus.root || cellIds.size === 0) return
@@ -192,7 +265,7 @@
   }
 </script>
 
-<section class="builder">
+<section class="builder" bind:this={_editorEl}>
   <h2>Opetope Builder <span class="badge">experimental</span></h2>
   <p class="desc">
     Prev: substrate edge tree. Focus: atomic diagram (right-click leaf box → source extrude; double-click edge in Succ → add drop). Succ: bonded edge tree.
@@ -203,6 +276,10 @@
     {#each examples as ex}
       <button class="ex-btn" onclick={() => loadExample(ex.make)}>{ex.label}</button>
     {/each}
+    <span class="toolbar-sep"></span>
+    <button class="rec-btn" class:recording onclick={() => recording ? stopRecording() : startRecording()}>
+      {recording ? '⏹ Stop' : '⏺ Record'}
+    </button>
   </div>
 
   <OpetopeEditor onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onencircle={handleEncircle} />
@@ -265,5 +342,38 @@
     background: #f3e5f5;
     border-color: #a02480;
     color: #a02480;
+  }
+
+  .toolbar-sep {
+    flex: 1;
+  }
+
+  .rec-btn {
+    padding: 5px 14px;
+    border: 1px solid #bbb;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .rec-btn:hover {
+    background: #fce4ec;
+    border-color: #c62828;
+    color: #c62828;
+  }
+
+  .rec-btn.recording {
+    background: #ffebee;
+    border-color: #c62828;
+    color: #c62828;
+    font-weight: 700;
+    animation: rec-blink 1.2s ease-in-out infinite;
+  }
+
+  @keyframes rec-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
   }
 </style>

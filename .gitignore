@@ -9,7 +9,9 @@ dist-ssr
 
 **/*.map
 vite.config.*js
+vitest.config.*js
 frontend/*.*js
+frontend/**/*.js
 frontend/lib/*.js
 
 **/*~

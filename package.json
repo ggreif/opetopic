@@ -7,7 +7,8 @@
     "start:local": "npx @icp-sdk/icp-cli network start local -d",
     "stop:local": "npx @icp-sdk/icp-cli network stop local",
     "deploy:local": "npx @icp-sdk/icp-cli build -e local && npx @icp-sdk/icp-cli canister install counter -e local && npm run build && npx @icp-sdk/icp-cli canister install assets -e local && npx @icp-sdk/icp-cli sync assets -e local",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@connect2ic/core": "0.1.6",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "@testing-library/svelte": "^5.3.1",
     "@types/d3": "^7.4.3",
     "@types/node": "^22.19.15",
     "buffer": "^6.0.3",
