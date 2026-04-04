@@ -516,18 +516,25 @@ export function boxtree(): Opetope {
   const g = cell('g', 1)
   const i = cell('i', 1)
   const u = cell('u', 1)
-  const a = cell('a', 0)
-  const b = cell('b', 0)
-  const c = cell('c', 0)
-  const t = cell('t', 0)
-  const d = cell('d', 0)
-  const e = cell('e', 0)
+  const [pa, pb, pc, pt, pd, pe] = ['0','1','2','3','4','5'].map(l => cell(l, 0))
 
-  const tree: Tree = node(j, [
-    [freshId(), node(g, [[freshId(), leaf(a)], [freshId(), leaf(b)], [freshId(), leaf(c)]])],
-    [freshId(), node(i, [[freshId(), leaf(t)]])],
-    [freshId(), node(u, [[freshId(), leaf(d)], [freshId(), leaf(e)]])],
+  // dim0: chain of 6 points (all inner; last is lollipop)
+  const dim0 = node(pa, [[freshId(), node(pb, [[freshId(), node(pc, [[freshId(), node(pt, [[freshId(), node(pd, [[freshId(), lollipop(pe)]])]])]])]])]])
+
+  // dim1: g, i, u as inner nodes; j as root; 0-cells as substrate leaves
+  const dim1 = node(j, [
+    [freshId(), node(g, [[freshId(), leaf(substrate('a', pa))], [freshId(), leaf(substrate('b', pb))], [freshId(), leaf(substrate('c', pc))]])],
+    [freshId(), node(i, [[freshId(), leaf(substrate('t', pt))]])],
+    [freshId(), node(u, [[freshId(), leaf(substrate('d', pd))], [freshId(), leaf(substrate('e', pe))]])],
   ])
 
-  return [tree]
+  // dim2: outer frame with g, i, u as substrate leaves
+  const frameCell = cell('J', 3)
+  const dim2 = node(frameCell, [
+    [freshId(), leaf(substrate('g□', g))],
+    [freshId(), leaf(substrate('i□', i))],
+    [freshId(), leaf(substrate('u□', u))],
+  ])
+
+  return [dim0, dim1, dim2]
 }
