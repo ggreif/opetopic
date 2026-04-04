@@ -437,7 +437,7 @@ export function point(label = 'a'): Opetope {
  */
 export function ypsilon(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): Opetope {
   const f = cell(fLabel, 1)
-  const points = [cell('0', 0), cell('1', 0), cell('2', 0)]
+  const points = ['0','1','2'].map(l => cell(l, 0))
   const x = substrate(srcLabel, points[0])
   const y = substrate(tgtLabel, points[1])
 
@@ -469,17 +469,33 @@ export function simplex(
   f_src = 'a', f_tgt = 'b',
   g_src = 'c', g_tgt = 'd',
   h_src = 'e', h_tgt = 'i',
+  outLabel = 'out',
 ): Opetope {
   const alpha = cell(alphaLabel, 2)
   const f = cell(fLabel, 1)
   const g = cell(gLabel, 1)
   const h = cell(hLabel, 1)
 
-  return [node(alpha, [
-    [freshId(), node(f, [[freshId(), leaf(cell(f_src, 0))], [freshId(), leaf(cell(f_tgt, 0))]])],
-    [freshId(), node(g, [[freshId(), leaf(cell(g_src, 0))], [freshId(), leaf(cell(g_tgt, 0))]])],
-    [freshId(), node(h, [[freshId(), leaf(cell(h_src, 0))], [freshId(), leaf(cell(h_tgt, 0))]])],
-  ])]
+  // dim0: chain of 6 points (all inner; last is lollipop)
+  const [pa, pb, pc, pd, pe, pi] = ['0','1','2','3','4','5'].map(l => cell(l, 0))
+  const dim0 = node(pa, [[freshId(), node(pb, [[freshId(), node(pc, [[freshId(), node(pd, [[freshId(), node(pe, [[freshId(), lollipop(pi)]])]])]])]])]])
+
+  // dim1: f,g,h as inner nodes; output 1-cell as root; 0-cells as substrate leaves
+  const out = cell(outLabel, 1)
+  const dim1 = node(out, [
+    [freshId(), node(f, [[freshId(), leaf(substrate(f_src, pa))], [freshId(), leaf(substrate(f_tgt, pb))]])],
+    [freshId(), node(g, [[freshId(), leaf(substrate(g_src, pc))], [freshId(), leaf(substrate(g_tgt, pd))]])],
+    [freshId(), node(h, [[freshId(), leaf(substrate(h_src, pe))], [freshId(), leaf(substrate(h_tgt, pi))]])],
+  ])
+
+  // dim2: alpha with f,g,h as substrate leaves
+  const dim2 = node(alpha, [
+    [freshId(), leaf(substrate(fLabel + '□', f))],
+    [freshId(), leaf(substrate(gLabel + '□', g))],
+    [freshId(), leaf(substrate(hLabel + '□', h))],
+  ])
+
+  return [dim0, dim1, dim2]
 }
 
 /**
