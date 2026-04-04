@@ -337,7 +337,7 @@
       onmouseenter={() => onhover?.(hier.data.id)} onmouseleave={() => onhover?.(null)}
     >{hier.data.label}</text>
 
-    {#each nodes.filter((d: any) => d.children) as d (d.data.id)}
+    {#each nodes.filter((d: any) => d.children || d.data.nullary) as d (d.data.id)}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <rect
@@ -400,8 +400,8 @@
     vector-effect: non-scaling-stroke;
   }
   :global(.box-rect.leaf) { cursor: context-menu; }
-  :global(.box-rect.highlighted) { stroke: #a02480; stroke-width: 2.25; }
   :global(.box-rect.selected) { stroke: #e53935; stroke-width: 2.25; cursor: context-menu; }
+  :global(.box-rect.highlighted) { stroke: #a02480; stroke-width: 2.25; }
   :global(.box-label) {
     font-family: 'Georgia', serif;
     font-style: italic;
@@ -423,8 +423,8 @@
   :global(.corolla-link) {
     fill: none; stroke: #444; stroke-width: 1.5; stroke-linecap: round; pointer-events: none;
   }
-  :global(.corolla-link.highlighted) { stroke: #a02480; stroke-width: 2.25; }
   :global(.corolla-link.selection-highlighted) { stroke: #e53935; stroke-width: 2.25; }
+  :global(.corolla-link.highlighted) { stroke: #a02480; stroke-width: 2.25; }
   :global(.corolla-hit) {
     fill: none; stroke: transparent; stroke-width: 10; stroke-linecap: round; pointer-events: stroke;
   }
@@ -447,9 +447,8 @@
     vector-effect: non-scaling-stroke;
     transition: fill 0.1s, stroke 0.1s;
   }
-  :global(.tree-node.highlighted) { stroke: #a02480; stroke-width: 2.25; }
   :global(.tree-node.selected) { fill: #e53935; cursor: context-menu; }
-  :global(.box-rect.selected) { stroke: #e53935; stroke-width: 2.25; }
+  :global(.tree-node.highlighted) { stroke: #a02480; stroke-width: 2.25; }
 
   .ctx-overlay {
     position: fixed; inset: 0; z-index: 99;

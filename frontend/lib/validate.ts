@@ -43,6 +43,15 @@ function buildBranchIdSet(t: Tree): Set<string> {
   return s
 }
 
+function buildBranchChildMap(t: Tree): Map<string, Tree> {
+  const m = new Map<string, Tree>()
+  function walk(n: Tree) {
+    if (n.children) for (const [bid, child] of n.children) { m.set(bid, child); walk(child) }
+  }
+  walk(t)
+  return m
+}
+
 function isAcyclic(t: Tree): boolean {
   const onStack = new Set<string>()
   function dfs(n: Tree): boolean {
@@ -213,6 +222,28 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
       return `lollipop-dim-is-zero: lollipop "${n.cell.label}" has dim=${n.cell.dim}, expected 0`
   }
 
+  // 6.5 no-lollipop-in-multi-child-intermediate: intermediate nodes in root with >1 children
+  //     must not have lollipops among their children (drops must not be wrapped by encircle)
+  if (root) {
+    function checkNoLolliInMulti(t: Tree, isRoot: boolean): string | null {
+      if (!t.children || t.children.length === 0) return null
+      const isIntermediate = !isRoot && t.children !== null && t.children.some(([, c]) => c.children !== null)
+      if (isIntermediate && t.children.length > 1) {
+        for (const [, child] of t.children) {
+          if (child.children !== null && child.children.length === 0)
+            return `no-lollipop-in-multi-child-intermediate: lollipop "${child.cell.label}" is inside intermediate box "${t.cell.label}" with ${t.children.length} children`
+        }
+      }
+      for (const [, child] of t.children) {
+        const r = checkNoLolliInMulti(child, false)
+        if (r) return r
+      }
+      return null
+    }
+    const r = checkNoLolliInMulti(root, true)
+    if (r) return r
+  }
+
   // ── away set checks ────────────────────────────────────────────────────────
 
   // 4.1 away-branch-ids-exist
@@ -237,16 +268,15 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
   if (root && root !== edgeRoot) {
     // 5.1 drop-id-bonds-to-lollipop
-    // dropId is an edge (branch) ID in root — the (n+1)-dimensional tree.
-    // In the current encoding dropId === lollipop cell.id === its branch key in its parent,
-    // so we check both: the branch exists in root AND it resolves to a lollipop cell.
+    // dropId is a branch ID in root. We look up the child tree by branch ID (not cell ID).
     const rootBranchIds = buildBranchIdSet(root)
+    const rootBranchChildMap = buildBranchChildMap(root)
     for (const d of allDrops) {
       if (!rootBranchIds.has(d.rootId))
         return `drop-id-bonds-to-lollipop: dropId "${d.rootId}" is not a branch id in root`
-      const sub = rootCellMap.get(d.rootId)
+      const sub = rootBranchChildMap.get(d.rootId)
       if (!sub)
-        return `drop-id-bonds-to-lollipop: dropId "${d.rootId}" branch exists but cell not found in root`
+        return `drop-id-bonds-to-lollipop: dropId "${d.rootId}" branch exists but child not found in root`
       if (sub.children === null)
         return `drop-id-bonds-to-lollipop: dropId "${d.rootId}" bonds to an open leaf, not a lollipop`
       if (sub.children.length > 0)
@@ -255,13 +285,53 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
     // 5.3 lollipop-has-drop (ADVISORY for zero-reference; fundamental for double-reference)
     {
-      const lollipopIds = new Set(rootNodes.filter(n => n.children !== null && n.children.length === 0).map(n => n.cell.id))
+      // lollipop branch IDs = branch IDs whose child is a lollipop (children: [])
+      const lollipopBranchIds = new Set(
+        [...rootBranchChildMap.entries()]
+          .filter(([, child]) => child.children !== null && child.children.length === 0)
+          .map(([bid]) => bid)
+      )
       const dropRefCount = new Map<string, number>()
       for (const d of allDrops) dropRefCount.set(d.rootId, (dropRefCount.get(d.rootId) ?? 0) + 1)
-      for (const [id, count] of dropRefCount) if (count > 1)
-        return `lollipop-has-drop: lollipop "${rootCellMap.get(id)?.cell.label ?? id}" referenced by ${count} drops`
-      for (const id of lollipopIds) if (!dropRefCount.has(id))
-        return `ADVISORY lollipop-has-drop: lollipop "${rootCellMap.get(id)?.cell.label ?? id}" has no corresponding drop`
+      for (const [bid, count] of dropRefCount) if (count > 1)
+        return `lollipop-has-drop: lollipop branch "${bid}" referenced by ${count} drops`
+      for (const bid of lollipopBranchIds) if (!dropRefCount.has(bid))
+        return `ADVISORY lollipop-has-drop: lollipop branch "${bid}" has no corresponding drop`
+    }
+
+
+    // 5.4 drop-lollipop-same-owner: the leaf box for the drop-owner and the lollipop
+    //     must share the same parent node in root.
+    {
+      const rootLeafParent = new Map<string, string>()  // leafCellId → parentCellId in root
+      const rootBranchParent = new Map<string, string>() // branchId → parentCellId in root
+      function walkRootParents(t: Tree) {
+        if (!t.children) return
+        for (const [bid, child] of t.children) {
+          rootBranchParent.set(bid, t.cell.id)
+          if (child.children === null) rootLeafParent.set(child.cell.id, t.cell.id)
+          walkRootParents(child)
+        }
+      }
+      walkRootParents(root)
+
+      const dropOwnerToRootId = new Map<string, string>()
+      for (const d of allDrops) {
+        for (const n of edgeNodes) {
+          if (n.drops.some(dr => dr.dropId === d.rootId)) {
+            dropOwnerToRootId.set(n.cell.id, d.rootId)
+            break
+          }
+        }
+      }
+
+      for (const [ownerCellId, lolliBranchId] of dropOwnerToRootId) {
+        const leafParent = rootLeafParent.get(ownerCellId)
+        const lolliParent = rootBranchParent.get(lolliBranchId)
+        if (leafParent === undefined || lolliParent === undefined) continue
+        if (leafParent !== lolliParent)
+          return `drop-lollipop-same-owner: drop owner "${ownerCellId}" is under "${leafParent}" but lollipop branch "${lolliBranchId}" is under "${lolliParent}"`
+      }
     }
   }
 
