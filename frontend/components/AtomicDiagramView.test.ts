@@ -126,6 +126,51 @@ describe('Boxtree', () => {
   })
 })
 
+describe('Recorded sequence: point → extrude → 2×drop → encircle', () => {
+  // Sequence captured from browser recording session 2026-04-04.
+  // Steps: start(point) · extrude(a) · hop(-1) · drop(a) · hop(-1) ·
+  //        drop(α) · hop(-1) · encircle([a]) · hop(-1)
+  const tape = new Tape()
+    .start('point')
+    .extrude('a')
+    .hop(-1)
+    .drop('a')
+    .hop(-1)
+    .drop('α')
+    .hop(-1)
+    .encircle(['a'])
+    .hop(-1)
+
+  test('tape is valid after full sequence', () => {
+    expect(tape.validate()).toBeNull()
+  })
+
+  test('two drop boxes (.box-rect.leaf) present', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    expect(dropBoxCount(container)).toBe(2)
+  })
+
+  test('encircle produced one intermediate box-rect (non-leaf)', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    // outer frame + intermediate wrapper = 2 non-leaf box-rects
+    const nonLeaf = container.querySelectorAll('.box-rect:not(.leaf)')
+    expect(nonLeaf).toHaveLength(2)
+  })
+
+  test('both edge-labels α and a are present', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    const labels = edgeLabels(container)
+    expect(labels).toContain('α')
+    expect(labels).toContain('a')
+  })
+})
+
 describe('Validation: Tape.validate()', () => {
   test('fresh boxtree is valid', () => {
     const tape = new Tape().start('boxtree')
