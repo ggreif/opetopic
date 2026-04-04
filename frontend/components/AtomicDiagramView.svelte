@@ -225,10 +225,24 @@
       <g
         onmouseenter={() => { onhover?.(ib.cell.id); onnodehover?.(ib.cell.id) }}
         onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+        onclick={(e) => {
+          e.stopPropagation()
+          if (e.ctrlKey) return
+          if (selected.size === 1 && selected.has(ib.cell.id)) onselect?.(null)
+          else onselect?.(ib.cell.id, false)
+        }}
+        oncontextmenu={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (selected.has(ib.cell.id) && selected.size > 0) {
+            ctxMenu = { x: e.clientX, y: e.clientY, cellId: ib.cell.id, snapshot: new Set(selected) }
+          }
+        }}
       >
         <rect x={ib.x} y={ib.y} width={ib.w} height={ib.h} rx="5" ry="5"
           class="box-rect"
           class:highlighted={ib.cell.id === highlight || ib.cell.id === highlightNode}
+          class:selected={selected.has(ib.cell.id)}
         />
         <text x={ib.x + ib.w - 7} y={ib.y + 18} class="box-label"
           class:highlighted={ib.cell.id === highlight}
@@ -385,6 +399,7 @@
   }
   :global(.box-rect.leaf) { cursor: context-menu; }
   :global(.box-rect.highlighted) { stroke: #a02480; stroke-width: 2.25; }
+  :global(.box-rect.selected) { stroke: #e53935; stroke-width: 2.25; cursor: context-menu; }
   :global(.box-label) {
     font-family: 'Georgia', serif;
     font-style: italic;

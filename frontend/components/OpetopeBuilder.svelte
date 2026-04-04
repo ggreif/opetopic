@@ -156,9 +156,9 @@
   function handleEncircle(cellIds: Set<string>) {
     const focus = store.focus
     if (!focus.root || cellIds.size === 0) return
-    // Use any member to determine dimension (all are in the same edge tree)
+    // Use any member to determine dimension — search edgeRoot first, then root
     const anyId = [...cellIds][0]
-    const sub = subtreeFor(focus.edgeRoot, anyId)
+    const sub = subtreeFor(focus.edgeRoot, anyId) ?? subtreeFor(focus.root, anyId)
     if (!sub) return
     setFocus(encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1)))
   }
