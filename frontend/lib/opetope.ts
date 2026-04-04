@@ -476,9 +476,9 @@ export function simplex(
   const g = cell(gLabel, 1)
   const h = cell(hLabel, 1)
 
-  // dim0: chain of 6 points (all inner; last is lollipop)
-  const [pa, pb, pc, pd, pe, pi] = ['0','1','2','3','4','5'].map(l => cell(l, 0))
-  const dim0 = node(pa, [[freshId(), node(pb, [[freshId(), node(pc, [[freshId(), node(pd, [[freshId(), node(pe, [[freshId(), lollipop(pi)]])]])]])]])]])
+  // dim0: chain of 7 points (all inner except last which is an open leaf)
+  const [pa, pb, pc, pd, pe, pi, pj] = ['0','1','2','3','4','5','6'].map(l => cell(l, 0))
+  const dim0 = node(pa, [[freshId(), node(pb, [[freshId(), node(pc, [[freshId(), node(pd, [[freshId(), node(pe, [[freshId(), node(pi, [[freshId(), leaf(pj)]])]])]])]])]])]])
 
   // dim1: f,g,h as inner nodes; output 1-cell as root; 0-cells as substrate leaves
   const out = cell(outLabel, 1)
@@ -488,11 +488,12 @@ export function simplex(
     [freshId(), node(h, [[freshId(), leaf(substrate(h_src, pe))], [freshId(), leaf(substrate(h_tgt, pi))]])],
   ])
 
-  // dim2: alpha with f,g,h as substrate leaves
+  // dim2: alpha with f,g,h,out as substrate leaves
   const dim2 = node(alpha, [
     [freshId(), leaf(substrate(fLabel + '□', f))],
     [freshId(), leaf(substrate(gLabel + '□', g))],
     [freshId(), leaf(substrate(hLabel + '□', h))],
+    [freshId(), leaf(substrate(outLabel + '□', out))],
   ])
 
   return [dim0, dim1, dim2]
@@ -516,24 +517,26 @@ export function boxtree(): Opetope {
   const g = cell('g', 1)
   const i = cell('i', 1)
   const u = cell('u', 1)
-  const [pa, pb, pc, pt, pd, pe] = ['0','1','2','3','4','5'].map(l => cell(l, 0))
+  const out = cell('⍵', 1)  // output 1-cell: root of dim1
+  const [pa, pb, pc, pt, pd, pe, pf] = ['0','1','2','3','4','5','6'].map(l => cell(l, 0))
 
-  // dim0: chain of 6 points (all inner; last is lollipop)
-  const dim0 = node(pa, [[freshId(), node(pb, [[freshId(), node(pc, [[freshId(), node(pt, [[freshId(), node(pd, [[freshId(), lollipop(pe)]])]])]])]])]])
+  // dim0: chain of 7 points (inner except last open leaf)
+  const dim0 = node(pa, [[freshId(), node(pb, [[freshId(), node(pc, [[freshId(), node(pt, [[freshId(), node(pd, [[freshId(), node(pe, [[freshId(), leaf(pf)]])]])]])]])]])]])
 
-  // dim1: g, i, u as inner nodes; j as root; 0-cells as substrate leaves
-  const dim1 = node(j, [
+  // dim1: g, i, u as inner nodes; out (dim=1) as root; 0-cells as substrate leaves
+  const dim1 = node(out, [
     [freshId(), node(g, [[freshId(), leaf(substrate('a', pa))], [freshId(), leaf(substrate('b', pb))], [freshId(), leaf(substrate('c', pc))]])],
     [freshId(), node(i, [[freshId(), leaf(substrate('t', pt))]])],
     [freshId(), node(u, [[freshId(), leaf(substrate('d', pd))], [freshId(), leaf(substrate('e', pe))]])],
   ])
 
-  // dim2: outer frame with g, i, u as substrate leaves
-  const frameCell = cell('J', 3)
-  const dim2 = node(frameCell, [
+  const out2 = cell('J', 2) // output 2-cell: root of dim2
+  // dim2: j (dim=2) as root; g, i, u, out as substrate leaves
+  const dim2 = node(out2, [
     [freshId(), leaf(substrate('g□', g))],
     [freshId(), leaf(substrate('i□', i))],
     [freshId(), leaf(substrate('u□', u))],
+    [freshId(), leaf(substrate('⍵□', out))],
   ])
 
   return [dim0, dim1, dim2]

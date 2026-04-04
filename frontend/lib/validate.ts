@@ -130,10 +130,14 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
     }
   }
 
-  // 1.3 edgeroot-no-lollipop (ADVISORY)
+  // 1.3 edgeroot-no-lollipop: fundamental for dim=0 (drops don't exist there), ADVISORY otherwise
   for (const n of edgeNodes) {
-    if (n.children !== null && n.children.length === 0)
-      return `ADVISORY edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in edgeRoot`
+    if (n.children !== null && n.children.length === 0) {
+      if (edgeRoot.cell.dim === 0)
+        return `edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in dim-0 edgeRoot (drops not allowed at dim 0)`
+      else
+        return `ADVISORY edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in edgeRoot`
+    }
   }
 
   // 1.4/8.2 branch-ids-unique-within-node
@@ -188,18 +192,19 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   for (const n of rootNodes) if (n.cell.dim < 0)
     return `dim-non-negative: cell "${n.cell.label}" has dim=${n.cell.dim} in root`
 
-  // 6.1 edgeroot-dim-decreases
-  function checkDims(n: Tree): string | null {
+  // 6.1 edgeroot-dim-decreases: children of inner nodes must be dim-1.
+  //     Root's direct children are at the same dim (they are inputs, not sub-cells).
+  function checkDims(n: Tree, isRoot: boolean): string | null {
     if (!n.children) return null
     for (const [, child] of n.children) {
-      if (n.cell.dim > 0 && child.cell.dim !== n.cell.dim - 1)
+      if (!isRoot && n.cell.dim > 0 && child.cell.dim !== n.cell.dim - 1)
         return `edgeroot-dim-decreases: child "${child.cell.label}" dim=${child.cell.dim} but parent "${n.cell.label}" dim=${n.cell.dim}`
-      const r = checkDims(child)
+      const r = checkDims(child, false)
       if (r) return r
     }
     return null
   }
-  const dimViolation = checkDims(edgeRoot)
+  const dimViolation = checkDims(edgeRoot, true)
   if (dimViolation) return dimViolation
 
   // 6.3 lollipop-dim-is-zero (in root)
@@ -329,18 +334,20 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
 // ── Multi-level validation ────────────────────────────────────────────────────
 
-function treeShapeEquals(a: Tree, b: Tree): boolean {
-  if (a.cell.id !== b.cell.id) return false
-  if ((a.children === null) !== (b.children === null)) return false
-  if (a.children === null || b.children === null) return true  // both null
-  if (a.children.length !== b.children.length) return false
+function treeShapeEquals(a: Tree, b: Tree): string | null {
+  if (a.cell.id !== b.cell.id) return `cell id mismatch: "${a.cell.label}" (${a.cell.id}) vs "${b.cell.label}" (${b.cell.id})`
+  if (a.cell.label !== b.cell.label) return `label mismatch for id ${a.cell.id}: "${a.cell.label}" vs "${b.cell.label}"`
+  if ((a.children === null) !== (b.children === null)) return `children null-mismatch at "${a.cell.label}"`
+  if (a.children === null || b.children === null) return null  // both null
+  if (a.children.length !== b.children.length) return `children length mismatch at "${a.cell.label}": ${a.children.length} vs ${b.children.length}`
   for (let i = 0; i < a.children.length; i++) {
     const [abid, achild] = a.children[i]
     const [bbid, bchild] = b.children[i]
-    if (abid !== bbid) return false
-    if (!treeShapeEquals(achild, bchild)) return false
+    if (abid !== bbid) return `branch id mismatch at "${a.cell.label}": "${abid}" vs "${bbid}"`
+    const r = treeShapeEquals(achild, bchild)
+    if (r) return r
   }
-  return true
+  return null
 }
 
 export function validateStack(diagrams: AtomicDiagram[]): string | null {
@@ -352,8 +359,8 @@ export function validateStack(diagrams: AtomicDiagram[]): string | null {
     const d = diagrams[i]
     if (!d.root) continue
     const expected = computeSucc(d.root)
-    if (!treeShapeEquals(expected, diagrams[i + 1].edgeRoot))
-      return `[bond ${i}→${i+1}] edgeRoot of level ${i+1} does not match computeSucc of level ${i}`
+    const r = treeShapeEquals(expected, diagrams[i + 1].edgeRoot)
+    if (r) return `[bond ${i}→${i+1}] ${r}`
   }
   return null
 }
