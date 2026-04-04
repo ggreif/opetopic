@@ -24,6 +24,20 @@
   const violation = $derived(validateStack(store.diagrams))
   const drops     = $derived(collectDrops(store.focus.edgeRoot))
 
+  // Map lollipop cell ID → its branch ID in focus.root (for bond hover via cell ID)
+  const lolliCellToBranchId = $derived((() => {
+    const m = new Map<string, string>()
+    function walk(t: import('../lib/opetope').Tree) {
+      if (!t.children) return
+      for (const [bid, child] of t.children) {
+        if (child.children !== null && child.children.length === 0) m.set(child.cell.id, bid)
+        walk(child)
+      }
+    }
+    if (store.focus.root) walk(store.focus.root)
+    return m
+  })())
+
   $effect(() => { if (violation) console.log('[validateStack]', violation) })
 
   // Succ AtomicDiagram:
@@ -96,7 +110,7 @@
       diagram={store.focus}
       {drops}
       highlight={hoveredId ?? undefined}
-      highlightNode={succHoveredId ?? undefined}
+      highlightNode={(succHoveredId ? (lolliCellToBranchId.get(succHoveredId) ?? succHoveredId) : undefined)}
       selected={selectedIds}
       onhover={(id) => { hoveredId = id }}
       onnodehover={(id) => { succHoveredId = id }}

@@ -18,7 +18,7 @@
   function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
     const innerNodes: ReturnType<typeof cell>[] = []
     function collectInner(t: Tree) {
-      if (t.children !== null) {
+      if (t.children !== null && t.children.length > 0) {
         innerNodes.push(t.cell)
         for (const [, child] of t.children) collectInner(child)
       }

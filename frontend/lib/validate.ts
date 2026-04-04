@@ -98,7 +98,7 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   const edgeCellMap = buildCellMap(edgeRoot)
 
   const edgeInnerIds = new Set<string>(
-    edgeNodes.filter(n => n.children !== null).map(n => n.cell.id)
+    edgeNodes.filter(n => n.children !== null && n.children.length > 0).map(n => n.cell.id)
   )
   const edgeBranchIds = buildBranchIdSet(edgeRoot)
 
