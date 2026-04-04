@@ -29,6 +29,13 @@
       blurb: "Continues the Orchard tutorial by showing how to reshape opetopic cells interactively, covering extrusion and other structural editing operations.",
     },
     {
+      id: "Vxnf_3Bxj2o",
+      title: "Orchard 3 - Composition and Associativity",
+      date: "2014-01-21",
+      label: "Jan 21, 2014",
+      blurb: "Demonstrates how composition of opetopic cells is performed in Orchard and unpacks the associativity structure that emerges from the opetopic pasting diagrams.",
+    },
+    {
       id: "DRFjUSaNexQ",
       title: "Orchard 4 - Identities and Invertibility",
       date: "2014-01-21",

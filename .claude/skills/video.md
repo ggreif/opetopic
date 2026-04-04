@@ -1,5 +1,15 @@
 # Adding YouTube Videos to the Videos Page
 
+## Extracting the video ID
+
+YouTube URLs often carry query parameters (e.g. `?si=...`, `?t=...`). Only the
+bare 11-character video ID belongs in the `videos` array — strip everything else.
+
+| URL form | ID |
+|---|---|
+| `https://youtu.be/Vxnf_3Bxj2o?si=m40n5CuB8TwKHzlB` | `Vxnf_3Bxj2o` |
+| `https://www.youtube.com/watch?v=aPBqf72X-I8&t=42s` | `aPBqf72X-I8` |
+
 ## Fetch metadata for a YouTube video ID
 
 Use `curl` to get the upload date and oEmbed title:
