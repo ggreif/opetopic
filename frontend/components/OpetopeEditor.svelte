@@ -50,6 +50,8 @@
       const extended  = minConnectedSubtree(store.focus.edgeRoot, candidate)
       if (isValidEncircleSet(store.focus.edgeRoot, extended)) {
         selectedIds = extended
+      } else {
+        selectedIds = new Set([id])  // multi-select invalid — fall back to single select
       }
     } else {
       selectedIds = new Set([id])
