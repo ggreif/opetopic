@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, arrow, point, boxtree, cell, freshId, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree } from '../lib/opetope'
+  import { simplex, arrow, point, boxtree, cell, freshId, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
   import { validateDiagram } from '../lib/validate'
   import { store } from '../lib/diagramStore.svelte'
 
@@ -25,15 +25,29 @@
     }
     collectInner(diagram.edgeRoot)
     if (innerNodes.length === 0) return { edgeRoot: diagram.edgeRoot, root: null }
-    const frameCell = cell(freshLabel(), diagram.edgeRoot.cell.dim + 1)
+    // Collect labels already in edgeRoot so we skip them (computeSucc preserves labels,
+    // which would collide with freshLabel() if we don't check).
+    const usedLabels = new Set<string>()
+    function collectLabels(t: Tree) {
+      usedLabels.add(t.cell.label)
+      if (t.children) for (const [, c] of t.children) collectLabels(c)
+    }
+    collectLabels(diagram.edgeRoot)
+    function safeLabel(): string {
+      let label: string
+      do { label = freshLabel() } while (usedLabels.has(label))
+      usedLabels.add(label)
+      return label
+    }
+    const frameCell = cell(safeLabel(), diagram.edgeRoot.cell.dim + 1)
     const children: [string, Tree][] = innerNodes.map(c =>
-      [freshId(), { cell: { ...c, label: freshLabel() }, away: new Set(), drops: [], children: null } as Tree]
+      [freshId(), { cell: { ...c, label: safeLabel() }, away: new Set(), drops: [], children: null } as Tree]
     )
     return { edgeRoot: diagram.edgeRoot, root: { cell: frameCell, away: new Set(), drops: [], children } }
   }
 
   // Initialise store with default example
-  store.resetTo(withOuterFrame(boxtree()))
+  loadExample(boxtree)
 
   // Auto-create the base box whenever Focus lands on a diagram with root === null
   // but an edge tree that has inner nodes. This fires on hopRight into a new level.
@@ -54,15 +68,24 @@
   }
 
   // Example gallery switcher
-  const examples: { label: string; make: () => AtomicDiagram }[] = [
+  const examples: { label: string; make: () => Opetope }[] = [
     { label: 'Boxtree',          make: () => boxtree() },
     { label: 'Simplex (2-cell)', make: () => simplex() },
     { label: 'Arrow (1-cell)',   make: () => arrow() },
     { label: 'Point (0-cell)',   make: () => point() },
   ]
 
-  function loadExample(make: () => AtomicDiagram) {
-    store.resetTo(withOuterFrame(make()))
+  function loadExample(make: () => Opetope) {
+    const trees = make()
+    if (trees.length === 1) {
+      store.resetTo(withOuterFrame({ edgeRoot: trees[0], root: null }))
+      return
+    }
+    // Multi-level: trees[i+1] serves as root for diagrams[i] — the bond holds
+    // because computeSucc(trees[i+1]) has the same structure as trees[i+1].
+    const diagrams: AtomicDiagram[] = trees.slice(0, -1).map((t, i) => ({ edgeRoot: t, root: trees[i + 1] }))
+    diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }))
+    store.resetToStack(diagrams, 0)
   }
 
   function handleSourceExtrude(leafId: string) {

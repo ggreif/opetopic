@@ -417,6 +417,7 @@ export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell):
 
 export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
 function leaf(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: null } }
+function lollipop(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: [] } }
 function node(c: Cell, children: [string, Tree][]): Tree {
   return { cell: c, away: new Set(), drops: [], children }
 }
@@ -424,22 +425,30 @@ function node(c: Cell, children: [string, Tree][]): Tree {
 /**
  * A single 0-cell (point). Just one node, no edges.
  */
-export function point(label = 'a'): AtomicDiagram {
+export function point(label = 'a'): Opetope {
   const x = cell(label, 0)
-  const t = leaf(x)
-  return { root: t, edgeRoot: t }
+  return [leaf(x)]
 }
 
 /**
  * A 1-cell: arrow f: a → b.
  * Edge tree: f at top, a and b as children (source/target).
  */
-export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): AtomicDiagram {
+export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): Opetope {
   const f = cell(fLabel, 1)
-  const x = cell(srcLabel, 0)
-  const y = cell(tgtLabel, 0)
-  const edgeRoot = node(f, [[freshId(), leaf(x)], [freshId(), leaf(y)]])
-  return { root: edgeRoot, edgeRoot }
+  const points = [cell('0', 0), cell('1', 0), cell('2', 0)]
+  const x = { ...points[0], label: srcLabel }
+  const y = { ...points[1], label: tgtLabel }
+
+  // dim0: just a tower of points
+  const dim0 = node(points[0], [[freshId(), node(points[1], [[freshId(), leaf(points[2])]])]])
+
+  // dim1: y is outer inner node, x is lollipop child — both inner ⟹ rule 7.1 holds for dim0↔dim1
+  //const dim1 = node(y, [[freshId(), lollipop(x)]])
+  //const dim1 = leaf(cell('B', 1),)
+  // dim2: f: x → y (open leaves x,y match inner nodes of dim0)
+  const dim1 = node(f, [[freshId(), leaf(x)], [freshId(), leaf(y)]])
+  return [dim0, dim1/*, dim2*/]
 }
 
 /**
@@ -458,19 +467,17 @@ export function simplex(
   f_src = 'a', f_tgt = 'b',
   g_src = 'c', g_tgt = 'd',
   h_src = 'e', h_tgt = 'i',
-): AtomicDiagram {
+): Opetope {
   const alpha = cell(alphaLabel, 2)
   const f = cell(fLabel, 1)
   const g = cell(gLabel, 1)
   const h = cell(hLabel, 1)
 
-  const edgeRoot = node(alpha, [
+  return [node(alpha, [
     [freshId(), node(f, [[freshId(), leaf(cell(f_src, 0))], [freshId(), leaf(cell(f_tgt, 0))]])],
     [freshId(), node(g, [[freshId(), leaf(cell(g_src, 0))], [freshId(), leaf(cell(g_tgt, 0))]])],
     [freshId(), node(h, [[freshId(), leaf(cell(h_src, 0))], [freshId(), leaf(cell(h_tgt, 0))]])],
-  ])
-
-  return { root: edgeRoot, edgeRoot }
+  ])]
 }
 
 /**
@@ -486,7 +493,7 @@ export function simplex(
  *
  * Labels: j = 2-cell (outermost), g/i/u = 1-cells, a/b/c/t/d/e = 0-cells
  */
-export function boxtree(): AtomicDiagram {
+export function boxtree(): Opetope {
   const j = cell('j', 2)
   const g = cell('g', 1)
   const i = cell('i', 1)
@@ -504,5 +511,5 @@ export function boxtree(): AtomicDiagram {
     [freshId(), node(u, [[freshId(), leaf(d)], [freshId(), leaf(e)]])],
   ])
 
-  return { root: tree, edgeRoot: tree }
+  return [tree]
 }

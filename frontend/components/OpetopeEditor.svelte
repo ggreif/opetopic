@@ -24,6 +24,8 @@
   const violation = $derived(validateStack(store.diagrams))
   const drops     = $derived(collectDrops(store.focus.edgeRoot))
 
+  $effect(() => { if (violation) console.log('[validateStack]', violation) })
+
   // Succ AtomicDiagram:
   //   1. null                               → hide pane (no box tree)
   //   2. store.succDiagram                  → next level already exists, show verbatim

@@ -42,6 +42,11 @@ class DiagramStore {
     this.diagrams = [diagram]
     this.focusIdx = 0
   }
+
+  resetToStack(newDiagrams: AtomicDiagram[], startIdx: number) {
+    this.diagrams = newDiagrams
+    this.focusIdx = Math.min(startIdx, newDiagrams.length - 1)
+  }
 }
 
 export const store = new DiagramStore()
