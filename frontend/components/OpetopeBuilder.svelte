@@ -1,9 +1,11 @@
 <script lang="ts">
   import * as d3 from 'd3'
+  import { tick } from 'svelte'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, ypsilon, point, boxtree, cell, freshId, substrate, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
+  import { simplex, ypsilon, point, boxtree, cell, freshId, resetIds, substrate, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
   import { validateDiagram } from '../lib/validate'
   import { store } from '../lib/diagramStore.svelte'
+  import type { TapeStep } from '../lib/opetope-edsl'
 
   // Auto-label counter: cycles through α β γ δ ε ζ η θ ι κ … then x₀ x₁ …
   const _greek = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π']
@@ -46,17 +48,19 @@
     return { edgeRoot: diagram.edgeRoot, root: { cell: frameCell, away: new Set(), drops: [], children } }
   }
 
-  // Initialise store with default example
-  loadExample(boxtree)
-
   // Dump Focus diagram to console on every dimension hop.
   let _prevFocusIdx = store.focusIdx
   let _firstHopEffect = true
+
+  // Initialise store with default example
+  loadExample(boxtree)
   $effect(() => {
     const idx = store.focusIdx  // tracked reactive dependency
     dumpOpetope(`hop → level ${idx}`)
     if (!_firstHopEffect) {
-      console.log('[EDSL]', JSON.stringify({ op: 'hop', delta: idx > _prevFocusIdx ? 1 : -1 }))
+      const step: TapeStep = { op: 'hop', delta: idx > _prevFocusIdx ? 1 : -1 }
+      console.log('[EDSL]', JSON.stringify(step))
+      _recordStep(step, true)  // $effect runs post-flush — snapshot immediately
     }
     _firstHopEffect = false
     _prevFocusIdx = idx
@@ -81,31 +85,36 @@
   }
 
   // Example gallery switcher
-  const examples: { label: string; make: () => Opetope }[] = [
-    { label: 'Boxtree',          make: () => boxtree() },
-    { label: 'Simplex (2-cell)', make: () => simplex() },
-    { label: 'Ypsilon (2-cell)', make: () => ypsilon() },
-    { label: 'Point (0-cell)',   make: () => point() },
+  type ExampleName = 'boxtree' | 'simplex' | 'ypsilon' | 'point'
+  const examples: { label: string; name: ExampleName; make: () => Opetope }[] = [
+    { label: 'Boxtree',          name: 'boxtree', make: () => boxtree() },
+    { label: 'Simplex (2-cell)', name: 'simplex', make: () => simplex() },
+    { label: 'Ypsilon (2-cell)', name: 'ypsilon', make: () => ypsilon() },
+    { label: 'Point (0-cell)',   name: 'point',   make: () => point() },
   ]
 
-  function loadExample(make: () => Opetope) {
+  function loadExample(make: () => Opetope, name?: ExampleName) {
+    _firstHopEffect = true  // suppress the hop effect fired by the store reset below
     const trees = make()
     if (trees.length === 1) {
       store.resetTo(withOuterFrame({ edgeRoot: trees[0], root: null }))
-      return
+    } else {
+      // Multi-level: trees[i+1] serves as root for diagrams[i] — the bond holds
+      // because computeSucc(trees[i+1]) has the same structure as trees[i+1].
+      const diagrams: AtomicDiagram[] = trees.slice(0, -1).map((t, i) => ({ edgeRoot: t, root: trees[i + 1] }))
+      diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }))
+      store.resetToStack(diagrams, 0)
     }
-    // Multi-level: trees[i+1] serves as root for diagrams[i] — the bond holds
-    // because computeSucc(trees[i+1]) has the same structure as trees[i+1].
-    const diagrams: AtomicDiagram[] = trees.slice(0, -1).map((t, i) => ({ edgeRoot: t, root: trees[i + 1] }))
-    diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }))
-    store.resetToStack(diagrams, 0)
+    if (name) {
+      const step: TapeStep = { op: 'start', example: name }
+      console.log('[EDSL]', JSON.stringify(step))
+      _recordStep(step)
+    }
   }
 
   function handleSourceExtrude(leafId: string) {
     const focus = store.focus
-    // Find the leaf label for EDSL logging
     const _extrudedLeaf = subtreeFor(focus.edgeRoot, leafId)
-    if (_extrudedLeaf) console.log('[EDSL]', JSON.stringify({ op: 'extrude', label: _extrudedLeaf.cell.label }))
     // Find the dim of the extruded leaf so the new child has dim - 1
     function findDim(tree: typeof focus.edgeRoot): number {
       if (tree.cell.id === leafId) return tree.cell.dim
@@ -136,6 +145,11 @@
       newRoot = { ...oldRoot, children: [...oldRoot.children, [freshId(), newLeafBox]] }
     }
     setFocus({ edgeRoot: newEdgeRoot, root: newRoot })
+    if (_extrudedLeaf) {
+      const step: TapeStep = { op: 'extrude', label: _extrudedLeaf.cell.label }
+      console.log('[EDSL]', JSON.stringify(step))
+      _recordStep(step)
+    }
 
     // Navigate to newCell through the reactive $state proxy so mutations trigger Svelte reactivity
     const reactiveCell = subtreeFor(store.focus.edgeRoot, newCell.id)!.cell
@@ -174,7 +188,6 @@
 
   function handleDropInsert(edgeCellId: string) {
     const _dropNode = subtreeFor(store.focus.edgeRoot, edgeCellId)
-    if (_dropNode) console.log('[EDSL]', JSON.stringify({ op: 'drop', label: _dropNode.cell.label }))
     dumpOpetope(`before dropInsert (edgeCellId=${edgeCellId})`)
     const focus = store.focus
     // Create a fresh lollipop cell for the new child in root
@@ -190,68 +203,60 @@
       setFocus({ ...newFocus, root: { cell: frameCell, away: new Set(), drops: [], children: [[branchId, lollipop]] } })
     }
     dumpOpetope(`after dropInsert (branchId=${branchId})`)
+    if (_dropNode) {
+      const step: TapeStep = { op: 'drop', label: _dropNode.cell.label }
+      console.log('[EDSL]', JSON.stringify(step))
+      _recordStep(step)
+    }
   }
 
   // ── Recording ────────────────────────────────────────────────────────────────
   let recording = $state(false)
-  let _recordSteps: string[] = []         // EDSL JSON strings, each `[EDSL] {...}`
-  let _recordSnapshots: string[] = []     // SVG innerHTML of Focus pane at each step
-  let _recordObserver: MutationObserver | null = null
+  let _recordSteps: TapeStep[] = []
+  let _recordSnapshots: string[] = []
   let _editorEl: HTMLElement | undefined  // bound to the .builder section
 
   function _captureSnapshot(): string {
     if (!_editorEl) return ''
-    const focusSvg = _editorEl.querySelector('.focus-pane .atomic-diagram svg')
-    return focusSvg ? (focusSvg as SVGElement).innerHTML : ''
+    const focusSvg = _editorEl.querySelector('.focus-pane svg.atomic-diagram')
+    if (!focusSvg) return ''
+    // Clone and strip transient interaction classes before snapshotting
+    const clone = focusSvg.cloneNode(true) as SVGElement
+    clone.querySelectorAll('.highlighted, .selected').forEach(el => {
+      el.classList.remove('highlighted', 'selected')
+    })
+    return clone.innerHTML
   }
 
   function startRecording() {
     _recordSteps = []
     _recordSnapshots = []
+    _labelIdx = 0
+    resetIds()
     recording = true
-    if (!_editorEl) return
-    _recordObserver = new MutationObserver(() => {
-      // Snapshot captured after each mutation batch (i.e. after each operation)
-    })
-    const panes = _editorEl.querySelectorAll('.prev-pane, .focus-pane, .succ-pane')
-    panes.forEach(p => _recordObserver!.observe(p, { childList: true, subtree: true, attributes: true, characterData: true }))
   }
 
-  function _recordStep(jsonLine: string) {
+  // Called directly from each handler AFTER the state update.
+  // immediate=true: DOM already flushed (called from $effect) — snapshot synchronously.
+  // immediate=false: called from event handler — await tick() for Svelte to flush first.
+  async function _recordStep(step: TapeStep, immediate = false) {
     if (!recording) return
-    _recordSteps.push(jsonLine)
-    // Defer snapshot capture to after the DOM has updated
-    requestAnimationFrame(() => { _recordSnapshots.push(_captureSnapshot()) })
+    _recordSteps.push(step)
+    if (!immediate) await tick()
+    _recordSnapshots.push(_captureSnapshot())
   }
 
-  function stopRecording() {
+  async function stopRecording() {
     recording = false
-    _recordObserver?.disconnect()
-    _recordObserver = null
+    await tick()  // drain any in-flight _recordStep tick() calls
     const output = {
-      steps: _recordSteps.map(l => { try { return JSON.parse(l.replace(/^\[EDSL\]\s+/, '')) } catch { return l } }),
+      steps: _recordSteps,
       snapshots: _recordSnapshots,
     }
     console.group('[EDSL] Recording stopped — copy below into Tape.fromLog()')
     console.log(JSON.stringify(output, null, 2))
     console.groupEnd()
   }
-
-  // Intercept console.log to capture [EDSL] lines during recording
-  const _origConsoleLog = console.log.bind(console)
-  $effect(() => {
-    if (recording) {
-      ;(console as any).log = (...args: any[]) => {
-        _origConsoleLog(...args)
-        if (typeof args[0] === 'string' && args[0] === '[EDSL]') {
-          _recordStep(args[0] + ' ' + args[1])
-        }
-      }
-    } else {
-      ;(console as any).log = _origConsoleLog
-    }
-    return () => { ;(console as any).log = _origConsoleLog }
-  })
 
   function handleEncircle(cellIds: Set<string>) {
     const focus = store.focus
@@ -261,7 +266,14 @@
     const sub = subtreeFor(focus.edgeRoot, anyId) ?? subtreeFor(focus.root, anyId)
     if (!sub) return
     const next = encircleMulti(focus, cellIds, cell(freshLabel(), sub.cell.dim + 1))
-    if (next !== focus) setFocus(next)
+    if (next !== focus) {
+      // Resolve labels before setFocus mutates the store
+      const labels = [...cellIds].map(id => subtreeFor(focus.edgeRoot, id)?.cell.label ?? id)
+      setFocus(next)
+      const step: TapeStep = { op: 'encircle', labels }
+      console.log('[EDSL]', JSON.stringify(step))
+      _recordStep(step)
+    }
   }
 </script>
 
@@ -274,7 +286,7 @@
   <div class="toolbar">
     <span class="toolbar-label">Examples:</span>
     {#each examples as ex}
-      <button class="ex-btn" onclick={() => loadExample(ex.make)}>{ex.label}</button>
+      <button class="ex-btn" onclick={() => loadExample(ex.make, ex.name)}>{ex.label}</button>
     {/each}
     <span class="toolbar-sep"></span>
     <button class="rec-btn" class:recording onclick={() => recording ? stopRecording() : startRecording()}>

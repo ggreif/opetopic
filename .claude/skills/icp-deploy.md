@@ -16,6 +16,18 @@ Add the export to `~/.zshrc` if you want it persistent.
 
 ## Deploy workflow
 
+The simplest way — everything is wired into a single npm script:
+
+```bash
+npm run deploy:local
+```
+
+This chains: build Motoko canisters → install counter → `npm run build` (Svelte) → install
+assets canister → sync assets. Equivalent to the manual steps below and preferred for
+day-to-day use.
+
+### Manual equivalent
+
 ```bash
 export PATH=~/.npm-global/bin:$PATH   # if not already in PATH
 

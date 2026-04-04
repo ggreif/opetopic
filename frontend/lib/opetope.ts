@@ -25,6 +25,7 @@ export type Cell = {
  */
 let _nextId = 0
 export function freshId(): string { return String(_nextId++) }
+export function resetIds(): void { _nextId = 0 }
 
 /**
  * A drop is parasitic on a substrate branch, stored in that branch's Drop[]
