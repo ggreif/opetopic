@@ -418,6 +418,7 @@ export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell):
 export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
 function leaf(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: null } }
 function lollipop(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: [] } }
+function substrate(label: string, c: Cell): Cell { return { ...c, label } }
 function node(c: Cell, children: [string, Tree][]): Tree {
   return { cell: c, away: new Set(), drops: [], children }
 }
@@ -431,24 +432,21 @@ export function point(label = 'a'): Opetope {
 }
 
 /**
- * A 1-cell: arrow f: a → b.
- * Edge tree: f at top, a and b as children (source/target).
+ * A 2-cell: an Y.
+ * Edge tree: f is output, a and b inputs (source/target).
  */
 export function arrow(fLabel = 'f', srcLabel = 'a', tgtLabel = 'b'): Opetope {
   const f = cell(fLabel, 1)
   const points = [cell('0', 0), cell('1', 0), cell('2', 0)]
-  const x = { ...points[0], label: srcLabel }
-  const y = { ...points[1], label: tgtLabel }
+  const x = substrate(srcLabel, points[0])
+  const y = substrate(tgtLabel, points[1])
 
   // dim0: just a tower of points
   const dim0 = node(points[0], [[freshId(), node(points[1], [[freshId(), leaf(points[2])]])]])
 
-  // dim1: y is outer inner node, x is lollipop child — both inner ⟹ rule 7.1 holds for dim0↔dim1
-  //const dim1 = node(y, [[freshId(), lollipop(x)]])
-  //const dim1 = leaf(cell('B', 1),)
-  // dim2: f: x → y (open leaves x,y match inner nodes of dim0)
+  // dim1: f base, x y substrate (open leaves x,y match inner nodes of dim0)
   const dim1 = node(f, [[freshId(), leaf(x)], [freshId(), leaf(y)]])
-  return [dim0, dim1/*, dim2*/]
+  return [dim0, dim1]
 }
 
 /**
