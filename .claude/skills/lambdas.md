@@ -163,6 +163,31 @@ Layers 2 and 3 are **independent** — neither presupposes the other:
   full CCC, where the diagonal additionally allows x to be shared freely across
   both curry(b) and other morphisms.
 
+## Bonus: Sums via Church Encoding
+
+Categorical sums (coproducts) come **for free** from layers 2+3 — no new axiom needed.
+The Church/lambda encoding represents A + B as:
+
+**A + B ≅ ∀C. (A ⇒ C) × (B ⇒ C) ⇒ C**
+
+A value of type A + B is a function expecting a *tuple of continuations* — one per
+branch — and applying the appropriate one. Elimination is just @, no primitive
+case-split required.
+
+In the opetopic picture: the tuple of continuations is a multi-input cell (product,
+layer 2), and elimination is the apply operator (layer 3). The sum is geometrically
+a tree of continuation wires feeding into @.
+
+This mirrors the situation in System F / polymorphic lambda calculus, where all data
+types are encodable. The full hierarchy:
+
+1. **Base** — opetopic categories
+2. **Products** — cartesian flag, splitting-the-identity *(axiom)*
+3. **Exponentials** — dissecting binary morphisms *(axiom)*
+4. **Sums** — Church-encoded from 2+3 *(derived, no axiom)*
+
+---
+
 See also: Baez & Stay, *Physics, Topology, Logic and Computation: A Rosetta Stone* (2009)
 https://arxiv.org/abs/0903.0340 — uses closed symmetric monoidal categories as a
 unifying framework connecting Feynman diagrams, cobordisms, proofs, and programs.
