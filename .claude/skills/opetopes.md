@@ -209,6 +209,24 @@ The **head** of an opetope is the top-dimensional cell plus its codimension-1 pa
 
 ---
 
+## TODO: Stability of Target Universality (potential future chapter)
+
+In `frontend/components/Equivalences.svelte`, the proof of "target universal ⟺ equivalence"
+invokes a **stability** property via a stub link `href="#"`:
+
+> "By stability, it suffices to consider that we are given a target universal *arrow* f."
+
+The idea: target universality is stable under the extrusion operations, so the property
+at any dimension reduces to the base case of arrows (1-dimensional cells). This is analogous
+to how induction over the extrusion construction works — if the result holds for arrows,
+stability propagates it to all higher dimensions.
+
+This deserves its own chapter (likely in the `theory/` section, near UniversalProperties or
+IdentitiesUnits), with a formal statement and proof. When written, the stub `href="#"` in
+Equivalences.svelte should be updated to point to the new anchor.
+
+---
+
 ## Key Terms
 
 | Term | Meaning |
