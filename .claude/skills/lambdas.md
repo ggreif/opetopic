@@ -120,12 +120,38 @@ the only extra axiom needed on top of the base opetopic category structure.
 
 ---
 
-## Exponentials
+## Exponentials — Dissecting Binary Morphisms
 
-*(To be developed.)*
+The exponential (function object, internal hom) is forced into existence by a single
+identity equation — the **counit of the curry/apply adjunction**:
 
-The currying adjunction in the opetopic setting would have to respect the tree-shaped
-source structure rather than iterated binary currying. Grafting of trees corresponds
-to composition, so the adjunction likely interacts deeply with opetopic composition.
+**b(x, y) = @(curry(b)(x), y)**
 
-Deferred until the product picture is clearer.
+for any binary morphism b with inputs x and y. This is the *dissection* of b along
+one of its input wires.
+
+### What this forces
+
+- **curry(b)** — a unary morphism taking x, producing an intermediate "waiting for y"
+  object: the exponential Y^X (or X ⇒ Y)
+- **@** (apply/eval) — takes the curried result together with y and recovers b
+
+Neither curry nor @ is constructed independently — they are *jointly* forced into
+existence by demanding this single identity. The equation says: the direct 2-input
+cell b and the factored diagram @∘(curry(b) × id) are **equal as cells** in the
+opetopic category.
+
+### Layered structure
+
+The full CCC construction has a clean layered form, each layer adding exactly one
+identity axiom:
+
+1. **Base** — opetopic categories: linear, tree-shaped composition
+2. **Products** — flag inputs with !, drops give diagonal, ⊗ forced by
+   splitting-the-identity: `⊗(π₁(x), ..., πₙ(x)) = id(x)`
+3. **Exponentials** — curry/@ forced by dissecting binary morphisms:
+   `b(x, y) = @(curry(b)(x), y)`
+
+Layer 3 presupposes layer 2: the diagonal is needed to route x to both curry(b)
+and @ on the right-hand side. So the cartesian flag must already be in place before
+exponentials make sense.
