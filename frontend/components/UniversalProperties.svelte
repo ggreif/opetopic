@@ -26,7 +26,7 @@ import RightUniv1 from "./svgs/runiv1.svelte"
     </p>
 
     <p>
-      Let's begin with a cell f as in the previous section.
+      Let's begin with a cell <i>f</i> as in the previous section.
     </p>
 
     <div class="ui basic center aligned segment">
@@ -50,7 +50,7 @@ import RightUniv1 from "./svgs/runiv1.svelte"
     <p>
       The second universal property we will be interested in is called
       <em>source universality</em> and depends on the choice of a particular
-      source cell of f.  It will similarly be denoted by a small triangle,
+      source cell of <i>f</i>.  It will similarly be denoted by a small triangle,
       this time decorating the appropriate input edge:
     </p>
 
@@ -62,9 +62,9 @@ import RightUniv1 from "./svgs/runiv1.svelte"
     <p>
       In the above diagram, we have labelled the input edges with the
       faces they correspond in order to aid the reader in seeing what
-      assertion is being made about f by the decoration: by decorating
-      the edge corresponding to the cell x, we mean to assert that
-      f is source universal at x.
+      assertion is being made about <i>f</i> by the decoration: by decorating
+      the edge corresponding to the cell <i>x</i>, we mean to assert that
+      <i>f</i> is source universal at <i>x</i>.
     </p>
 
     <p>
@@ -80,10 +80,10 @@ import RightUniv1 from "./svgs/runiv1.svelte"
     </div>
     <div class="ui bottom attached segment">
       <p>
-	Definition: a cell f is said to be <em>target universal</em>
-	if for all s and t filling the cells depicted in green, there
-	exist u and v completing the diagram such that v both is target
-	universal and source universal at u.
+	Definition: a cell <i>f</i> is said to be <em>target universal</em>
+	if for all <i>s</i> and <i>t</i> filling the cells depicted in green, there
+	exist <i>u</i> and <i>v</i> completing the diagram such that <i>v</i> both is target
+	universal and source universal at <i>u</i>.
       </p>
     </div>
 
@@ -91,7 +91,7 @@ import RightUniv1 from "./svgs/runiv1.svelte"
       Let us pause to make a couple remarks before moving on to the
       definition of source universal.  First of all, the observant
       reader will notice that the shape depicted in the diagram above
-      is exactly the target extrusion of f as discussed in the previous
+      is exactly the target extrusion of <i>f</i> as discussed in the previous
       section.  We have colored the cells in the diagram simply as a
       means to aid the reader in recognizing what are the
       hypotheses of the definition (in green), and what are its
@@ -100,9 +100,9 @@ import RightUniv1 from "./svgs/runiv1.svelte"
 
     <p>
       We now finish the definition by explaining what it is for a cell
-      f to be source universal at a chosen source cell x.  Not
+      <i>f</i> to be source universal at a chosen source cell <i>x</i>.  Not
       surprisingly this definition will make use of the source
-      extrusion at x.
+      extrusion at <i>x</i>.
     </p>
 
     <div class="ui top attached inverted grey segment">
@@ -114,11 +114,11 @@ import RightUniv1 from "./svgs/runiv1.svelte"
     </div>
     <div class="ui bottom attached segment">
       <p>
-	Definition: a cell f is said to be <em>source universal</em>
-	at a given source cell x if for all s and t filling the cells
-	depicted in green, there exist u and v completing the diagram
-	such that v is both target universal and source universal at
-	u.
+	Definition: a cell <i>f</i> is said to be <em>source universal</em>
+	at a given source cell <i>x</i> if for all <i>s</i> and <i>t</i> filling the cells
+	depicted in green, there exist <i>u</i> and <i>v</i> completing the diagram
+	such that <i>v</i> is both target universal and source universal at
+	<i>u</i>.
       </p>
     </div>
 
