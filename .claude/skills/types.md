@@ -36,15 +36,16 @@ data BT where
   B : BT -> BT -> BT
 ```
 
-The four opetopic diagrams corresponding to this definition
-(from Finster's Higher Dimensional Syntax slides):
+The opetopic diagrams from Finster's *Higher Dimensional Syntax* slides.
+**Only `R` and `B` are exported** — everything else is administrative scaffolding
+required by the opetopic structure but invisible to the user of the type.
 
 | Diagram | Opetopic shape | Meaning |
 |---|---|---|
 | `[BT]` alone | nominal card | the type BT itself |
-| `[BT] [x]` | card + enclosed point | a term `x : BT` |
-| `[BT] [x] [f] [R]` | card + term + morphism + drop | the `R` leaf constructor |
-| `[BT] [[x][f]] [[f][f]] [B]` | card + two terms + binary node | the `B` branch constructor |
+| `[BT] [x]` | card + administrative 0-cell | scaffolding — NOT a user-facing term |
+| `[BT] [x] [f] [R]` | card + scaffolding + drop | the exported `R` leaf constructor |
+| `[BT] [[x][f]] [[f][f]] [B]` | card + scaffolding + binary node | the exported `B` branch constructor |
 
 The **source tree shape** of the constructor cell directly encodes its arity:
 - `R` — nullary (drop/lollipop, no inputs)
@@ -55,21 +56,21 @@ The **source tree shape** of the constructor cell directly encodes its arity:
 ## Types, Terms, Constructors
 
 - **Types** = nominal cards (dimension -1): classify everything above them
-- **Type constructors** = cells whose source tree is over the nominal card
-- **Data constructors** = cells that build terms: their shape (unary, binary, ...)
-  is the arity of the constructor
-- **Terms** = 0-cells tagged with a nominal card
+- **Data constructors** = exported cells (`R`, `B`, ...): their source tree shape
+  encodes arity; everything else in the complex is administrative scaffolding
+- **User-facing terms** = opetopic **composites** (the red box) — trees of
+  constructor applications collapsed into a single output cell
+- **Administrative cells** = the 0- and 1-dimensional faces (`x`, `f`, ...) required
+  by the opetopic structure to be well-formed; not exported to the user
 - **Rewrites / proofs** = higher cells
-
-This gives a natural hierarchy matching dependent type theory:
 
 | Dimension | Role |
 |---|---|
 | -1 | Type (nominal card) |
-| 0 | Term |
-| 1 | Morphism between terms / constructor |
-| 2 | Rewrite / proof |
-| n ≥ 3 | Higher coherence |
+| 0 | Administrative scaffolding (e.g. `x`) |
+| 1 | Constructor or administrative morphism (e.g. `f`) |
+| 2+ | Higher constructors, rewrites, coherences |
+| composite | User-facing term — a tree of constructors in a red box |
 
 ---
 
@@ -139,13 +140,13 @@ nominal position (-1), making it appear as a 0-cell — a new type. The caption
 on the slide is literally: *"One has a new type."*
 
 Example: `k` is technically a 2-cell mediating between two chains of 1-cells, but
-shifted to the -1 position it becomes a bare point — a new type name. The
-higher-dimensional scaffolding (the chains) becomes the internal structure; `k`
-is the clean exported face.
+shifted to the **-1 position** it becomes a new **nominal card** — a new type name.
+The higher-dimensional scaffolding (the chains) becomes the prefix/internal structure;
+`k` is the clean exported face.
 
-**Type formation is dimensional shift** — collapsing a higher cell to a point and
-declaring it a type. The prefix box marks the boundary between scaffolding and
-the exported interface.
+**Type formation is dimensional shift** — taking a higher cell and placing it at the
+-1 position, declaring it a new type. The prefix box marks the boundary between
+scaffolding and the exported interface.
 
 ---
 
@@ -227,10 +228,10 @@ The four opetopic diagrams:
 
 | Diagram | Reading |
 |---|---|
-| `[Vec] [x]` | general term schema: `x : Vec` |
-| `[Vec] [x over x] [Nat]` | `Vec` is indexed by `Nat` — green cell appears as parameter |
-| `[Vec] [x] [0] [Nil]` | `Nil` constructor: index is `0` |
-| `[Vec] [x over x] [n over n+1] [A]` | `Cons` constructor: index steps `n → n+1`, element type `A` |
+| `[Vec] [x]` | administrative scaffolding — nominal card + 0-cell |
+| `[Vec] [x over x] [Nat]` | `Vec` is indexed by `Nat` — green cell as parameter |
+| `[Vec] [x] [0] [Nil]` | exported `Nil` constructor: index instantiated to `0` |
+| `[Vec] [x over x] [n over n+1] [A]` | exported `Cons`: index steps `n → n+1`, element type `A` |
 
 ### The green cell — imported nominal card (highly speculative)
 
