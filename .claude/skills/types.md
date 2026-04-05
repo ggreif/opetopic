@@ -132,6 +132,69 @@ low-dimensional interface** — and the box (nominal card) is what marks that bo
 
 ---
 
+## Type Formation = Dimensional Shift
+
+From Finster's slides: a higher-dimensional cell can be **shifted down** to the
+nominal position (-1), making it appear as a 0-cell — a new type. The caption
+on the slide is literally: *"One has a new type."*
+
+Example: `k` is technically a 2-cell mediating between two chains of 1-cells, but
+shifted to the -1 position it becomes a bare point — a new type name. The
+higher-dimensional scaffolding (the chains) becomes the internal structure; `k`
+is the clean exported face.
+
+**Type formation is dimensional shift** — collapsing a higher cell to a point and
+declaring it a type. The prefix box marks the boundary between scaffolding and
+the exported interface.
+
+---
+
+## Identity Types and the HoTT Tower
+
+From Finster's slides, the identity type notation:
+
+- `[X] [a over b]` = **Id_x(a, b)** — type of witnesses that 1-cells `a` and `b` are equal
+- `[X] [a over b] [f over g]` = **Id_{Id_x(a,b)}(f, g)** — homotopies between paths
+- Each level adds one more cell to the prefix box
+
+This is the full **∞-groupoid / HoTT tower**, falling out naturally from the
+dimensional shift mechanism:
+
+```mermaid
+graph LR
+  A["Id_x(a,b)"] --> B["Id_{Id_x(a,b)}(f,g)"] --> C["Id_{...}(...)"] --> D["..."]
+```
+
+---
+
+## Parametrised and Dependent Types
+
+The prefix box contents are the **free variables** the type depends on — `x`, `a`,
+`b` are parameters to `Id`. Dependent types are opetopic complexes with a longer
+prefix where later cells reference earlier ones:
+
+| Kind | Prefix |
+|---|---|
+| Simple type | just the nominal card |
+| Parametrised type | nominal card + extra cells as parameters |
+| Dependent type | prefix cells that reference earlier ones |
+
+---
+
+## `Refl` = Drop on the Nominal Card
+
+**`Refl_x : Id_x(a, a)`** — the reflexivity constructor — is a **drop on the point**
+of `Id_x(a,b)`. A drop is a degeneracy: it collapses a 1-cell to a point, identifying
+`a = a`. The trivial path *is* the drop. So `Refl` is not an extra axiom — it is the
+**existing drop mechanism** applied to the identity type's nominal card.
+
+Degeneracies in opetopic theory already know about reflexivity!
+
+This also suggests:
+- **`J` eliminator** = universal property of that drop (to be worked out)
+
+---
+
 ## To Be Developed
 
 - Dependent types: how does the nominal card generalise to families?
