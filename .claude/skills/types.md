@@ -335,8 +335,11 @@ Both Agda and Ωmega implement related hierarchies:
 - **Agda**: `Set_i : Set_{i+1}`, optional cumulativity via `--cumulativity` flag
   (subtyping `Set_i <: Set_{i+1}`). See [universe levels](https://agda.readthedocs.io/en/latest/language/universe-levels.html).
 - **Ωmega** (Tim Sheard): unbounded predicative hierarchy `*0, *1, *2, ...` for
-  values, types, kinds, sorts. See Sheard & Diehl,
-  [Leveling up dependent types](https://dl.acm.org/doi/10.1145/2502409.2502414) (DTP@ICFP 2013).
+  values, types, kinds, sorts. See Sheard & Mishra-Linger,
+  [Programming in Ωmega](https://link.springer.com/chapter/10.1007/978-3-540-88059-2_5)
+  (CEFP 2007, LNCS 5161); also Sheard,
+  [Generic Programming in Ωmega](https://link.springer.com/chapter/10.1007/978-3-540-76786-2_5)
+  (SSDGP 2006, LNCS 4719).
 
 Neither encodes the hierarchy as drops explicitly — that is the opetopic conjecture.
 
