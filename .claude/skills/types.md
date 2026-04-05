@@ -103,6 +103,35 @@ is a *specific composite* — a particular inhabitant built by applying construc
 
 ---
 
+## The Nominal Card as `newtype` (Speculative Analogy)
+
+Only `R` and `B` are **exported** data constructors — the things the programmer sees.
+The rest of the complex (`[BT]`, `[x]`, `[f]`) is **administrative scaffolding**:
+the 0- and 1-dimensional faces required by the opetopic structure to be well-formed,
+invisible at the type theory level.
+
+Finster draws a **box around the prefix** (dimensions -1..n) of the opetopic complex,
+keeping it separate from what follows. This box is the geometric expression of
+*hiding the scaffolding* — distilling a higher-dimensional structure down to a usable
+thing at a lower dimension.
+
+The analogy with Haskell's `newtype` is suggestive but not yet precise:
+
+```haskell
+newtype BT = BT { unBT :: forall r. r -> (BT -> BT -> r) -> r }
+--            ^^^ the box                ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the scaffolding
+```
+
+The `newtype` names the type, hides the Church/Scott encoding, and exposes only
+`R` and `B` as smart constructors. The nominal card plays a similar role in the
+opetopic complex — a naming device that abstracts over the internal plumbing.
+
+Whether this analogy is exact, or just a useful intuition pump, is an open question.
+The key idea to preserve: **higher-dimensional scaffolding gets distilled to a clean,
+low-dimensional interface** — and the box (nominal card) is what marks that boundary.
+
+---
+
 ## To Be Developed
 
 - Dependent types: how does the nominal card generalise to families?
