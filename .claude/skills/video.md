@@ -48,9 +48,13 @@ Each entry shape:
   title: "Title as returned by oEmbed",
   date: "YYYY-MM-DD",      // for sorting
   label: "Mon DD, YYYY",   // human-readable display
+  start: 10863,            // optional: start time in seconds (from ?t= or &t= in URL)
   blurb: "One or two sentences describing the content.",
 }
 ```
+
+If the URL contains `?t=NNN` or `&t=NNN`, extract the number and set `start: NNN`.
+The embed URL becomes `https://www.youtube.com/embed/ID?start=NNN` automatically.
 
 ## Deploy
 

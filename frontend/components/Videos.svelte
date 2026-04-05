@@ -15,6 +15,14 @@
       blurb: "Eric Finster presents his work on constructing the (∞,1)-category of types within homotopy type theory, delivered at the Centre for Quantum and Topological Systems at NYU Abu Dhabi.",
     },
     {
+      id: "u8XCiI-ZSHc",
+      title: "2022 Workshop on Polynomial Functors: Day 3 (Eric Finster segment)",
+      date: "2022-03-16",
+      label: "Mar 16, 2022",
+      start: 10863,
+      blurb: "Eric Finster's contribution to the Topos Institute polynomial functors workshop, starting at the point where he presents opetopic and type-theoretic aspects of polynomial monads.",
+    },
+    {
       id: "wz3h59rnhOU",
       title: "Eric Finster, Weak structures from strict ones",
       date: "2020-06-19",
@@ -101,7 +109,7 @@
       <div class="video-entry">
         <div class="video-embed">
           <iframe
-            src="https://www.youtube.com/embed/{v.id}"
+            src="https://www.youtube.com/embed/{v.id}{v.start ? '?start=' + v.start : ''}"
             title={v.title}
             frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
