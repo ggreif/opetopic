@@ -5,6 +5,7 @@ import Cellctxt from "./svgs/cellctxt.svelte"
 import LeftExtrusion from "./svgs/LeftExtrusion.svelte"
 import RightExtrusion from "./svgs/RightExtrusion.svelte"
 
+let leftStep  = $state<"start" | "extrude" | "enclose">("enclose")
 let rightStep = $state<"start" | "extrude" | "enclose">("extrude")
 
 </script>
@@ -70,14 +71,14 @@ let rightStep = $state<"start" | "extrude" | "enclose">("extrude")
     </p>
 
     <div class="ui attached center aligned segment">
-      <LeftExtrusion/>
+      <LeftExtrusion step={leftStep}/>
       <!-- <svg width="360" height="175" id="lext-svg"></svg> -->
     </div>
     <div class="ui bottom attached center aligned segment">
       <div class="ui buttons">
-        <button class="ui button" class:active={true}>Start</button>
-        <button class="ui button">Extrude</button>
-        <button class="ui button">Enclose</button>
+        <button class="ui button" class:active={leftStep === "start"}   onclick={() => leftStep = "start"}>Start</button>
+        <button class="ui button" class:active={leftStep === "extrude"} onclick={() => leftStep = "extrude"}>Extrude</button>
+        <button class="ui button" class:active={leftStep === "enclose"} onclick={() => leftStep = "enclose"}>Enclose</button>
       </div>
     </div>
 
