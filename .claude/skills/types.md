@@ -288,6 +288,60 @@ most important of the three.
 
 ---
 
+## Universe Hierarchy as Drops (Conjecture)
+
+Consider a stratified type with nested data declarations:
+
+```haskell
+data Foo : Set_2 where
+  data Bar : Foo where
+    Baz : Bar
+    Quux : Nat -> Bar
+  Zup : Foo
+```
+
+Three levels:
+
+- **`Foo : Set_2`** — a kind (level 2)
+- **`Bar : Foo`**, **`Zup : Foo`** — types (level 1, classified by `Foo`)
+- **`Baz : Bar`**, **`Quux : Nat → Bar`** — values (level 0, classified by `Bar`)
+
+In the opetopic picture, the universe hierarchy `Set_0, Set_1, Set_2, ...` is itself
+encoded as a chain of **drops**:
+
+```
+... ↓Set_2  ↓Set_1  ↓Set_0
+```
+
+`Set_n` is a drop in `Set_(n+1)`'s scaffolding (with intermediate administrative
+cells). This is natural: a drop is a degeneracy — a "constant" or "trivial" cell —
+and `Set_n` *is* exactly a specific constant element sitting inside the larger
+universe `Set_(n+1)`, not doing anything active at that level.
+
+The cascaded `data inside data` structure maps onto an **iterated prefix**:
+
+| Dimension | Role |
+|---|---|
+| ... | higher universes |
+| -2 | `Set_2` / kind level |
+| -1 | `Set_1` / type level — nominal cards (`Bar`, `Zup`) |
+| 0+ | `Set_0` / value level — constructors (`Baz`, `Quux`) |
+
+**Universe cumulativity** (`Set_n : Set_(n+1)`) falls out from the drop chain:
+the drop *is* an element of the higher universe. **Universe polymorphism** would be
+an operation parameterised over the drop chain — working at any level uniformly.
+
+Both Agda and Ωmega implement related hierarchies:
+- **Agda**: `Set_i : Set_{i+1}`, optional cumulativity via `--cumulativity` flag
+  (subtyping `Set_i <: Set_{i+1}`). See [universe levels](https://agda.readthedocs.io/en/latest/language/universe-levels.html).
+- **Ωmega** (Tim Sheard): unbounded predicative hierarchy `*0, *1, *2, ...` for
+  values, types, kinds, sorts. See Sheard & Diehl,
+  [Leveling up dependent types](https://dl.acm.org/doi/10.1145/2502409.2502414) (DTP@ICFP 2013).
+
+Neither encodes the hierarchy as drops explicitly — that is the opetopic conjecture.
+
+---
+
 ## Conclusion: The Proof is in the Pudding
 
 All of the above is conceptual scaffolding until there is a working implementation
