@@ -11,7 +11,7 @@
   <h4 class="ui header">Model Theory</h4>
 
   <p>
-    Soon after introducting the homotopy theoretic interpretation
+    Soon after introducing the homotopy theoretic interpretation
     of type theory, Voevodsky, et al,
     <a href="http://arxiv.org/abs/1211.2851">showed</a> that there was indeed a
     <em>model</em> of the theory in simplicial sets, which additionally
@@ -61,7 +61,7 @@
   <p>
     Most work on this problem has focused on finding a reasonable internal
     definition of <em>simplicial type</em>.  The main idea is that axiomatizing
-    such an object would allow us to speak of main other kinds of higher
+    such an object would allow us to speak of many other kinds of higher
     coherent objects such as internal groupoids and (∞,1)-categories.
     So far, however, no simple solution to this problem has been found.
   </p>
