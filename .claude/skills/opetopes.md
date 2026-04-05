@@ -227,6 +227,67 @@ Equivalences.svelte should be updated to point to the new anchor.
 
 ---
 
+## 🧨 Crackpot Corner
+
+Speculative generalisations of opetopic theory that may or may not be tractable.
+Handle with care — none of this is established mathematics.
+
+### Bubble Drops and k-Bonds
+
+A **standard drop** (1-bond) is dimension-adjacent:
+- Attaches to an n-cell
+- Boundary is an (n+1)-cell
+- Lollipop appears in dim (n+2)
+
+A **bubble drop** (2-bond) skips a dimension:
+- Attaches to a 0-cell (point)
+- **No** 1-cell boundary
+- Boundary is a 2-cell (a surface — a bubble)
+- Volume lollipop appears in dim 3
+
+The current bond bijection requires adjacent dimensions, so a bubble drop violates
+well-formedness. But geometrically nothing forbids the shape.
+
+**Proposed generalisation: k-bonds** — bonds that skip k-1 dimensions but remain
+bijective, matching n-cells to (n+k)-cells directly. Standard opetopic bonds are
+1-bonds. The bijection is preserved so compositionality might survive with a coarser
+grain. Finster never mentions such things, but they are geometrically conceivable.
+
+This is reminiscent of **higher homotopy groups** — π₂ detects exactly 2-spheres
+attached at a point, invisible to π₁. Standard drops only see π₁-level structure.
+(Or homology, depending on taste.)
+
+### The 0-ary Corolla and the Riemann Sphere
+
+In the corolla condition, an n-ary corolla has n input branches venting upward.
+The **0-ary case** has *no* venting holes — the top-dimensional cell sits in a
+closed box with nowhere for edges to escape.
+
+Geometrically this is the **Riemann sphere**: take a disk (the box), close off its
+boundary circle to a single point (the 0-ary corolla = one-point compactification)
+→ S². This is a suspension: ΣS⁰ = S¹, ΣS¹ = S², etc.
+
+The 0-ary corolla closure *might* be admissible as a degenerate boundary case in
+current opetopic theory — it is where the pasting diagram interpretation breaks
+down gracefully rather than violently. (Not the Dyson sphere. The Riemann sphere.)
+
+### Exotic Boundaries — The Torus and Beyond
+
+Once k-bonds and non-trivial closures are allowed, the boundary of a cell need not
+be a tree-shaped pasting diagram. It could be any CW-complex:
+- **Torus** T² = S¹ × S¹ — requires identifications the strict bond bijection cannot express
+- **Higher genus surfaces** — likewise
+
+This moves opetopic theory toward **CW-complex** territory — cells attached along
+arbitrary-dimensional boundaries — which is the natural home of homotopy theory but
+much harder to work with combinatorially.
+
+**Open question**: is the standard opetopic theory a well-behaved *slice* of
+CW-complex theory, with k-bonds and exotic closures living in the larger world
+outside that slice? And is that larger world tractable for higher category theory?
+
+---
+
 ## Key Terms
 
 | Term | Meaning |
