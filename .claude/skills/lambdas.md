@@ -152,6 +152,13 @@ identity axiom:
 3. **Exponentials** — curry/@ forced by dissecting binary morphisms:
    `b(x, y) = @(curry(b)(x), y)`
 
-Layer 3 presupposes layer 2: the diagonal is needed to route x to both curry(b)
-and @ on the right-hand side. So the cartesian flag must already be in place before
-exponentials make sense.
+Layers 2 and 3 are **independent** — neither presupposes the other:
+
+- **Monoidal closed** = base + exponentials (layer 3 alone): curry/@ exist without
+  any diagonal. x appears exactly once on each side of the dissection equation —
+  it is routed through curry, not duplicated. Linearity is fully preserved.
+- **Cartesian monoidal** = base + products (layer 2 alone): diagonal and ⊗ exist,
+  but no internal hom.
+- **Cartesian closed** = base + products + exponentials (all three layers): the
+  full CCC, where the diagonal additionally allows x to be shared freely across
+  both curry(b) and other morphisms.
