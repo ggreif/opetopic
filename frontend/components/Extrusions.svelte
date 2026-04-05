@@ -5,11 +5,13 @@ import Cellctxt from "./svgs/cellctxt.svelte"
 import LeftExtrusion from "./svgs/LeftExtrusion.svelte"
 import RightExtrusion from "./svgs/RightExtrusion.svelte"
 
+let rightStep = $state<"start" | "extrude" | "enclose">("extrude")
+
 </script>
 
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Extrusions</h2>
+    <h2 class="ui dividing header" id="extrusions">Extrusions</h2>
 
     <p>
       We will be interested in this section in two constructions
@@ -72,10 +74,10 @@ import RightExtrusion from "./svgs/RightExtrusion.svelte"
       <!-- <svg width="360" height="175" id="lext-svg"></svg> -->
     </div>
     <div class="ui bottom attached center aligned segment">
-      <div class="ui small steps">
-	<a class="active step" id="start-left">Start</a>
-	<a class="step" id="extrude-left">Extrude</a>
-	<a class="step" id="enclose-left">Enclose</a>
+      <div class="ui buttons">
+        <button class="ui button" class:active={true}>Start</button>
+        <button class="ui button">Extrude</button>
+        <button class="ui button">Enclose</button>
       </div>
     </div>
 
@@ -98,14 +100,20 @@ import RightExtrusion from "./svgs/RightExtrusion.svelte"
     </p>
 
     <div class="ui attached center aligned segment">
-      <RightExtrusion/>
+      {#if rightStep === "extrude"}
+        <RightExtrusion/>
+      {:else if rightStep === "start"}
+        <RightExtrusion showRedCells={false}/>
+      {:else if rightStep === "enclose"}
+        <RightExtrusion showGreenBox={true}/>
+      {/if}
       <!-- <svg width="360" height="175" id="rext-svg"></svg> -->
     </div>
     <div class="ui bottom attached center aligned segment">
-      <div class="ui small steps">
-	<a class="active step" id="start-right">Start</a>
-	<a class="step" id="extrude-right">Extrude</a>
-	<a class="step" id="enclose-right">Enclose</a>
+      <div class="ui buttons">
+        <button class="ui button" class:active={rightStep === "start"}   onclick={() => rightStep = "start"}>Start</button>
+        <button class="ui button" class:active={rightStep === "extrude"} onclick={() => rightStep = "extrude"}>Extrude</button>
+        <button class="ui button" class:active={rightStep === "enclose"} onclick={() => rightStep = "enclose"}>Enclose</button>
       </div>
     </div>
 

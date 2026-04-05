@@ -1,3 +1,7 @@
+<script lang="ts">
+let { showRedCells = true, showGreenBox = false } = $props()
+</script>
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -5,7 +9,7 @@
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
    version="1.1"
-   width="350.71207"
+   width="358"
    height="214.25999"
    id="svg4256">
   <defs
@@ -112,19 +116,12 @@
          id="path7406-4"
          style="fill:none;stroke:#000000;stroke-width:100" />
     </g>
-    <g
-       transform="matrix(0.02,0,0,0.02,4.7026602,1101.1192)"
-       id="g7408-9">
-      <path
-         d="m 0,-4813 v 1972"
-         id="path7410-5"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
+
     <g
        transform="matrix(0.02,0,0,0.02,4.7026602,1101.1192)"
        id="g7412-3">
       <path
-         d="m 0,-9013 v 2600"
+         d="m 0,-9013 v 6172"
          id="path7414-3"
          style="fill:none;stroke:#000000;stroke-width:100" />
     </g>
@@ -180,10 +177,22 @@
            style="fill:#000000;stroke:#000000;stroke-width:1" />
       </g>
     </g>
+
+    <g
+       transform="matrix(0.02,0,0,0.02,4.7026602,1101.1192)"
+       visibility={showRedCells ? "hidden" : "visible"}>
+      <rect
+         width="200"
+         height="3572"
+         x="-100"
+         y="-7063"
+         style="fill:#ffffff;stroke:none" />
+    </g>
     <g
        transform="matrix(0.02,0,0,0.02,4.7026602,1101.1192)"
        id="g7436-7"
-       style="stroke:#c80000;stroke-opacity:1">
+       style="stroke:#c80000;stroke-opacity:1"
+       visibility={showRedCells ? "visible" : "hidden"}>
       <rect
          width="1600"
          height="1600"
@@ -198,6 +207,20 @@
          id="g7440-9"
          style="stroke:#c80000;stroke-opacity:1" />
     </g>
+    {#if showGreenBox}
+    <g
+       transform="matrix(0.02,0,0,0.02,184.08266,1084.3792)"
+       id="g-green-enclose">
+      <rect
+         width="4200"
+         height="6800"
+         rx="200"
+         ry="200"
+         x="-2600"
+         y="-6800"
+         style="fill:#ffffff;stroke:#21BA45;stroke-width:100;stroke-opacity:1" />
+    </g>
+    {/if}
     <g
        transform="matrix(0.02,0,0,0.02,184.08266,1084.3792)"
        id="g7450-3">
@@ -226,18 +249,11 @@
        transform="matrix(0.02,0,0,0.02,184.08266,1084.3792)"
        id="g7462-6">
       <path
-         d="m -1500,-3840 v 1270 a 200,200 0 0 0 200,200 h 634"
+         d="m -1500,-7340 v 4770 a 200,200 0 0 0 200,200 h 634"
          id="path7464-1"
          style="fill:none;stroke:#000000;stroke-width:100" />
     </g>
-    <g
-       transform="matrix(0.02,0,0,0.02,184.08266,1084.3792)"
-       id="g7466-2">
-      <path
-         d="m -1500,-7340 v 1900"
-         id="path7468-0"
-         style="fill:none;stroke:#000000;stroke-width:100" />
-    </g>
+
     <g
        transform="matrix(0.02,0,0,0.02,184.08266,1084.3792)"
        id="g7470-0">
@@ -260,10 +276,12 @@
            style="fill:#000000;stroke:#000000;stroke-width:1" />
       </g>
     </g>
+
     <g
        transform="matrix(0.02,0,0,0.02,184.08266,1084.3792)"
        id="g7478-0"
-       style="stroke:#c80000;stroke-opacity:1">
+       style="stroke:#c80000;stroke-opacity:1"
+       visibility={showRedCells ? "visible" : "hidden"}>
       <rect
          width="1600"
          height="1600"
