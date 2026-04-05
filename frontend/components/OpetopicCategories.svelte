@@ -24,7 +24,7 @@ import CompUnivs from "./svgs/comp-univs.svelte"
     <div class="ui bottom attached segment">
       <p>
 	Every pasting diagram admits a target universal filler.  That is,
-	given x, y, z as pictured, we obtain u and v such that v is target
+	given <i>x</i>, <i>y</i>, <i>z</i> as pictured, we obtain <i>u</i> and <i>v</i> such that <i>v</i> is target
 	universal.
       </p>
     </div>
@@ -47,8 +47,8 @@ import CompUnivs from "./svgs/comp-univs.svelte"
       <p>
 	For any target universal cell, if all but one face is also target
 	universal, so is the remaining one.  In the above schematic example,
-	if all of f, x, y, and w are target universal as depicted by the
-	black decorations, then z is also target universal, as depicted
+	if all of <i>f</i>, <i>x</i>, <i>y</i>, and <i>w</i> are target universal as depicted by the
+	black decorations, then <i>z</i> is also target universal, as depicted
 	in red.
       </p>
     </div>
@@ -61,7 +61,7 @@ import CompUnivs from "./svgs/comp-univs.svelte"
       their <a href="http://arxiv.org/abs/q-alg/9702014">original
       definition</a>.  Their definition requires only that composites
       of target universals are also target universal, that is, they
-      require our axiom only in the case where it is the cell w 
+      require our axiom only in the case where it is the cell <i>w</i>
       which is not already known to be target universal, as depicted
       by the following diagram:
     </p>
