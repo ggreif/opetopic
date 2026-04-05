@@ -99,9 +99,14 @@
   <h2 class="ui dividing header">Videos</h2>
 
   <p>
-    A curated selection of video lectures by Eric Finster on opetopic higher
-    category theory — from early proof-assistant demos to foundational talks at
-    the Institute for Advanced Study.
+    A curated collection of video lectures by Eric Finster spanning over a decade
+    of work on opetopic higher category theory. The selection ranges from
+    hands-on proof-assistant demos (Orchard, 2014) and foundational IAS lectures
+    on the calculus of opetopes (2016), through technically deep research talks on
+    weak structures and universal algebra (2018–2020), to recent frontiers such as
+    the (∞,1)-category of types (2023) and dependetopes for higher generalized
+    algebraic theories (2025). Also included is a segment from the 2022 Topos
+    Institute workshop on polynomial functors.
   </p>
 
   <div class="video-list">
