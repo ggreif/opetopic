@@ -62,7 +62,7 @@
     Most work on this problem has focused on finding a reasonable internal
     definition of <em>simplicial type</em>.  The main idea is that axiomatizing
     such an object would allow us to speak of main other kinds of higher
-    coherent objects such as internal groupoids and (infinity, 1)-categories.
+    coherent objects such as internal groupoids and (∞,1)-categories.
     So far, however, no simple solution to this problem has been found.
   </p>
 
