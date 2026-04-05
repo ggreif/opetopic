@@ -1,6 +1,13 @@
 <script lang="ts">
   const videos = [
     {
+      id: "VENeNIk_Mc0",
+      title: "Taichi Uemura - A direct-categorical approach to opetopic sets and opetopes",
+      date: "2026-01-15",
+      label: "Jan 15, 2026",
+      blurb: "Taichi Uemura presents a direct categorical construction of opetopic sets and opetopes, with particular attention to loop cells (drops) and their role in the globular structure.",
+    },
+    {
       id: "Ab86KBvS65A",
       title: "Eric Finster: \"Dependetopes and Higher Generalized Algebraic Theories\"",
       date: "2025-09-11",
