@@ -214,6 +214,39 @@ align correctly with the opetopic universal property definition.
 
 ---
 
+## Dependent Types in Practice: `Vec A n` (⚠️ highly speculative)
+
+From Finster's slides — `Vec (A : Set) : Nat -> Set`, length-indexed vectors:
+
+```
+Nil  : Vec A 0
+Cons : A -> Vec A n -> Vec A (n + 1)
+```
+
+The four opetopic diagrams:
+
+| Diagram | Reading |
+|---|---|
+| `[Vec] [x]` | general term schema: `x : Vec` |
+| `[Vec] [x over x] [Nat]` | `Vec` is indexed by `Nat` — green cell appears as parameter |
+| `[Vec] [x] [0] [Nil]` | `Nil` constructor: index is `0` |
+| `[Vec] [x over x] [n over n+1] [A]` | `Cons` constructor: index steps `n → n+1`, element type `A` |
+
+### The green cell — imported nominal card (highly speculative)
+
+The green border on `Nat` may indicate a cell **imported from another nominal card**
+— a cross-reference between opetopic complexes. This would be how dependent types
+*depend on values of other types*: the `Nat` index slot is a green-bordered cell
+pulled in from the `Nat` complex.
+
+The specific instantiations (`0` for `Nil`, `n+1` for `Cons`) would then be
+*filled context holes* — particular terms of `Nat` substituted into the index slot.
+
+This is a hunch only. Finster does not explain the green cell in the slides and the
+correct interpretation may be quite different.
+
+---
+
 ## To Be Developed
 
 - Dependent types: how does the nominal card generalise to families?
