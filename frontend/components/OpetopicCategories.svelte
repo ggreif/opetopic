@@ -7,7 +7,7 @@ import CompUnivs from "./svgs/comp-univs.svelte"
 </script>
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Opetopic Categories</h2>
+    <h2 class="ui dividing header" id="categories">Opetopic Categories</h2>
 
     <p>
       We will say that an opetopic set is an <em>opetopic category</em>
@@ -31,7 +31,7 @@ import CompUnivs from "./svgs/comp-univs.svelte"
 
     <p>
       Note that we continue the convention begun in the second about
-      <a href="/docs/categories/uprops">universal properties</a> 
+      <a href="/docs/categories/uprops#uprops">universal properties</a> 
       where the cells or properties which are the conclusions of these
       axioms are depicted in red.
     </p>
@@ -82,14 +82,14 @@ import CompUnivs from "./svgs/comp-univs.svelte"
 
     <div class="ui secondary menu">
       <div class="item">
-	<a href="/docs/categories/uprops" class="ui left labeled icon button">
+	<a href="/docs/categories/uprops#uprops" class="ui left labeled icon button">
     	  <i class="left arrow icon"></i>
     	  Prev: Universal Properties
 	</a>
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/theory/units" class="ui right labeled icon button">
+	  <a href="/docs/theory/units#units" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
     	    Next: Identities and Units
 	  </a>

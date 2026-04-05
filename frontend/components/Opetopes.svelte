@@ -7,7 +7,7 @@ import Faces from "./svgs/faces.svelte"
 </script>
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Opetopes</h2>
+    <h2 class="ui dividing header" id="opetopes">Opetopes</h2>
     
     <p>
       Here, again, is the complex we were looking at at the end
@@ -128,14 +128,14 @@ import Faces from "./svgs/faces.svelte"
     
     <div class="ui secondary menu">
       <div class="item">
-	<a href="/docs/diagrams/complexes" class="ui left labeled icon button">
+	<a href="/docs/diagrams/complexes#complexes" class="ui left labeled icon button">
     	  <i class="left arrow icon"></i>
     	  Prev: Opetopic Complexes
 	</a>
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/diagrams/geometry" class="ui right labeled icon button">
+	  <a href="/docs/diagrams/geometry#geometry" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
     	    Next: Geometry
 	  </a>

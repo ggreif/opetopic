@@ -16,7 +16,7 @@ let view = $state<'complex' | 'first' | 'second'>('complex');
 </script>
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Opetopic Complexes</h2>
+    <h2 class="ui dividing header" id="complexes">Opetopic Complexes</h2>
 
     <p>
       In their
@@ -240,14 +240,14 @@ let view = $state<'complex' | 'first' | 'second'>('complex');
 
     <div class="ui secondary menu">
       <div class="item">
-	<a href="/docs/intro" class="ui left labeled icon button">
+	<a href="/docs/intro#intro" class="ui left labeled icon button">
     	  <i class="left arrow icon"></i>
     	  Prev: Introduction
 	</a>
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/diagrams/opetopes" class="ui right labeled icon button">
+	  <a href="/docs/diagrams/opetopes#opetopes" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
     	    Next: Opetopes
 	  </a>

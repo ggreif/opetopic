@@ -9,7 +9,7 @@ import RightUniv1 from "./svgs/runiv1.svelte"
 </script>
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Universal Properties</h2>
+    <h2 class="ui dividing header" id="uprops">Universal Properties</h2>
 
     <p>
       One of the attractive features of working with opetopic categories
@@ -129,14 +129,14 @@ import RightUniv1 from "./svgs/runiv1.svelte"
 
     <div class="ui secondary menu">
       <div class="item">
-	<a href="/docs/categories/extrusions" class="ui left labeled icon button">
+	<a href="/docs/categories/extrusions#extrusions" class="ui left labeled icon button">
     	  <i class="left arrow icon"></i>
     	  Prev: Extrusions
 	</a>
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/categories/categories" class="ui right labeled icon button">
+	  <a href="/docs/categories/categories#categories" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
     	    Next: Opetopic Categories
 	  </a>

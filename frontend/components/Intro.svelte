@@ -1,6 +1,6 @@
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Introduction</h2>
+    <h2 class="ui dividing header" id="intro">Introduction</h2>
 
     <p>
       Category theory has had a profound effect on modern mathematics.
@@ -121,7 +121,7 @@
     <div class="ui basic segment">
       <div class="ui two wide grid">
 	<div class="right aligned column">
-	  <a href="/docs/diagrams/complexes" class="ui right labeled icon button">
+	  <a href="/docs/diagrams/complexes#complexes" class="ui right labeled icon button">
 	    <i class="right arrow icon"></i>
 	    Next: Opetopic Complexes
 	  </a>

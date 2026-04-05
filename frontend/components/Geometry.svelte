@@ -11,7 +11,7 @@ import Threecell from "./svgs/threecell.svelte"
 </script>
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Geometry</h2>
+    <h2 class="ui dividing header" id="geometry">Geometry</h2>
 
     <p>
       In this section, we explore the connection between our opetopic
@@ -165,14 +165,14 @@ import Threecell from "./svgs/threecell.svelte"
 
     <div class="ui secondary menu">
       <div class="item">
-	<a href="/docs/diagrams/opetopes" class="ui left labeled icon button">
+	<a href="/docs/diagrams/opetopes#opetopes" class="ui left labeled icon button">
     	  <i class="left arrow icon"></i>
     	  Prev: Opetopes
 	</a>
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/diagrams/osets" class="ui right labeled icon button">
+	  <a href="/docs/diagrams/osets#osets" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
     	    Next: Opetopic Sets
 	  </a>

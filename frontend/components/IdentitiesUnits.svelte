@@ -12,7 +12,7 @@ import Unitr from "./svgs/unit-r.svelte"
 </script>
 
   <div class="ui raised segment">
-    <h2 class="ui dividing header">Identities and Units</h2>
+    <h2 class="ui dividing header" id="units">Identities and Units</h2>
 
     <p>
       Let us start with an object <i>x</i> in an opetopic category.

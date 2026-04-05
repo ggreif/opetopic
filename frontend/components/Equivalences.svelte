@@ -124,7 +124,7 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
 
     <p>
       And we see that, moreover, <i>g</i> is target universal by closure,
-      since <a href="/docs/theory/units"><i>id-x</i> is</a> and <i>f</i> is by
+      since <a href="/docs/theory/units#units"><i>id-x</i> is</a> and <i>f</i> is by
       hypothesis.  We pause to note that we have just shown that
       any target universal unary cell admits an "inverse" which is
       also target universal.  Hence we will freely apply this

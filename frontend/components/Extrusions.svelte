@@ -128,14 +128,14 @@ let rightStep = $state<"start" | "extrude" | "enclose">("extrude")
 
     <div class="ui secondary menu">
       <div class="item">
-	<a href="/docs/diagrams/osets" class="ui left labeled icon button">
+	<a href="/docs/diagrams/osets#osets" class="ui left labeled icon button">
     	  <i class="left arrow icon"></i>
     	  Prev: Opetopic Sets
 	</a>
       </div>
       <div class="right menu">
 	<div class="item">
-	  <a href="/docs/categories/uprops" class="ui right labeled icon button">
+	  <a href="/docs/categories/uprops#uprops" class="ui right labeled icon button">
     	    <i class="right arrow icon"></i>
     	    Next: Universal Properties
 	  </a>
