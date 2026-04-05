@@ -38,7 +38,7 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
     <!-- @svg("eqvs/unary-ex.svg") -->
 
     <p>
-      Of course, the number of input edges of x (and y) depends on the
+      Of course, the number of input edges of <i>x</i> (and <i>y</i>) depends on the
       lower dimensional structure, and is here chosen, arbitrarily, to
       be three.
     </p>
@@ -67,18 +67,18 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
     </div>
     <div class="ui bottom attached segment">
       <p>
-	Definition: a unary cell f : x → y is said to be an equivalence if there
-	exists g : y → x as well as higher cells η : g ∘ f → id-x and ε : f ∘ g → id-y
-	such that η and ε are equivalences.
+	Definition: a unary cell <i>f</i> : <i>x</i> → <i>y</i> is said to be an equivalence if there
+	exists <i>g</i> : <i>y</i> → <i>x</i> as well as higher cells <i>η</i> : <i>g</i> ∘ <i>f</i> → <i>id-x</i> and <i>ε</i> : <i>f</i> ∘ <i>g</i> → <i>id-y</i>
+	such that <i>η</i> and <i>ε</i> are equivalences.
       </p>
     </div>
 
     <p>
-      Notice how the hypothesis that f be unary assures that it makes
-      sense to speak of a cell g "in the other direction", that is,
-      between the target of f and the source of f, since this diagram
+      Notice how the hypothesis that <i>f</i> be unary assures that it makes
+      sense to speak of a cell <i>g</i> "in the other direction", that is,
+      between the target of <i>f</i> and the source of <i>f</i>, since this diagram
       remains well formed.  It is also readily checked, by symmetry,
-      that g is also an equivalence, though we have not denoted it as
+      that <i>g</i> is also an equivalence, though we have not denoted it as
       such since it is not needed in the definition.
     </p>
 
@@ -108,7 +108,7 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
 
     <p>
       By <a href="#">stability</a>, it suffices to consider that we
-      are given a target universal <em>arrow</em> f.
+      are given a target universal <em>arrow</em> <i>f</i>.
     </p>
 
     <Ftu/>
@@ -123,17 +123,17 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
     <!-- @svg("eqvs/g-tu.svg") -->
 
     <p>
-      And we see that, moreover, g is target universal by closure,
-      since <a href="/docs/theory/units">id-x is</a> and f is by
+      And we see that, moreover, <i>g</i> is target universal by closure,
+      since <a href="/docs/theory/units"><i>id-x</i> is</a> and <i>f</i> is by
       hypothesis.  We pause to note that we have just shown that
       any target universal unary cell admits an "inverse" which is
-      also target universal.  Hence we will freely apply this 
+      also target universal.  Hence we will freely apply this
       observation to other unary, target universal cells which
       we will encounter in the proof.
     </p>
 
     <p>
-      Continuing with our proof, we can now obtain the desired cell η
+      Continuing with our proof, we can now obtain the desired cell <i>η</i>
       using the lift
     </p>
 
@@ -141,7 +141,7 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
     <!-- @svg("eqvs/eta-tu.svg") -->
 
     <p>
-      Furthermore, since η is a unary, target universal cell, we conclude
+      Furthermore, since <i>η</i> is a unary, target universal cell, we conclude
       that it is an equivalence by the coinductive hypothesis.
     </p>
 
@@ -149,37 +149,37 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
     <!-- @svg("eqvs/eta-eqv-tu.svg") -->
 
     <p>
-      The construction of ε is more involved, and proceeds as follows.  First,
+      The construction of <i>ε</i> is more involved, and proceeds as follows.  First,
       recall that we have already constructed a left unit law for any arrow
-      which, applied to f, has the form.
+      which, applied to <i>f</i>, has the form.
     </p>
 
     <Unitl/>
     <!-- @svg("eqvs/unit-l.svg") -->
 
     <p>
-      Similarly, we have the right unit, unit-r.  From the first step of 
+      Similarly, we have the right unit, <i>unit-r</i>.  From the first step of
       the proof, each of these unary, target universal cells has an inverse
-      which we will denote unit-l-inv and unit-r-inv respectively in what
+      which we will denote <i>unit-l-inv</i> and <i>unit-r-inv</i> respectively in what
       follows.
     </p>
 
     <p>
-      Our first step is to lift f along itself, creating the cell α as shown
+      Our first step is to lift <i>f</i> along itself, creating the cell <i>α</i> as shown
     </p>
 
     <Alphadef/>
     <!-- @svg("eqvs/alpha-def.svg") -->
 
     <p>
-      Next, we define β as
+      Next, we define <i>β</i> as
     </p>
 
     <Betadef/>
     <!-- @svg("eqvs/beta-def.svg") -->
 
     <p>
-      And φ as
+      And <i>φ</i> as
     </p>
 
     <Phidef/>
@@ -187,8 +187,8 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
 
     <p>
       Next use the source lifting property obtained from the
-      definition of α twice, once for φ and once for β, obtaining
-      the cells φ and γ as follows:
+      definition of <i>α</i> twice, once for <i>φ</i> and once for <i>β</i>, obtaining
+      the cells <i>ψ</i> and <i>γ</i> as follows:
     </p>
 
     <Psidef/>
@@ -198,14 +198,14 @@ import Epsiloneqv from "./svgs/epsilon-eqv.svelte"
     <!-- @svg("eqvs/gamma-def.svg") -->
 
     <p>
-      We now define ε as the composite
+      We now define <i>ε</i> as the composite
     </p>
     
     <Epsilondef/>
     <!-- @svg("eqvs/epsilon-def.svg") -->
 
     <p>
-      And finally, since ε is a unary, target universal cell,
+      And finally, since <i>ε</i> is a unary, target universal cell,
       we conclude that it is an equivalence by the coinductive
       hypothesis.
     </p>
