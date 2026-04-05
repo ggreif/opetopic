@@ -63,6 +63,61 @@ Open question: is ⊗ a **property** (the category happens to have products, det
 by a universal property) or **structure** (an extra operation added to the signature)?
 In the CCC analogy, products are a property — but one that must be asserted to hold.
 
+### The diagonal — bifurcating a wire
+
+The crux of cartesian vs. monoidal: opetopic diagrams are normally **linear** — each
+wire is used exactly once. There is no native diagonal Δ : A → A ⊗ A. So how do we
+get copying?
+
+**Drops as duplication macros.** A drop on an input branch of a corolla is reinterpreted
+as a routing instruction — a macro for the diagonal. Concretely, in a dim-2 diagram:
+
+- A **bare drop** on input i: duplicate — feed the same value into the next unconnected
+  slot of the corolla below
+- A **singly encircled drop**: skip one slot, feed into the second unconnected slot
+- Deeper nesting: feed into the nth unconnected slot
+
+These are all macros for the **fundamental diagonal**, which can be drawn explicitly as
+a wire that curves back within the box — entirely within existing opetopic diagram syntax,
+no new notation needed. The drop is just the compact encoding of that routing.
+
+Geometrically: the diagonal is a wire identity, just routed. The opetopic diagram already
+has room for this since wires can travel arbitrarily within a box.
+
+### The construction
+
+The setup is a **planar tree** (dim-2 opetope) built in the editor, with:
+- Drops placed on the inputs (branches) of the tree
+- The **n-ary worker morphism** sitting in the node box
+
+The tree must be planar — this gives a canonical left-to-right ordering of inputs,
+which is essential for the routing/indexing of drops to be well-defined.
+
+### The cartesian flag — the jump to CCC
+
+The crucial distinction:
+
+- **Unmarked input**: linear — wire used exactly once, standard opetopic regime
+- **Flagged input**: cartesian — drops on this input are interpreted as diagonals,
+  breaking linearity
+
+The flag lives **on the input** of the corolla, depicted as a small white circle with
+a dot — mimicking the **!** (bang) modality of linear logic. This marks that input's
+resource as freely duplicable.
+
+- **Contraction** (copying) = diagonal drop on a flagged input
+- **Weakening** (discarding) = an input with no node below (dangling wire)
+
+Once an input is flagged, everything else follows:
+- The ⊗ morphism (product cell) exists
+- Projections πᵢ exist
+- The splitting-the-identity equation holds
+- The full cartesian universal property is derivable
+
+So the opetopic account gives a clean geometric story: **cartesian closed is the
+sub-theory where certain corolla inputs are flagged with !**, and that decoration is
+the only extra axiom needed on top of the base opetopic category structure.
+
 ---
 
 ## Exponentials
