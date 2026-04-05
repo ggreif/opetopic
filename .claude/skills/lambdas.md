@@ -162,3 +162,7 @@ Layers 2 and 3 are **independent** — neither presupposes the other:
 - **Cartesian closed** = base + products + exponentials (all three layers): the
   full CCC, where the diagonal additionally allows x to be shared freely across
   both curry(b) and other morphisms.
+
+See also: Baez & Stay, *Physics, Topology, Logic and Computation: A Rosetta Stone* (2009)
+https://arxiv.org/abs/0903.0340 — uses closed symmetric monoidal categories as a
+unifying framework connecting Feynman diagrams, cobordisms, proofs, and programs.
