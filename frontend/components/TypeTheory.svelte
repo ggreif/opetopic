@@ -43,7 +43,7 @@
   </p>
 
   <p>
-    The <a href="https://github.com/mortberg/cubicaltt">cubical type theory</a> of
+    The <a href="https://arxiv.org/abs/1611.02108">cubical type theory</a> of
     Coquand, Cohen, Huber, and Mörtberg, aims at solving this problem.
   </p>
 
