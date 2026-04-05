@@ -2,7 +2,9 @@
 
 import Home from "./components/Home.svelte"
 import Intro from "./components/Intro.svelte"
+import TypeTheory from "./components/TypeTheory.svelte"
 import Complexes from "./components/Complexes.svelte"
+import HigherDimTrees from "./components/HigherDimTrees.svelte"
 import Opetopes from "./components/Opetopes.svelte"
 import Geometry from "./components/Geometry.svelte"
 import OpetopicSets from "./components/OpetopicSets.svelte"
@@ -11,6 +13,8 @@ import UniversalProperties from "./components/UniversalProperties.svelte"
 import OpetopicCategories from "./components/OpetopicCategories.svelte"
 import IdentitiesUnits from "./components/IdentitiesUnits.svelte"
 import Equivalences from "./components/Equivalences.svelte"
+import SrcCoh from "./components/SrcCoh.svelte"
+import BasicEditing from "./components/BasicEditing.svelte"
 import Videos from "./components/Videos.svelte"
 import Layout from "./components/Layout.svelte"
 import OpetopeBuilder from "./components/OpetopeBuilder.svelte"
@@ -43,7 +47,11 @@ const client = createClient({
 <hr/>
 <Intro/>
 <hr/>
+<TypeTheory/>
+<hr/>
 <Complexes/>
+<hr/>
+<HigherDimTrees/>
 <hr/>
 <Opetopes/>
 <hr/>
@@ -60,6 +68,10 @@ const client = createClient({
 <IdentitiesUnits/>
 <hr/>
 <Equivalences/>
+<hr/>
+<SrcCoh/>
+<hr/>
+<BasicEditing/>
 <hr/>
 <Videos/>
 
