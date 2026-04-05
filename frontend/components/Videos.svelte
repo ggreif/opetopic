@@ -8,6 +8,13 @@
       blurb: "Eric Finster presents his work on constructing the (∞,1)-category of types within homotopy type theory, delivered at the Centre for Quantum and Topological Systems at NYU Abu Dhabi.",
     },
     {
+      id: "wz3h59rnhOU",
+      title: "Eric Finster, Weak structures from strict ones",
+      date: "2020-06-19",
+      label: "Jun 19, 2020",
+      blurb: "A technically dense talk on deriving weak higher categorical structures from strict ones using opetopic methods — aimed at researchers already familiar with the foundations.",
+    },
+    {
       id: "AnjK4hKp6v4",
       title: "Higher Dimensional Syntax - Eric Finster",
       date: "2016-08-18",
