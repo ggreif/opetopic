@@ -15,6 +15,13 @@
       blurb: "A lecture from the IAS Univalent Foundations program presenting the combinatorial calculus behind opetopes and how it supports a coherent notion of composition in higher categories.",
     },
     {
+      id: "hlCVHVtAlqQ",
+      title: "Eric Finster, Towards higher universal algebra in type theory",
+      date: "2018-12-06",
+      label: "Dec 6, 2018",
+      blurb: "A talk exploring how opetopic techniques can provide a foundation for universal algebra in homotopy type theory, connecting higher categorical structure to type-theoretic constructions.",
+    },
+    {
       id: "sEVJJCwohW0",
       title: "Orchard 1 - Introduction",
       date: "2014-01-21",
