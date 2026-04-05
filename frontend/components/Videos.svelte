@@ -1,6 +1,13 @@
 <script lang="ts">
   const videos = [
     {
+      id: "RFm1nz6YV_U",
+      title: "\"The (∞,1)-category of Types\", talk by Eric Finster at CQTS @ NYU Abu Dhabi",
+      date: "2023-02-18",
+      label: "Feb 18, 2023",
+      blurb: "Eric Finster presents his work on constructing the (∞,1)-category of types within homotopy type theory, delivered at the Centre for Quantum and Topological Systems at NYU Abu Dhabi.",
+    },
+    {
       id: "AnjK4hKp6v4",
       title: "Higher Dimensional Syntax - Eric Finster",
       date: "2016-08-18",
