@@ -5,7 +5,7 @@ import Cellctxt from "./svgs/cellctxt.svelte"
 import LeftExtrusion from "./svgs/LeftExtrusion.svelte"
 import RightExtrusion from "./svgs/RightExtrusion.svelte"
 
-let leftStep  = $state<"start" | "extrude" | "enclose">("enclose")
+let leftStep  = $state<"start" | "extrude" | "enclose">("extrude")
 let rightStep = $state<"start" | "extrude" | "enclose">("extrude")
 
 </script>
