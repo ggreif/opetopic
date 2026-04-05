@@ -1,6 +1,13 @@
 <script lang="ts">
   const videos = [
     {
+      id: "Ab86KBvS65A",
+      title: "Eric Finster: \"Dependetopes and Higher Generalized Algebraic Theories\"",
+      date: "2025-09-11",
+      label: "Sep 11, 2025",
+      blurb: "A live-streamed research talk introducing dependetopes — a novel opetopic notion underpinning higher generalized algebraic theories, pushing the frontier of categorical type theory.",
+    },
+    {
       id: "RFm1nz6YV_U",
       title: "\"The (∞,1)-category of Types\", talk by Eric Finster at CQTS @ NYU Abu Dhabi",
       date: "2023-02-18",
