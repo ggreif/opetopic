@@ -285,3 +285,23 @@ unexplored.
 **Open.** Likely refers to soundness, completeness, and normalisation for the
 higher-dimensional type theory. No partial answer yet — this is the hardest and
 most important of the three.
+
+---
+
+## Conclusion: The Proof is in the Pudding
+
+All of the above is conceptual scaffolding until there is a working implementation
+where one can:
+
+- Declare a nominal card and watch the prefix box form
+- Place `R` and `B` as constructor cells and see the exported interface emerge
+- Build a composite term like `B(R, B(R, R))` in the editor and see the red box
+  collapse it
+- Verify that the drop on `Id`'s nominal card really does behave like `Refl`
+- Test whether the `J` conjecture holds operationally
+
+The speculative skills (`types.md`, `lambdas.md`) serve as a **research roadmap** —
+knowing what we are aiming for shapes the implementation decisions. But the feedback
+loop will be brutal: things that look elegant categorically may be awkward to
+implement, and the implementation will likely reveal misunderstandings that no amount
+of armchair theorising can catch.
