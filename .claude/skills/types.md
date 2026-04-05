@@ -73,6 +73,36 @@ This gives a natural hierarchy matching dependent type theory:
 
 ---
 
+## Term Construction = Opetopic Composition
+
+A concrete term of type BT is displayed as an opetopic **composite** — enclosed in
+a red box with a single output wire at the bottom. Example from Finster's slides,
+representing `B(R, B(R, R))`:
+
+```mermaid
+graph BT
+  R1([R]) --> B2([B])
+  R2([R]) --> B2
+  R3([R]) --> B1([B])
+  B2      --> B1
+```
+
+A branch whose left child is a leaf and whose right child is another branch with
+two leaves. Reading the diagram:
+
+- Leaves = `R` nodes (nullary, drops — no input wires)
+- Internal nodes = `B` nodes (binary — two input wires each)
+- The red enclosing box = **opetopic composition**, collapsing the tree of
+  constructor applications into a single output cell
+
+The tree structure of the term *is* the source tree of the composite. There is no
+separate "evaluation" step — the term and its opetopic shape are the same thing.
+
+The left diagram `[BT] [x] [f]` is the *general schema* for a term; the red box
+is a *specific composite* — a particular inhabitant built by applying constructors.
+
+---
+
 ## To Be Developed
 
 - Dependent types: how does the nominal card generalise to families?
