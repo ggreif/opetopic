@@ -44,7 +44,7 @@
 
   <p>
     The <a href="https://github.com/mortberg/cubicaltt">cubical type theory</a> of
-    Coquand, Cohen, Huber, and Mortberg, aims at solving this problem.
+    Coquand, Cohen, Huber, and Mörtberg, aims at solving this problem.
   </p>
 
   <h4 class="ui header">Coherence Theory</h4>
