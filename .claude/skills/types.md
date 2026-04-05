@@ -190,8 +190,27 @@ of `Id_x(a,b)`. A drop is a degeneracy: it collapses a 1-cell to a point, identi
 
 Degeneracies in opetopic theory already know about reflexivity!
 
-This also suggests:
-- **`J` eliminator** = universal property of that drop (to be worked out)
+### Conjecture: `J` = target universality of `Refl`
+
+`J` is the eliminator for identity types: to prove `P(b, p)` for any `b : X` and
+`p : Id_x(a, b)`, it suffices to prove `P(a, Refl_a)`. Formally:
+
+- Given `P : (b : X) → Id_x(a, b) → Type` and `d : P(a, Refl_a)`
+- `J` constructs a term of type `P(b, p)` for any `b` and `p`
+
+This is **transport along a path** — `Refl` is the trivial case, and `J` says every
+path is reachable from `Refl` by induction.
+
+In the opetopic picture: since `Refl` = drop on the nominal card of `Id`, and drops
+are degeneracies with universal properties, `J` may be exactly the **target
+universality of `Refl`** — the lifting property that comes for free with any
+universal cell. Reflexivity would then be a universal cell, and `J` its counit.
+
+This would be a remarkable unification: the whole transport/substitution machinery
+of HoTT falling out of the universal property of a single drop.
+
+**To be researched**: verify that the dimensions, directions and type families
+align correctly with the opetopic universal property definition.
 
 ---
 
