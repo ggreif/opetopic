@@ -253,3 +253,34 @@ correct interpretation may be quite different.
 - Connection to the CCC/lambda structure in `lambdas.md`
 - Finster's full treatment of type formers (Π, Σ, Id) in this setting
 - Links to specific Finster talks/papers
+
+---
+
+## Finster's Open Questions (with partial answers)
+
+From the closing slide of *Higher Dimensional Syntax*:
+
+### 1. Find a theory of higher functions. (Higher λ-calculus??)
+
+**Partial answer** — see `lambdas.md`. The layered construction (monoidal closed =
+opetopic base + dissecting binary morphisms; CCC = + cartesian flag) already operates
+at all dimensions simultaneously. Because the opetopic base is inherently
+higher-dimensional, currying and apply work for n-cells just as for 1-cells. A 2-cell
+between morphisms can be curried just as a 1-cell can.
+
+Conjecture: the higher λ-calculus is simply **the dissection axiom applied at every
+dimension** — no new structure needed beyond what `lambdas.md` already describes.
+
+### 2. What are cofree/coinductive definitions?
+
+**Very partial.** The opetopic setting handles coinduction naturally — target and
+source universality are already mutually coinductive (see `Equivalences.svelte` and
+the stability conjecture). Cofree constructions would likely be the **terminal
+coalgebra** of some endofunctor on opetopic sets. The connection is suggestive but
+unexplored.
+
+### 3. Semantic Theorems
+
+**Open.** Likely refers to soundness, completeness, and normalisation for the
+higher-dimensional type theory. No partial answer yet — this is the hardest and
+most important of the three.
