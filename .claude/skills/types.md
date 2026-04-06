@@ -276,6 +276,7 @@ correct interpretation may be quite different.
 - Connection to the CCC/lambda structure in `lambdas.md`
 - Finster's full treatment of type formers (Π, Σ, Id) in this setting
 - Links to specific Finster talks/papers
+- [Opetopic Type Theory — nLab](https://ncatlab.org/nlab/show/opetopic+type+theory)
 
 ---
 
