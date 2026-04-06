@@ -353,6 +353,51 @@ outside that slice? And is that larger world tractable for higher category theor
 
 ---
 
+### Synthetic Analysis and the Triple Monad Collision
+
+**Can we reformulate analysis in CT terms?** People have been working on this:
+
+- **Synthetic Differential Geometry (SDG)** — Kock, Lawvere — axiomatises ε with
+  ε² = 0 directly in a topos, recovering classical analysis without limits.
+  Nilpotent infinitesimals are *objects* in the category. Lawvere's "Categorical
+  Dynamics" (1967) was the opening shot.
+- **Cohesive (∞,1)-toposes** — Schreiber, Shulman — combines SDG with homotopy
+  type theory. Smooth ∞-groupoids have a built-in notion of smooth connectedness
+  subsuming both continuity and infinitesimal structure.
+
+**The opetopic angle**: thin cells *are* the infinitesimals. A path in a smooth
+space is a thin opetopic 2-cell; smoothness is a condition on how thin cells
+compose. This would give a purely opetopic synthetic analysis — no limits, no
+ε-δ, just thin cells and universal properties.
+
+**The Triple Monad Collision** — three things all called *monad*:
+
+1. **Leibniz/non-standard monad** — the *nilpotent halo* around a real number x:
+   all points infinitesimally close to x, indistinguishable by standard means.
+   The cloud of ε-neighbours around a point.
+
+2. **Category-theoretic monad** — a monoid in the category of endofunctors, with
+   unit η and multiplication μ satisfying associativity and unit laws.
+
+3. **Opetopic/substitution monad** — opetopes arise from iterated polynomial
+   functors carrying a monad structure via **substitution** (grafting of trees).
+   Multiplication = tree substitution: plug one tree into the leaves of another.
+   This is the algebraic backbone of opetopic composition. *(Not yet discussed
+   in the codebase — substitution monad is a TODO.)*
+
+The collision is not merely nominative — deep connections lurk:
+- Both substitution and the nilpotent halo are about **local structure**:
+  substitution is local in the tree; the halo is local in space
+- Both have a **multiplication that vanishes at second order**: ε² = 0 for the
+  halo; grafting a tree of depth 2 into itself collapses at the substitution level
+
+**Tantalising conjecture**: the nilpotent halo around a cell in a smooth opetopic
+space is *computed* by the substitution monad. Smoothness = the monad structure
+of opetopes acts coherently on infinitesimal neighbourhoods. The three monads are
+the same monad seen from three different vantage points.
+
+---
+
 ## Key Terms
 
 | Term | Meaning |
