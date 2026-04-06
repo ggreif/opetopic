@@ -138,13 +138,30 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
     }
   }
 
-  // 1.3 edgeroot-no-lollipop: fundamental for dim=0 (drops don't exist there), ADVISORY otherwise
-  for (const n of edgeNodes) {
-    if (n.children !== null && n.children.length === 0) {
-      if (edgeRoot.cell.dim === 0)
-        return `edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in dim-0 edgeRoot (drops not allowed at dim 0)`
-      else
-        return `ADVISORY edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in edgeRoot`
+  // 1.3 edgeroot-no-lollipop
+  // - dim 0: always hard (drops not allowed at dim 0)
+  // - dim ≥ 1: hard if lollipop has a non-lollipop sibling (ground box required);
+  //            exempt if parent has ONLY lollipop children (bare drop on open branch)
+  {
+    const edgeParentMap = new Map<string, Tree>()  // childCellId → parent node
+    function buildEdgeParent(t: Tree) {
+      if (!t.children) return
+      for (const [, child] of t.children) { edgeParentMap.set(child.cell.id, t); buildEdgeParent(child) }
+    }
+    buildEdgeParent(edgeRoot)
+
+    for (const n of edgeNodes) {
+      if (n.children !== null && n.children.length === 0) {  // lollipop
+        if (edgeRoot.cell.dim === 0)
+          return `edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in dim-0 edgeRoot (drops not allowed at dim 0)`
+        // Bare drop exception: parent has only lollipop children → no ground box needed
+        const parent = edgeParentMap.get(n.cell.id) ?? edgeRoot
+        const hasNonLolliSibling = (parent.children ?? []).some(([, c]) =>
+          !(c.children !== null && c.children.length === 0)
+        )
+        if (hasNonLolliSibling)
+          return `edgeroot-no-lollipop: node "${n.cell.label}" (id=${n.cell.id}) is a lollipop in edgeRoot but parent has non-lollipop children — ground box required`
+      }
     }
   }
 

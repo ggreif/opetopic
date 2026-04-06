@@ -418,8 +418,9 @@ export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell):
 // ── Example diagrams ─────────────────────────────────────────────────────────
 
 export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
-function leaf(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: null } }
+function leaf(c: Cell, drops: Drop[] = []): Tree { return { cell: c, away: new Set(), drops, children: null } }
 function lollipop(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: [] } }
+function drop(branchId: string): Drop { return { dropId: branchId } }
 export function substrate(label: string, c: Cell): Cell { return { ...c, label } }
 function node(c: Cell, children: [string, Tree][]): Tree {
   return { cell: c, away: new Set(), drops: [], children }
@@ -431,6 +432,20 @@ function node(c: Cell, children: [string, Tree][]): Tree {
 export function point(label = 'a'): Opetope {
   const x = cell(label, 0)
   return [leaf(x)]
+}
+
+/**
+ * A bare drop: a 1-cell drop on a 0-cell, with no base box.
+ * dim0: point `a` with a bond on its stem.
+ * dim1: outer frame `f` containing the drop `α` bonded by the same branch id.
+ */
+export function bareDrop(aLabel = 'a', fLabel = 'f', alphaLabel = 'α'): Opetope {
+  const a     = cell(aLabel,     0)
+  const alpha = cell(alphaLabel, 1)
+  const branchId = freshId()
+  const dim0: Tree = leaf(a)
+  const dim1: Tree = { cell: cell(aLabel, 1), away: new Set(), drops: [drop(branchId)], children: null }
+  return [dim0, dim1]
 }
 
 /**
