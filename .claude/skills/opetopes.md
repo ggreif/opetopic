@@ -255,6 +255,23 @@ The thin cell is the one whose thickness is exactly ε:
 This is why universal cells compose: the vacuum ensures the composite is uniquely
 determined, and the infinitesimal remainder is the witness of that uniqueness.
 
+### `Refl` is the smallest thin cell
+
+`Refl` is the infinitesimal 2-cell par excellence:
+- Length ε, width ε
+- Area = **ε² = 0** — nilpotent, literally vanishing at the 2-dimensional level
+- Present as a cell, but its 2-dimensional content is zero
+- Cannot be "seen" by anything that measures area — which is exactly why it is
+  the trivial path, the identity witness
+
+The **J eliminator** then says: anything true of the ε×ε = 0 cell is true of any
+thin cell — because all thin cells are categorically indistinguishable from it.
+Transport along a path is the observation that ε-thick things behave like 0-thick
+things for all measurable purposes.
+
+The nilpotency ε² = 0 is not a defect — it is the *precise algebraic expression*
+of why `Refl` is the base case of path induction.
+
 ---
 
 ## TODO: Stability of Target Universality (potential future chapter)
