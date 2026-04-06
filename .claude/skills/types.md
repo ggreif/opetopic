@@ -182,14 +182,30 @@ prefix where later cells reference earlier ones:
 
 ---
 
-## `Refl` = Drop on the Nominal Card
+## `Refl` = Bare Drop on the Nominal Card of `Id`
 
-**`Refl_x : Id_x(a, a)`** — the reflexivity constructor — is a **drop on the point**
-of `Id_x(a,b)`. A drop is a degeneracy: it collapses a 1-cell to a point, identifying
-`a = a`. The trivial path *is* the drop. So `Refl` is not an extra axiom — it is the
-**existing drop mechanism** applied to the identity type's nominal card.
+`Refl` and `R` (the `BT` leaf constructor) are **the same construction** at different
+nominal cards. Both are bare drops at dim 1, closed with a lollipop.
 
-Degeneracies in opetopic theory already know about reflexivity!
+For `BT`:
+- Nominal card = `[BT]` (a simple point)
+- Administrative 0-cell `[x]`, bare branch `[f]`
+- Bare drop at dim 1 = `R` ↓ closed with lollipop
+- Geometric picture: x at top, drop α=R as 2-cell, output f at bottom
+
+For `Id`:
+- Nominal card = `[[X][[a][b]]]` — a **richer card** encoding x, a, b internally,
+  obtained by aggressively shifting dims {0,1,2} to -1
+- Administrative 0-cell, bare branch at dim 1
+- Bare drop at dim 1 = `Refl` ↓ closed with lollipop
+- Same construction, same dimension, just a richer nominal card
+
+**Key insight**: nominal cards can encode arbitrarily deep prefix structure. Once
+everything is shifted into the card, the bare drop at dim 1 always works — no
+bubbles, no k-bonds, no crackpot territory needed.
+
+`Refl` = `R` of `Id_X(a,b)`. Degeneracies in opetopic theory already know about
+reflexivity — and now we see exactly *how*.
 
 ### Conjecture: `J` = target universality of `Refl`
 
@@ -251,6 +267,8 @@ correct interpretation may be quite different.
 ## To Be Developed
 
 - Dependent types: how does the nominal card generalise to families?
+  (Partial answer: nominal cards can encode arbitrarily deep prefix structure
+  by aggressive shifting — see `Refl` = bare drop on richer nominal card above)
 - Connection to the CCC/lambda structure in `lambdas.md`
 - Finster's full treatment of type formers (Π, Σ, Id) in this setting
 - Links to specific Finster talks/papers
