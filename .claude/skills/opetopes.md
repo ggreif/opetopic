@@ -229,6 +229,82 @@ The **head** of an opetope is the top-dimensional cell plus its codimension-1 pa
 
 ---
 
+## Opetopic Substitution and the Monad Structure
+
+The opetopic analogue of monadic bind:
+
+```
+Opetope a -> (a -> Opetope b) -> Opetope b
+```
+
+where `a` is the **cell path type** — the type of open positions in the opetope.
+
+### μ as Zipper Substitution
+
+μ (monad multiplication) for opetopes proceeds in five steps:
+
+1. **Point at a cell** in an opetope — identify the target node
+2. **Get its arity** — n input edges, determining the shape of the hole
+3. **Take the McBride derivative** ∂_c(opetope) — one-hole context; hole typed by the removed cell's arity
+4. **Provide a *different* cell** of the same arity (and compatible universality) — from outside, independent of the original
+5. **Fill the hole** → new opetope
+
+This is **zipper substitution** — the derivative navigates to the hole; the filler is external, not from a nested layer of the same structure. It is closer to **operadic substitution** than to monad-μ on T(T(X)).
+
+### Two Path Types — Two Substitutions
+
+Different positions in an opetope have different path types:
+
+| Position | Path type | Universality | Substitution |
+|---|---|---|---|
+| Leaf edge (outer wire) | `Fin n` | None — plain wire | **Grafting** — non-dependent |
+| Inner box (internal node) | `TreeAddr` (word in branching alphabet) | Yes — may be universal | **Box substitution** — dependently typed |
+
+Leaf edges carry **no universality information** — they are just boundary wires. Grafting is therefore ordinary (non-dependent) monadic bind: `Fin n -> Opetope b`. Inner boxes carry universality, so box substitution is dependently typed: valid fillers depend on the universality the hole demands.
+
+Both are instances of the **same bind** at different path types. The two substitutions are unified by the single signature above, with `a = Fin n` for grafting and `a = TreeAddr` for box substitution.
+
+### η = Corolla
+
+η (unit/return) wraps a bare position into a trivial single-cell opetope — the corolla:
+
+```
+return : a -> Opetope a
+return p = corolla p   -- embed position p as an open leaf
+```
+
+In LC terms: `Var : a -> LC a`. No computation — just promoting a position to a leaf.
+
+### The Lambda Calculus Analogy
+
+In lambda calculus, substitution has type:
+
+```
+LC a -> (a -> LC b) -> LC b
+```
+
+- `LC a` = term with free variables typed by `a`
+- `a -> LC b` = substitution function: replace each free variable with a new term
+- `a`, `b` = types of free variable positions before and after
+
+The mapping to opetopes is exact: `a` = cell path type.
+
+### Signature / Algebra Analogy
+
+| Concept | Lambda Calculus | Opetopic |
+|---|---|---|
+| **Signature** | term constructors (App, Lam, ...) | cell shapes (which opetopes exist) |
+| **Free monad over signature** | `LC a` — terms with free variables `a` | opetope with open positions typed by `a` |
+| **Algebra** | interpretation of each constructor | opetopic set: assigns actual cells to each shape |
+| **Bind (>>=)** | substitution — thread variables through | zipper substitution — fill positions with cells |
+| **Structure map** T(A) → A | evaluate/reduce a term in A | composition — tree of cells collapses to one cell |
+| **η (return)** | `Var` — wrap a variable as a trivial term | corolla — wrap a position as an open leaf |
+| **μ** | flatten nested terms T(T(A)) → T(A) | flatten nested opetopes via zipper |
+
+The **signature** fixes *what shapes are available*; the **free monad** builds all possible trees from them with holes; an **algebra** is a way to *collapse* those trees — to say what each tree of cells actually composes to. An opetopic set is precisely such an algebra: for each pasting diagram (tree of cells), it picks the composite.
+
+---
+
 ## Target and Source Universality — Precise Definitions
 
 Both definitions follow the **same template** but applied to different extrusions.
@@ -393,6 +469,45 @@ The 0-ary corolla closure *might* be admissible as a degenerate boundary case in
 current opetopic theory — it is where the pasting diagram interpretation breaks
 down gracefully rather than violently. (Not the Dyson sphere. The Riemann sphere.)
 
+### Cobordism Interpretation
+
+The room metaphor (from the Opetopic Substitution section) has a direct cobordism reading:
+
+| Cell | Room | Cobordism |
+|---|---|---|
+| Normal n-ary cell | ceiling + floor + n tubes | n-holed pants |
+| Bare lollipop (drop on 0-cell) | ceiling only, **no floor** | cap — closes to ∅ |
+| Dim 0 (no substrate) | no floor, `under = {}` forced | empty boundary |
+
+**No floor iff `under = {}`** — at dim 0 and at bare lollipops. Both are cap-like: they terminate the cobordism rather than pass it through.
+
+The **support condition** (`under \ away` connected) is boundary matching: tubes must attach contiguously to the ceiling's topology. A disconnected support = a cobordism whose boundary doesn't stitch — geometrically forbidden.
+
+The opetopic **termination condition** (rightmost diagram is a corolla) = a cobordism that closes all boundaries — a closed manifold, no open ends.
+
+The **Baez-Dolan cobordism hypothesis** lives here: the (∞,n)-category of framed cobordisms is the free symmetric monoidal (∞,n)-category with duals — free in exactly the substitution monad sense. Opetopic shapes are the generating cobordisms; an opetopic algebra assigns structure (vector spaces, etc.) to each.
+
+### Non-Commutativity and Heisenberg
+
+Iterated derivatives are curried and **non-commutative**:
+
+```
+∂/∂p₁ ; ∂/∂p₂  :  Opetope → Context(p₁ first, then p₂ in the result)
+∂/∂p₂ ; ∂/∂p₁  :  Opetope → Context(p₂ first, then p₁ in the result)
+```
+
+Different arrow types — the intermediate context after the first derivative reshapes what the second acts on. The order of hole-making is recorded in the type.
+
+This **is** the Heisenberg relation. In quantum mechanics:
+
+```
+[x̂, p̂] = x̂p̂ − p̂x̂ = iħ
+```
+
+Measuring position then momentum ≠ measuring momentum then position — the intermediate state is disturbed. The commutator `iħ` measures the failure of commutativity, just as the type mismatch measures it in the opetopic/derivative setting.
+
+The `ε² = 0` nilpotency and `ħ` play the same role: both are "the smallest non-zero thing" — the irreducible residue of non-commutativity. Mostly philosophy, but the arrow-type non-commutativity of sequential zipper operations and the Heisenberg uncertainty principle are the same structure.
+
 ### Exotic Boundaries — The Torus and Beyond
 
 Once k-bonds and non-trivial closures are allowed, the boundary of a cell need not
@@ -437,21 +552,45 @@ compose. This would give a purely opetopic synthetic analysis — no limits, no
    unit η and multiplication μ satisfying associativity and unit laws.
 
 3. **Opetopic/substitution monad** — opetopes arise from iterated polynomial
-   functors carrying a monad structure via **substitution** (grafting of trees).
-   Multiplication = tree substitution: plug one tree into the leaves of another.
-   This is the algebraic backbone of opetopic composition. *(Not yet discussed
-   in the codebase — substitution monad is a TODO.)*
+   functors carrying a monad structure via **substitution** (zipper-based grafting).
+   Multiplication μ = zipper substitution (see Opetopic Substitution section above).
+   η = corolla. Free variables are cell path addresses (`Fin n` for leaves,
+   `TreeAddr` for inner boxes). See the LC analogy in that section.
 
 The collision is not merely nominative — deep connections lurk:
 - Both substitution and the nilpotent halo are about **local structure**:
   substitution is local in the tree; the halo is local in space
 - Both have a **multiplication that vanishes at second order**: ε² = 0 for the
   halo; grafting a tree of depth 2 into itself collapses at the substitution level
+- η of the substitution monad (corolla = constant map) corresponds to the
+  inclusion 0 ↦ x in SDG: both are "trivial/degenerate", both are units
 
 **Tantalising conjecture**: the nilpotent halo around a cell in a smooth opetopic
 space is *computed* by the substitution monad. Smoothness = the monad structure
 of opetopes acts coherently on infinitesimal neighbourhoods. The three monads are
 the same monad seen from three different vantage points.
+
+### Other CT Monads as Opetopic Composition Flavours
+
+The free monad (substitution) is the *syntactic* monad — it generates trees.
+Every other monad is a *semantic* interpretation: μ still collapses two layers,
+but the "cells" carry additional computational effect:
+
+| Monad | T(X) | Effect on opetopic composition |
+|---|---|---|
+| Maybe | X + {⊥} | partial composition — some cells may fail to compose |
+| List | finite lists of X | nondeterministic choice of composite |
+| Power set | subsets of X | set-theoretic closure under composition |
+| IO | world → (world, X) | composition with side effects |
+| State(S) | S → (S, X) | composition threading mutable state |
+| Probability | distributions over X | stochastic composition |
+| Free monad | trees with leaves X | pure syntactic substitution |
+| Writer(M) | X × M | composition accumulating a log/trace |
+
+In all cases η wraps a pure cell (no effect), and μ flattens two layers.
+The opetopic monad is the *typed* version where the filler must additionally
+carry a universality certificate — the effect type is dependently typed by the
+hole's universality demand.
 
 ---
 
