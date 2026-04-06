@@ -20,6 +20,7 @@
       date: "2023-02-18",
       label: "Feb 18, 2023",
       blurb: "Eric Finster presents his work on constructing the (∞,1)-category of types within homotopy type theory, delivered at the Centre for Quantum and Topological Systems at NYU Abu Dhabi.",
+      slides: "https://ncatlab.org/nlab/files/Finster-CQTS2022.pdf",
     },
     {
       id: "u8XCiI-ZSHc",
@@ -56,7 +57,6 @@
       date: "2018-12-06",
       label: "Dec 6, 2018",
       blurb: "A talk exploring how opetopic techniques can provide a foundation for universal algebra in homotopy type theory, connecting higher categorical structure to type-theoretic constructions.",
-      slides: "https://ncatlab.org/nlab/files/Finster-CQTS2022.pdf",
     },
     {
       id: "sEVJJCwohW0",
