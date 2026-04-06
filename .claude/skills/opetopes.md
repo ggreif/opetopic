@@ -229,6 +229,39 @@ The **head** of an opetope is the top-dimensional cell plus its codimension-1 pa
 
 ---
 
+## Target and Source Universality — Precise Definitions
+
+Both definitions follow the **same template** but applied to different extrusions.
+Green = hypotheses, red = conclusions (from the UniversalProperties page).
+
+### Target Universality
+
+- Consider the **target extrusion** of f
+- Given any cells s and t filling the green part (the extrusion scaffolding)
+- There exist u and v completing the diagram
+- v must be **both** target universal **and** source universal at u
+- Notation: small triangle on the **output edge** of f
+
+### Source Universality at x
+
+- Consider the **source extrusion** of f at chosen source face x
+- Given any cells s and t filling the green part
+- There exist u and v completing the diagram
+- Again v must be **both** target universal **and** source universal at u
+- Notation: small triangle on the **input edge** corresponding to x
+
+### The Coinductive Heart
+
+The conclusion of *each* definition requires the *other* — v must satisfy both
+simultaneously. There is no base case: you assert an **infinite tower** of mutual
+universal properties at once. This is genuine coinduction, not induction.
+
+This is why the definitions are mutually coinductive and why Palm's *thin* is the
+right word: a thin cell satisfies this infinite coinductive tower. The tower
+collapses to ε² = 0 — the coinduction *is* the nilpotency.
+
+---
+
 ## Geometric Intuition: Thin Cells and the Vacuumed Composite
 
 **Palm's terminology**: universal cells are called *thin* — they are "transparent",
