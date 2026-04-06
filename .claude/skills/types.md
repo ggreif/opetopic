@@ -204,6 +204,10 @@ For `Id`:
 everything is shifted into the card, the bare drop at dim 1 always works — no
 bubbles, no k-bonds, no crackpot territory needed.
 
+In Finster's *Calculus of Opetopes*, this shift-to-(-1)-and-recommence operation
+is called **concatenation of opetopes** — the prefix opetope and the data type
+opetope are two separate opetopes joined at the nominal card.
+
 `Refl` = `R` of `Id_X(a,b)`. Degeneracies in opetopic theory already know about
 reflexivity — and now we see exactly *how*.
 
