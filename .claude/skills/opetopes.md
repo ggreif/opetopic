@@ -201,6 +201,26 @@ Encloses the target in a new box, modifying the edge tree of the next dimension.
 ### Drop Insert
 Double-click an edge in Focus → adds a lollipop (`children: []`) to that branch's `Drop[]`. Shown as a slashed box in Prev/Focus. Drops are degeneracies — automorphisms without bijectivity.
 
+Currently, dropping on a bare branch (no base box) auto-creates a base box first.
+This is not geometrically required — a drop can attach directly to a 0-cell, as
+demonstrated by the Drop (α) in the Geometry section: α is a 2-cell whose source
+tree is a single point x, with f as the output 1-cell. No intermediate 1-cell needed.
+
+### Bare Drop (Proposed: Shift-double-click)
+
+**Shift-double-click** on a bare branch in Focus: insert a drop anchored directly
+at the 0-cell endpoint, skipping base box creation.
+
+- In Succ: renders as a **0-ary corolla** hanging directly off the edge — single
+  node, no children, one output stem
+- Geometrically: a self-morphism / loop at a point — already valid in current
+  opetopic theory, not an exotic extension
+- In type theory: an element of the fundamental group at that point
+
+This is a cleaner alternative to the bubble drop idea in Crackpot Corner — it stays
+entirely within the existing framework. The editor just needs to stop forcing a base
+box where none is required.
+
 ---
 
 ## The Head
