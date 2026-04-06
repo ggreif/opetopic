@@ -229,6 +229,34 @@ The **head** of an opetope is the top-dimensional cell plus its codimension-1 pa
 
 ---
 
+## Geometric Intuition: Thin Cells and the Vacuumed Composite
+
+**Palm's terminology**: universal cells are called *thin* — they are "transparent",
+determined entirely by their boundary, adding no new information. A thin cell
+conforms to whatever shape it is pressed against, like a thin sheet of material.
+
+**The vacuumed mattress**: a categorical composite of n-cells is a corolla frame
+with the (n+1)-cell *vacuumed out* — like a vacuum-packed mattress sold flat. The
+space between the base box and the input faces vanishes, making the pasting diagram
+triangle almost degenerate. But not quite:
+
+There remains an **infinitesimally thin** cell — an infinitesimal in the
+non-standard analysis sense: a nilpotent field extension ε with ε² = 0. There *is*
+volume, but it is not measurable, and the two configurations are categorically
+indistinguishable. No functor can separate them.
+
+The thin cell is the one whose thickness is exactly ε:
+- Present, but informationally empty
+- **Commutative** — it witnesses the equation but adds no content
+- **Stable under commutative detours**: if one input face takes a longer but
+  equivalent path, the vacuumed composite absorbs it without inflating. The
+  flatness is preserved under commutative substitution.
+
+This is why universal cells compose: the vacuum ensures the composite is uniquely
+determined, and the infinitesimal remainder is the witness of that uniqueness.
+
+---
+
 ## TODO: Stability of Target Universality (potential future chapter)
 
 In `frontend/components/Equivalences.svelte`, the proof of "target universal ⟺ equivalence"
