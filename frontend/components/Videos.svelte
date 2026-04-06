@@ -104,7 +104,7 @@
 </script>
 
 <div class="ui raised segment">
-  <h2 class="ui dividing header">Videos</h2>
+  <h2 class="ui dividing header" id="vids">Videos</h2>
 
   <p>
     A curated collection of video lectures by Eric Finster spanning over a decade
