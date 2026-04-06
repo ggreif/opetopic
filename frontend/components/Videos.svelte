@@ -56,6 +56,7 @@
       date: "2018-12-06",
       label: "Dec 6, 2018",
       blurb: "A talk exploring how opetopic techniques can provide a foundation for universal algebra in homotopy type theory, connecting higher categorical structure to type-theoretic constructions.",
+      slides: "https://ncatlab.org/nlab/files/Finster-CQTS2022.pdf",
     },
     {
       id: "sEVJJCwohW0",
@@ -131,6 +132,9 @@
         <div class="video-meta">
           <h3>{v.title}</h3>
           <span class="video-date">{v.label}</span>
+          {#if v.slides}
+            <a href={v.slides} target="_blank" rel="noopener noreferrer">Slides</a>
+          {/if}
           <p>{v.blurb}</p>
         </div>
       </div>
