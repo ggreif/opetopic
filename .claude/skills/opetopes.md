@@ -255,6 +255,30 @@ The thin cell is the one whose thickness is exactly ε:
 This is why universal cells compose: the vacuum ensures the composite is uniquely
 determined, and the infinitesimal remainder is the witness of that uniqueness.
 
+### Transparency — the dual of thinness
+
+A thin cell is also **transparent**: you can see through it from the side. What
+comes in is visible from the side where what comes out is — the infinitesimal layer
+does not obstruct the view. Input and output are indistinguishable through the cell.
+
+- **Thin/transparent cell**: no obstruction inside — the output simply follows the
+  input, witnessed only by an ε-thin layer. Two transparent sheets stacked are still
+  transparent: ε + ε = 2ε, still infinitesimal, still categorically indistinguishable.
+  Composition of thin cells is thin.
+
+- **Non-thin cell**: there is genuine **obstruction** inside — content that bends or
+  redirects the flow from input to output. Looking from the side you cannot see
+  through it. The output does *not* simply follow from the input — the cell makes a
+  non-trivial choice, adds real substance between source and target.
+
+Like clear glass vs. coloured glass: clear glass (thin cell) is the identity on
+what passes through; coloured glass (non-thin cell) lets things through but changes
+them — the colour is the obstruction.
+
+This also connects to **referential transparency** in functional programming: a
+thin cell is categorically referentially transparent — no hidden content, output
+fully determined by boundary data, no internal state that could surprise.
+
 ### `Refl` is the smallest thin cell
 
 `Refl` is the infinitesimal 2-cell par excellence:
