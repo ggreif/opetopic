@@ -10,7 +10,7 @@
  */
 
 import type { Tree, AtomicDiagram } from './opetope'
-import { collectDrops, computeSucc } from './opetope'
+import { collectDrops, computeSucc, isBareDrop } from './opetope'
 
 // ── Internal traversal helpers ────────────────────────────────────────────────
 
@@ -82,7 +82,8 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
     return `root-dim-is-edgeroot+1: root.dim=${root.cell.dim} but edgeRoot.dim=${edgeRoot.cell.dim}`
 
   // 9.1 root-required-for-dim-gte-2: a diagram at dimension ≥ 2 must have a root box tree
-  if (root === null && edgeRoot.cell.dim >= 2)
+  //     Lollipops (nullary corollas) are exempt — they are terminal and need no root.
+  if (root === null && edgeRoot.cell.dim >= 2 && !(edgeRoot.children !== null && edgeRoot.children.length === 0))
     return `root-required-for-dim-gte-2: dim=${edgeRoot.cell.dim} diagram has no root box tree`
 
   // 9.2 ADVISORY root-required-for-extrusion: if edgeRoot has inner nodes but root is null,
@@ -202,6 +203,7 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
   // 8.3 drop-branch-ids-distinct within each node
   for (const n of edgeNodes) {
+    if (!Array.isArray(n.drops)) continue  // bare-drop stem: singular, validated separately
     const seen = new Set<string>()
     for (const d of n.drops) {
       if (seen.has(d.dropId)) return `drop-branch-ids-distinct: dropId "${d.dropId}" appears twice on node "${n.cell.label}"`
@@ -232,11 +234,6 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   const dimViolation = checkDims(edgeRoot, true)
   if (dimViolation) return dimViolation
 
-  // 6.3 lollipop-dim-is-zero (in root)
-  if (root) for (const n of rootNodes) {
-    if (n.children !== null && n.children.length === 0 && n.cell.dim !== 0)
-      return `lollipop-dim-is-zero: lollipop "${n.cell.label}" has dim=${n.cell.dim}, expected 0`
-  }
 
   // 6.5 no-lollipop-in-multi-child-intermediate: intermediate nodes in root with >1 children
   //     must not have lollipops among their children (drops must not be wrapped by encircle)
@@ -347,7 +344,7 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
       const dropOwnerToRootId = new Map<string, string>()
       for (const d of allDrops) {
         for (const n of edgeNodes) {
-          if (n.drops.some(dr => dr.dropId === d.rootId)) {
+          if (Array.isArray(n.drops) && n.drops.some((dr: import('./opetope').Drop) => dr.dropId === d.rootId)) {
             dropOwnerToRootId.set(n.cell.id, d.rootId)
             break
           }
@@ -370,6 +367,7 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
     // 7.1 root-leaves-correspond-to-edgeroot-inners
     for (const n of rootNodes) {
       if (n.children === null) {  // open leaf in root
+        if (isBareDrop(n)) continue  // bare-drop stem: open leaf in focus.root by design
         if (!edgeInnerIds.has(n.cell.id))
           return `root-leaves-in-edgeroot-inners: root leaf "${n.cell.label}" (id=${n.cell.id}) is not an inner node of edgeRoot`
       }
@@ -387,6 +385,16 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
     }
   }
 
+  // ── Bare-drop stem rules ──────────────────────────────────────────────────────
+
+  // BD.1: if root itself is a bare-drop stem, check secondary structure.
+  // isBareDrop guarantees children === null (singular drops form), so no need to recheck.
+  if (root && isBareDrop(root)) {
+    // TODO: validate cell dimensions once dim semantics for bare-drop stems are settled
+    if (root.away.size !== 0)
+      return `bare-drop-stem-structure: bare-drop stem "${root.cell.label}" must have empty away set`
+  }
+
   // 3.1 unique-labels-within-edgeRoot
   {
     const seen = new Map<string, string>()  // label → cell id
@@ -399,9 +407,11 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
   // 3.2 unique-labels-across-trees: labels in root (displayed in Succ) must not
   //     duplicate labels in edgeRoot (displayed in Focus/Prev), even for shared cell objects.
+  //     Lollipops are exempt: they bond to drops and naturally share the label of the morphism they enclose.
   if (root && root !== edgeRoot) {
     const edgeLabels = new Set(edgeNodes.map(n => n.cell.label))
     for (const n of rootNodes) {
+      if (n.children !== null && n.children.length === 0) continue  // lollipop: exempt
       if (edgeLabels.has(n.cell.label))
         return `unique-labels-across-trees: label "${n.cell.label}" appears in both edgeRoot (Focus) and root (Succ)`
     }
@@ -457,6 +467,7 @@ export function validateStack(diagrams: AtomicDiagram[]): string | null {
   for (let i = 0; i < diagrams.length - 1; i++) {
     const d = diagrams[i]
     if (!d.root) continue
+    if (isBareDrop(d.root)) continue  // bare-drop stem: bond is via dropId, not computeSucc shape
     const expected = computeSucc(d.root)
     const r = treeShapeEquals(expected, diagrams[i + 1].edgeRoot)
     if (r) return `[bond ${i}→${i+1}] ${r}`

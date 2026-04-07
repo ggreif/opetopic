@@ -100,8 +100,8 @@
     if (trees.length === 1) {
       store.resetTo(withOuterFrame({ edgeRoot: trees[0], root: null }))
     } else {
-      // Multi-level: trees[i+1] serves as root for diagrams[i] — the bond holds
-      // because computeSucc(trees[i+1]) has the same structure as trees[i+1].
+      // Multi-level: trees[i+1] serves as root for diagrams[i] AND as edgeRoot for diagrams[i+1].
+      // Use trees[i+1] directly so factory-constructed ids (drops, branch bonds) are preserved.
       const diagrams: AtomicDiagram[] = trees.slice(0, -1).map((t, i) => ({ edgeRoot: t, root: trees[i + 1] }))
       diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }))
       store.resetToStack(diagrams, 0)
@@ -170,9 +170,11 @@
 
   function fmtTree(t: Tree, indent = ''): string {
     const id = `@${t.cell.id}`
-    const drops = t.drops.length ? ` drops=[${t.drops.map(d => d.dropId).join(',')}]` : ''
+    const drops = Array.isArray(t.drops)
+      ? (t.drops.length ? ` drops=[${t.drops.map(d => d.dropId).join(',')}]` : '')
+      : ` bare-drop[${t.drops.dropId}]`
     if (t.children === null) return `${indent}leaf(${t.cell.label}${id}:${t.cell.dim})${drops}`
-    if (t.children.length === 0) return `${indent}lolli(${t.cell.label}${id}:${t.cell.dim})${drops}`
+    if (t.children.length === 0) return `${indent}node(${t.cell.label}${id}:${t.cell.dim})${drops}`
     const kids = t.children.map(([bid, child]) => fmtTree(child, indent + '  ') + ` @${bid}`).join('\n')
     return `${indent}node(${t.cell.label}${id}:${t.cell.dim})${drops}\n${kids}`
   }

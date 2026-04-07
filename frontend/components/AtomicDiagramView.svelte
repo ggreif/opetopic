@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as d3 from 'd3'
   import type { Tree, AtomicDiagram, DropInfo } from '../lib/opetope'
+  import { isBareDrop } from '../lib/opetope'
   import { computeLayout, corollaElements, measureDropOffsets, PAD, ARC_R, TREE_H, DROP_BOX_H, DROP_SPACER, DROP_UNIT, NODE_W, INTER_PAD } from '../lib/layout'
 
 
@@ -168,6 +169,36 @@
     return { rects, extensions, minExtY }
   })())
 
+  // ── Bare-drop glyphs — open-stem nodes in focus.root with singular Drop ──────
+
+  const BARE_BOX_W = DROP_BOX_H * 3    // wider than ordinary drop box
+  const BARE_BOX_H = DROP_BOX_H * 2.5  // taller — like a base box
+
+  type BareDropGlyph = { stemId: string; stemLabel: string; cx: number; nodeY: number }
+
+  const bareDropGlyphs = $derived((() => {
+    const result: BareDropGlyph[] = []
+    if (!diagram.root) return result
+    // Bare drops are only at dim 0: edgeRoot is a single leaf — use its position for all bare-drop glyphs
+    const leafNode = nodes.find((n: any) => !n.children) as any ?? nodes[0] as any
+    const pushGlyph = (t: Tree) =>
+      result.push({ stemId: t.cell.id, stemLabel: t.cell.label, cx: leafNode.x as number, nodeY: leafNode.y as number })
+    // Handle case where root itself is a bare-drop stem
+    if (isBareDrop(diagram.root)) {
+      pushGlyph(diagram.root)
+    } else {
+      function walk(t: Tree) {
+        if (!t.children) return
+        for (const [, child] of t.children) {
+          if (isBareDrop(child)) pushGlyph(child)
+          else walk(child)
+        }
+      }
+      walk(diagram.root)
+    }
+    return result
+  })())
+
   // Expand the outer frame to cover drop boxes AND intermediate boxes in all directions
   const adjustedFrameRect = $derived((() => {
     const fr = frameRect
@@ -177,6 +208,7 @@
     const allRects = [
       ...dropLayout.rects.map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h })),
       ...intermediateBoxes.map(ib => ({ x: ib.x, y: ib.y, w: ib.w, h: ib.h })),
+      ...bareDropGlyphs.map(g => ({ x: g.cx - BARE_BOX_W / 2, y: g.nodeY + DROP_SPACER, w: BARE_BOX_W, h: BARE_BOX_H })),
     ]
 
     const minRectX = allRects.length > 0 ? Math.min(...allRects.map(r => r.x))         : null
@@ -262,6 +294,40 @@
         <rect x={dr.x} y={dr.y} width={dr.w} height={dr.h} rx="3" ry="3"
           class="box-rect leaf"
           class:highlighted={dr.rootId === highlight || dr.rootId === highlightNode}
+        />
+      </g>
+    {/each}
+    <!-- Bare-drop glyphs: left-bond stem line + right-bond box -->
+    {#each bareDropGlyphs as g (g.stemId)}
+      {@const bx = g.cx - BARE_BOX_W / 2}
+      {@const by = g.nodeY + DROP_SPACER}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <g
+        onmouseenter={() => { onhover?.(g.stemId); onnodehover?.(g.stemId) }}
+        onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+      >
+        <!-- Left bond: vertical stem line from node down into the box -->
+        <line
+          x1={g.cx} y1={g.nodeY}
+          x2={g.cx} y2={by + BARE_BOX_H / 2}
+          class="corolla-link bare-drop-stem"
+          class:highlighted={g.stemId === highlight}
+        />
+        <!-- Left bond label alongside the stem -->
+        <text x={g.cx + 5} y={by + BARE_BOX_H / 2 - 4}
+          class="edge-label"
+          class:highlighted={g.stemId === highlight}
+        >{g.stemLabel}</text>
+        <!-- Right bond: the box (freestanding corolla / Succ lollipop) -->
+        <rect x={bx} y={by} width={BARE_BOX_W} height={BARE_BOX_H} rx="4" ry="4"
+          class="box-rect leaf bare-drop-box"
+          class:highlighted={g.stemId === highlight || g.stemId === highlightNode}
+        />
+        <!-- Horizontal crossing line, inset — does NOT extend outside the box -->
+        <line
+          x1={bx + 6} y1={by + BARE_BOX_H / 2}
+          x2={bx + BARE_BOX_W - 6} y2={by + BARE_BOX_H / 2}
+          class="drop-slash-box"
         />
       </g>
     {/each}
@@ -411,6 +477,10 @@
     text-anchor: end;
   }
   :global(.box-label.highlighted) { fill: #a02480; font-weight: bold; }
+  :global(.bare-drop-box) {
+    fill: rgba(243, 229, 245, 0.5);  /* light purple tint — visual cue for bijection */
+  }
+
   :global(.drop-slash-box) {
     stroke: #666;
     stroke-width: 1.5;
