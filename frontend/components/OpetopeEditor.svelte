@@ -9,11 +9,13 @@
     oncellclick = undefined,
     onsourceextrude = undefined,
     ondropinsert = undefined,
+    onbaredropinsert = undefined,
     onencircle = undefined,
   }: {
     oncellclick?: (cellId: string) => void
     onsourceextrude?: (leafId: string) => void
     ondropinsert?: (cellId: string) => void
+    onbaredropinsert?: (cellId: string) => void
     onencircle?: (cellIds: Set<string>) => void
   } = $props()
 
@@ -128,6 +130,7 @@
       onnodehover={(id) => { succHoveredId = id }}
       onselect={handleSelect}
       ondropinsert={(cellId) => ondropinsert?.(cellId)}
+      onbaredropinsert={(cellId) => onbaredropinsert?.(cellId)}
       onencircle={(ids) => { onencircle?.(ids); selectedIds = new Set() }}
     />
     {#if hardViolation}

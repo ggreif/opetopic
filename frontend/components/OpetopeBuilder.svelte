@@ -213,6 +213,14 @@
     }
   }
 
+  function handleBareDropInsert(_leafCellId: string) {
+    const focus = store.focus
+    if (focus.root !== null) return  // ignore if root already exists
+    const newCell = cell(freshLabel(), focus.edgeRoot.cell.dim + 1)
+    const lolliTree: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
+    setFocus({ ...focus, root: lolliTree })
+  }
+
   // ── Recording ────────────────────────────────────────────────────────────────
   let recording = $state(false)
   let _recordSteps: TapeStep[] = []
@@ -297,7 +305,7 @@
     </button>
   </div>
 
-  <OpetopeEditor onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onencircle={handleEncircle} />
+  <OpetopeEditor onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onbaredropinsert={handleBareDropInsert} onencircle={handleEncircle} />
 </section>
 
 <style>

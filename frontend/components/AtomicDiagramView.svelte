@@ -18,6 +18,7 @@
     onnodehover = undefined,
     onselect = undefined,
     ondropinsert = undefined,
+    onbaredropinsert = undefined,
     onencircle = undefined,
   }: {
     diagram: AtomicDiagram
@@ -32,6 +33,7 @@
     onnodehover?: (cellId: string | null) => void
     onselect?: (cellId: string | null, add?: boolean) => void
     ondropinsert?: (cellId: string) => void
+    onbaredropinsert?: (cellId: string) => void
     onencircle?: (ids: Set<string>) => void
   } = $props()
 
@@ -83,6 +85,12 @@
 
   const hier  = $derived(computeLayout(diagram.edgeRoot, width, height, dropCountsByEdge, diagram.root))
   const nodes = $derived(hier.descendants() as any[])
+
+  // Bare open leaf cell ids: open leaf nodes (no d3 children, not nullary) with no drops on them
+  const openLeafIds = $derived(new Set<string>(
+    nodes.filter((d: any) => !d.children && !d.data.nullary && !droppedEdgeIds.has(d.data.id as string))
+         .map((d: any) => d.data.id as string)
+  ))
 
   // ── Intermediate boxes — non-root, non-leaf nodes of focus.root ──────────────
   // After encircle, focus.root gains wrapper nodes that have no counterpart in
@@ -337,8 +345,11 @@
         <g onmouseenter={() => onhover?.(d.data.id)} onmouseleave={() => onhover?.(null)}>
           <path d={p} class="corolla-link" class:highlighted={d.data.id === highlight} class:selection-highlighted={selectionHighlightIds.has(d.data.id)} />
           <path d={p} class="corolla-hit" />
-          {#if ondropinsert}
-            <path d={p} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(d.data.id)} />
+          {#if ondropinsert || onbaredropinsert}
+            <path d={p} class="corolla-hit droppable" ondblclick={(e) => {
+              if (e.shiftKey && openLeafIds.has(d.data.id as string)) { onbaredropinsert?.(d.data.id) }
+              else { ondropinsert?.(d.data.id) }
+            }} />
           {/if}
         </g>
       {/if}
@@ -374,8 +385,11 @@
         >
           <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} class:selection-highlighted={selectionHighlightIds.has(branch.id)} />
           <path d={branch.path} class="corolla-hit" />
-          {#if ondropinsert}
-            <path d={branch.vertPath} class="corolla-hit droppable" ondblclick={() => ondropinsert?.(branch.id)} />
+          {#if ondropinsert || onbaredropinsert}
+            <path d={branch.vertPath} class="corolla-hit droppable" ondblclick={(e) => {
+              if (e.shiftKey && openLeafIds.has(branch.id)) { onbaredropinsert?.(branch.id) }
+              else { ondropinsert?.(branch.id) }
+            }} />
           {/if}
         </g>
       {/each}
