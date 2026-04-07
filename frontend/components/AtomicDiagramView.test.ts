@@ -384,6 +384,25 @@ describe('bareDrop example: Succ via store (no hop)', () => {
   })
 })
 
+describe('bareDrop example: hop(1) arrives with base box', () => {
+  // start('bareDrop') pre-builds diagrams[1] with a proper root.
+  // hop(1) just increments focusIdx — no root=null transient ever exists.
+  const tape = new Tape().start('bareDrop').hop(1)
+
+  test('tape is valid after hop', () => {
+    expect(tape.validate()).toBeNull()
+  })
+
+  test('level 1 edgeRoot is the lollipop f', () => {
+    expect(tape.focus.edgeRoot.children).toEqual([])
+  })
+
+  test('level 1 root is a base box (non-null) on arrival', () => {
+    expect(tape.focus.root).not.toBeNull()
+    expect(tape.focus.root!.children).toHaveLength(1)
+  })
+})
+
 describe('Validation: Tape.validate()', () => {
   test('fresh boxtree is valid', () => {
     const tape = new Tape().start('boxtree')

@@ -2,7 +2,7 @@
   import * as d3 from 'd3'
   import { tick } from 'svelte'
   import OpetopeEditor from './OpetopeEditor.svelte'
-  import { simplex, ypsilon, point, boxtree, bareDrop, cell, freshId, resetIds, substrate, sourceExtrude, subtreeFor, dropInsert, encircleMulti, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
+  import { simplex, ypsilon, point, boxtree, bareDrop, cell, freshId, resetIds, substrate, sourceExtrude, subtreeFor, dropInsert, encircleMulti, computeSucc, type AtomicDiagram, type Tree, type Opetope } from '../lib/opetope'
   import { validateDiagram } from '../lib/validate'
   import { store } from '../lib/diagramStore.svelte'
   import type { TapeStep } from '../lib/opetope-edsl'
