@@ -335,6 +335,32 @@ describe('Recorded sequence: point → bareDrop → 2×drop → hop(1) → hop(1
   })
 })
 
+describe('bareDrop example: Succ via store (no hop)', () => {
+  // tape.succDiagram reads diagrams[focusIdx+1] directly, mirroring store.succDiagram.
+  // The Succ of a bare lollipop is itself a lollipop — 1 node, 1 edge-label.
+  const tape = new Tape().start('bareDrop')
+
+  test('succDiagram exists without hopping', () => {
+    expect(tape.succDiagram).toBeDefined()
+  })
+
+  test('succDiagram edgeRoot is a lollipop (1 node, 0 children)', () => {
+    expect(tape.succDiagram!.edgeRoot.children).toEqual([])
+  })
+
+  test('succDiagram root is null (no pre-created outer frame)', () => {
+    expect(tape.succDiagram!.root).toBeNull()
+  })
+
+  test('Succ DOM renders 1 edge-label', () => {
+    const succ = tape.succDiagram!
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: succ, drops: collectDrops(succ.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(1)
+  })
+})
+
 describe('Validation: Tape.validate()', () => {
   test('fresh boxtree is valid', () => {
     const tape = new Tape().start('boxtree')

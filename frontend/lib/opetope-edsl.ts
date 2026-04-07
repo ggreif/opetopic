@@ -12,14 +12,14 @@
 import {
   cell, freshId, subtreeFor, sourceExtrude, dropInsert, encircleMulti, computeSucc,
   type AtomicDiagram, type Tree, type Cell,
-  point, boxtree, simplex, ypsilon, type Opetope,
+  point, boxtree, simplex, ypsilon, bareDrop as bareDropExample, type Opetope,
 } from './opetope'
 import { validateStack } from './validate'
 
 // ── Step types ───────────────────────────────────────────────────────────────
 
 export type TapeStep =
-  | { op: 'start';    example: 'point' | 'boxtree' | 'simplex' | 'ypsilon' }
+  | { op: 'start';    example: 'point' | 'boxtree' | 'simplex' | 'ypsilon' | 'bareDrop' }
   | { op: 'extrude';  label: string }
   | { op: 'drop';     label: string }
   | { op: 'bareDrop' }
@@ -37,13 +37,14 @@ function freshLabel(): string {
 
 function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
   const innerNodes: Cell[] = []
-  function collectInner(t: Tree) {
+  function collectInner(t: Tree, isEdgeRoot = false) {
     if (t.children !== null) {  // corolla node: inner (length>0) or lollipop (length===0)
-      innerNodes.push(t.cell)
+      // Include as substrate unless it's the edgeRoot itself being a bare lollipop.
+      if (!isEdgeRoot || t.children.length > 0) innerNodes.push(t.cell)
       for (const [, child] of t.children) collectInner(child)
     }
   }
-  collectInner(diagram.edgeRoot)
+  collectInner(diagram.edgeRoot, true)
   if (innerNodes.length === 0) return { edgeRoot: diagram.edgeRoot, root: null }
 
   const usedLabels = new Set<string>()
@@ -78,6 +79,11 @@ export class Tape {
     return this.diagrams[this.focusIdx]
   }
 
+  /** The next level's diagram, if it exists — mirrors store.succDiagram. */
+  get succDiagram(): AtomicDiagram | undefined {
+    return this.diagrams[this.focusIdx + 1]
+  }
+
   /** Map lollipop cell label → branch ID in focus.root */
   lolliToBranchId(label: string): string | undefined {
     const root = this.focus.root
@@ -96,9 +102,9 @@ export class Tape {
 
   // ── Fluent builder ─────────────────────────────────────────────────────────
 
-  start(example: 'point' | 'boxtree' | 'simplex' | 'ypsilon'): this {
+  start(example: 'point' | 'boxtree' | 'simplex' | 'ypsilon' | 'bareDrop'): this {
     this.steps.push({ op: 'start', example })
-    const makers: Record<string, () => Opetope> = { point, boxtree, simplex, ypsilon }
+    const makers: Record<string, () => Opetope> = { point, boxtree, simplex, ypsilon, bareDrop: bareDropExample }
     const trees = makers[example]()
     if (trees.length === 1) {
       this.diagrams = [withOuterFrame({ edgeRoot: trees[0], root: null })]

@@ -19,13 +19,14 @@
   // Returns focus with root = null if substrate has no corolla nodes (e.g. Point).
   function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
     const innerNodes: ReturnType<typeof cell>[] = []
-    function collectInner(t: Tree) {
+    function collectInner(t: Tree, isEdgeRoot = false) {
       if (t.children !== null) {  // corolla node: inner (length>0) or lollipop (length===0)
-        innerNodes.push(t.cell)
+        // Include as substrate unless it's the edgeRoot itself being a bare lollipop.
+        if (!isEdgeRoot || t.children.length > 0) innerNodes.push(t.cell)
         for (const [, child] of t.children) collectInner(child)
       }
     }
-    collectInner(diagram.edgeRoot)
+    collectInner(diagram.edgeRoot, true)
     if (innerNodes.length === 0) return { edgeRoot: diagram.edgeRoot, root: null }
     // Collect labels already in edgeRoot so we skip them (computeSucc preserves labels,
     // which would collide with freshLabel() if we don't check).
