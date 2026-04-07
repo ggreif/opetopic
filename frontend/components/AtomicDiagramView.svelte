@@ -189,18 +189,9 @@
     const leafNode = nodes.find((n: any) => !n.children) as any ?? nodes[0] as any
     const pushGlyph = (t: Tree, bid: string) =>
       result.push({ stemId: t.cell.id, branchId: bid, edgeId: diagram.edgeRoot.cell.id, stemLabel: t.cell.label, cx: leafNode.x as number, nodeY: leafNode.y as number })
-    // Handle case where root itself is a bare-drop stem (no parent branch — use cell id as fallback)
+    // Only diagram.root itself can be a bare-drop — lollipop children are ordinary drops
     if (isBareDrop(diagram.root)) {
       pushGlyph(diagram.root, diagram.root.cell.id)
-    } else {
-      function walk(t: Tree) {
-        if (!t.children) return
-        for (const [bid, child] of t.children) {
-          if (isBareDrop(child)) pushGlyph(child, bid)
-          else walk(child)
-        }
-      }
-      walk(diagram.root)
     }
     return result
   })())

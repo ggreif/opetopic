@@ -39,6 +39,17 @@
     return m
   })())
 
+  // Inverse: branch ID → lollipop cell ID (for bond hover from Focus drop box → Succ lollipop)
+  const branchToLolliCell = $derived(new Map([...lolliCellToBranchId].map(([cellId, bid]) => [bid, cellId])))
+
+  // Succ highlightNode: only nullary nodes — map branch id → lollipop cell id,
+  // or pass through if succHoveredId is itself a lollipop cell id; else undefined.
+  const succHighlightNode = $derived(
+    succHoveredId
+      ? (branchToLolliCell.get(succHoveredId) ?? (lolliCellToBranchId.has(succHoveredId) ? succHoveredId : undefined))
+      : undefined
+  )
+
   $effect(() => { if (violation) console.log('[validateStack]', violation) })
 
   // Succ AtomicDiagram:
@@ -137,12 +148,12 @@
       drops={collectDrops(succAtomicDiagram.edgeRoot)}
       width={280}
       height={340}
-      highlight={succHoveredId ?? undefined}
-      highlightNode={undefined}
+      highlight={succHoveredId ? (branchToLolliCell.get(succHoveredId) ?? succHoveredId) : undefined}
+      highlightNode={succHighlightNode}
       selected={new Set()}
       selectionHighlightIds={selectedIds}
       onhover={(id) => { succHoveredId = id }}
-      onnodehover={undefined}
+      onnodehover={(id) => { succHoveredId = id }}
       onselect={undefined}
       ondropinsert={undefined}
       onencircle={undefined}
