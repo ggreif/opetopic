@@ -171,6 +171,59 @@ describe('Recorded sequence: point → extrude → 2×drop → encircle', () => 
   })
 })
 
+describe('Recorded sequence: point → bareDrop → 2×drop', () => {
+  // Sequence captured from browser recording session 2026-04-07.
+  // Steps: start(point) · bareDrop · hop(-1) · drop(a) · hop(-1) · drop(a) · hop(-1)
+  // (hop(-1) steps are spurious no-ops fired by the $effect when store.diagrams changes)
+  const tape = new Tape()
+    .start('point')
+    .bareDrop()
+    .hop(-1)
+    .drop('a')
+    .hop(-1)
+    .drop('a')
+    .hop(-1)
+
+  test('tape is valid after full sequence', () => {
+    expect(tape.validate()).toBeNull()
+  })
+
+  test('after bareDrop only: root is a bare-drop lollipop (no children)', () => {
+    const t = new Tape().start('point').bareDrop()
+    const root = t.focus.root
+    expect(root).not.toBeNull()
+    expect(root!.children).toEqual([])  // lollipop: children = []
+    expect(t.focus.edgeRoot.drops).toHaveLength(0)  // no bonds to edgeRoot
+  })
+
+  test('after bareDrop only: bare-drop-box glyph present, no ordinary drop boxes', () => {
+    const t = new Tape().start('point').bareDrop()
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: t.focus, drops: collectDrops(t.focus.edgeRoot) }
+    })
+    expect(container.querySelectorAll('.bare-drop-box')).toHaveLength(1)
+    expect(dropBoxCount(container)).toBe(1)  // bare-drop-box itself is .box-rect.leaf
+  })
+
+  test('after full sequence: two drop boxes', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    expect(dropBoxCount(container)).toBe(2)
+  })
+
+  test('after full sequence: root has two lollipop children', () => {
+    const root = tape.focus.root
+    expect(root).not.toBeNull()
+    expect(root!.children).toHaveLength(2)
+    root!.children!.forEach(([, child]) => expect(child.children).toEqual([]))
+  })
+
+  test('after full sequence: edgeRoot carries two drops', () => {
+    expect(tape.focus.edgeRoot.drops).toHaveLength(2)
+  })
+})
+
 describe('Validation: Tape.validate()', () => {
   test('fresh boxtree is valid', () => {
     const tape = new Tape().start('boxtree')

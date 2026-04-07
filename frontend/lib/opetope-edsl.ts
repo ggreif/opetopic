@@ -22,6 +22,7 @@ export type TapeStep =
   | { op: 'start';    example: 'point' | 'boxtree' | 'simplex' | 'ypsilon' }
   | { op: 'extrude';  label: string }
   | { op: 'drop';     label: string }
+  | { op: 'bareDrop' }
   | { op: 'hop';      delta: 1 | -1 }
   | { op: 'encircle'; labels: string[] }
 
@@ -176,6 +177,16 @@ export class Tape {
     return this
   }
 
+  bareDrop(): this {
+    this.steps.push({ op: 'bareDrop' })
+    const focus = this.focus
+    if (focus.root !== null) return this
+    const newCell = cell(freshLabel(), focus.edgeRoot.cell.dim + 1)
+    const lolliTree: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
+    this.diagrams[this.focusIdx] = { ...focus, root: lolliTree }
+    return this
+  }
+
   hop(delta: 1 | -1): this {
     this.steps.push({ op: 'hop', delta })
     if (delta === 1) {
@@ -239,6 +250,7 @@ export class Tape {
         case 'start':    tape.start(step.example); break
         case 'extrude':  tape.extrude(step.label); break
         case 'drop':     tape.drop(step.label); break
+        case 'bareDrop': tape.bareDrop(); break
         case 'hop':      tape.hop(step.delta); break
         case 'encircle': tape.encircle(step.labels); break
       }

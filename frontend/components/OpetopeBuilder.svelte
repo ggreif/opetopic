@@ -219,6 +219,9 @@
     const newCell = cell(freshLabel(), focus.edgeRoot.cell.dim + 1)
     const lolliTree: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
     setFocus({ ...focus, root: lolliTree })
+    const step: TapeStep = { op: 'bareDrop' }
+    console.log('[EDSL]', JSON.stringify(step))
+    _recordStep(step)
   }
 
   // ── Recording ────────────────────────────────────────────────────────────────
