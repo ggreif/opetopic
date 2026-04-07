@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [svelte()],
   resolve: {
     conditions: ['browser'],
+    extensions: ['.ts', '.svelte', '.mjs', '.js', '.jsx', '.tsx', '.json'],
   },
   test: {
     environment: 'jsdom',
