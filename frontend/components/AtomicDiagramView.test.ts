@@ -11,7 +11,7 @@
 import { render } from '@testing-library/svelte'
 import { describe, test, expect } from 'vitest'
 import AtomicDiagramView from './AtomicDiagramView.svelte'
-import { collectDrops, computeSucc } from '../lib/opetope'
+import { collectDrops } from '../lib/opetope'
 import { Tape } from '../lib/opetope-edsl'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -224,10 +224,55 @@ describe('Recorded sequence: point → bareDrop → 2×drop', () => {
   })
 })
 
+describe('Succ at intermediate steps: bareDrop → drop → drop', () => {
+  // After hop(1) the tape stores computeSucc(root) as the next level's edgeRoot.
+  // We read tape.focus.edgeRoot directly — no need to call computeSucc manually.
+  //   bareDrop + hop  → lollipop (0 children) → 1 edge-label in DOM
+  //   + 1 drop + hop  → inner node with 1 lollipop child → 2 edge-labels
+  //   + 2 drops + hop → inner node with 2 lollipop children → 3 edge-labels
+
+  const t0 = new Tape().start('point').bareDrop().hop(1)
+  const t1 = new Tape().start('point').bareDrop().hop(-1).drop('a').hop(1)
+  const t2 = new Tape().start('point').bareDrop().hop(-1).drop('a').hop(-1).drop('a').hop(1)
+
+  test('after bareDrop + hop: Succ edgeRoot is a lollipop (0 children)', () => {
+    expect(t0.focus.edgeRoot.children).toEqual([])
+  })
+
+  test('after bareDrop + hop: Succ DOM renders 1 edge-label', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: t0.focus, drops: collectDrops(t0.focus.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(1)
+  })
+
+  test('after bareDrop + 1 drop + hop: Succ edgeRoot has 1 lollipop child', () => {
+    expect(t1.focus.edgeRoot.children).toHaveLength(1)
+    expect(t1.focus.edgeRoot.children![0][1].children).toEqual([])
+  })
+
+  test('after bareDrop + 1 drop + hop: Succ DOM renders 2 edge-labels (root + 1 child)', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: t1.focus, drops: collectDrops(t1.focus.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(2)
+  })
+
+  test('after bareDrop + 2 drops + hop: Succ edgeRoot has 2 lollipop children', () => {
+    expect(t2.focus.edgeRoot.children).toHaveLength(2)
+    t2.focus.edgeRoot.children!.forEach(([, c]) => expect(c.children).toEqual([]))
+  })
+
+  test('after bareDrop + 2 drops + hop: Succ DOM renders 3 edge-labels (root + 2 children)', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: t2.focus, drops: collectDrops(t2.focus.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(3)
+  })
+})
+
 describe('Recorded sequence: point → bareDrop → 2×drop → hop(1)', () => {
-  // Extends previous sequence with hop(1) to level 1.
-  // At level 1: edgeRoot = computeSucc(root) = node(α, [(b1,lollipop(β)), (b2,lollipop(γ))])
-  // withOuterFrame creates a root for α only; β and γ lollipops have bonds to the right.
+  // At level 1: edgeRoot = stored computeSucc(root) = node(α, [(b1,lollipop(β)), (b2,lollipop(γ))])
   const tape = new Tape()
     .start('point')
     .bareDrop()
@@ -254,29 +299,13 @@ describe('Recorded sequence: point → bareDrop → 2×drop → hop(1)', () => {
     })
     expect(treeNodeCount(container)).toBe(3)
   })
-
-  test('Succ edgeRoot (computeSucc of level1.root) has 3 open children', () => {
-    const succEdgeRoot = computeSucc(tape.focus.root!)
-    expect(succEdgeRoot.children).toHaveLength(3)
-    succEdgeRoot.children!.forEach(([, c]) => expect(c.children).toBeNull())
-  })
-
-  test('Succ renders 4 edge-labels (root + 3 open children)', () => {
-    const succEdgeRoot = computeSucc(tape.focus.root!)
-    const succDiagram = { edgeRoot: succEdgeRoot, root: null }
-    const { container } = render(AtomicDiagramView, {
-      props: { diagram: succDiagram, drops: collectDrops(succDiagram.edgeRoot) }
-    })
-    const labels = edgeLabels(container)
-    // succEdgeRoot root node (the output edge ν) + 3 open children (ξ, ο, π) = 4 labels total
-    expect(labels).toHaveLength(4)
-  })
 })
 
 describe('Recorded sequence: point → bareDrop → 2×drop → hop(1) → hop(1)', () => {
-  // Hop to level 2. Level 2 edgeRoot = computeSucc(level1.root).
-  // β and γ are lollipops in level 1's edgeRoot but NOT inner nodes — withOuterFrame
-  // only creates a substrate for α. The question: do β and γ bonds appear at level 2?
+  // Level 2 edgeRoot is stored in the tape after the second hop — no manual computeSucc needed.
+  // withOuterFrame at level 1 creates substrate leaves for ALL corolla nodes:
+  // α (inner) + β (lollipop) + γ (lollipop) → 3 children in level 1 root →
+  // 3 open branches in level 2 edgeRoot.
   const tape = new Tape()
     .start('point')
     .bareDrop()
@@ -292,13 +321,17 @@ describe('Recorded sequence: point → bareDrop → 2×drop → hop(1) → hop(1
     expect(tape.validate()).toBeNull()
   })
 
-  test('level 2 edgeRoot root has 3 open children (substrates for α, β, γ)', () => {
-    // withOuterFrame at level 1 now creates substrate leaves for ALL corolla nodes:
-    // α (inner) + β (lollipop) + γ (lollipop) → 3 children in level 1 root.
-    // computeSucc maps those to 3 open branches in level 2 edgeRoot.
+  test('level 2 edgeRoot has 3 open children (substrates for α, β, γ)', () => {
     const edgeRoot = tape.focus.edgeRoot
     expect(edgeRoot.children).toHaveLength(3)
-    edgeRoot.children!.forEach(([, child]) => expect(child.children).toBeNull())  // all open leaves
+    edgeRoot.children!.forEach(([, child]) => expect(child.children).toBeNull())
+  })
+
+  test('level 2 Succ renders 4 edge-labels (root + 3 open children)', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(4)
   })
 })
 
