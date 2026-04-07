@@ -73,6 +73,7 @@
 
   const NODE_R = 4
   const DROP_W = H_PAD_L + H_PAD_R
+  const DROP_X_OFFSET_FRAC = 3  // box x offset: cx - boxWidth / DROP_X_OFFSET_FRAC (same for drops and bare drops)
 
   const dropCountsByEdge = $derived((() => {
     const m = new Map<string, number>()
@@ -157,7 +158,7 @@
       const bw = DROP_BOX_H * 1.5  // narrow box width — same for all branches
       for (let i = 0; i < k; i++) {
         const yOff = dropOffsets.get(edgeDrops[i].rootId) ?? (NODE_W / 2 + DROP_SPACER)
-        rects.push({ rootId: edgeDrops[i].rootId, x: cx - bw / 3, y: nodeY + yOff + i * DROP_UNIT, w: bw, h: DROP_BOX_H })
+        rects.push({ rootId: edgeDrops[i].rootId, x: cx - bw / DROP_X_OFFSET_FRAC, y: nodeY + yOff + i * DROP_UNIT, w: bw, h: DROP_BOX_H })
       }
     }
 
@@ -174,23 +175,28 @@
   const BARE_BOX_W = DROP_BOX_H * 3    // wider than ordinary drop box
   const BARE_BOX_H = DROP_BOX_H * 2.5  // taller — like a base box
 
-  type BareDropGlyph = { stemId: string; stemLabel: string; cx: number; nodeY: number }
+  type BareDropGlyph = { stemId: string; branchId: string; edgeId: string; stemLabel: string; cx: number; nodeY: number }
+
+  // Set of edgeRoot cell ids that have a bare-drop box — used to clip their stems
+  const bareDropEdgeIds = $derived(new Set(
+    diagram.root && isBareDrop(diagram.root) ? [diagram.edgeRoot.cell.id] : []
+  ))
 
   const bareDropGlyphs = $derived((() => {
     const result: BareDropGlyph[] = []
     if (!diagram.root) return result
     // Bare drops are only at dim 0: edgeRoot is a single leaf — use its position for all bare-drop glyphs
     const leafNode = nodes.find((n: any) => !n.children) as any ?? nodes[0] as any
-    const pushGlyph = (t: Tree) =>
-      result.push({ stemId: t.cell.id, stemLabel: t.cell.label, cx: leafNode.x as number, nodeY: leafNode.y as number })
-    // Handle case where root itself is a bare-drop stem
+    const pushGlyph = (t: Tree, bid: string) =>
+      result.push({ stemId: t.cell.id, branchId: bid, edgeId: diagram.edgeRoot.cell.id, stemLabel: t.cell.label, cx: leafNode.x as number, nodeY: leafNode.y as number })
+    // Handle case where root itself is a bare-drop stem (no parent branch — use cell id as fallback)
     if (isBareDrop(diagram.root)) {
-      pushGlyph(diagram.root)
+      pushGlyph(diagram.root, diagram.root.cell.id)
     } else {
       function walk(t: Tree) {
         if (!t.children) return
-        for (const [, child] of t.children) {
-          if (isBareDrop(child)) pushGlyph(child)
+        for (const [bid, child] of t.children) {
+          if (isBareDrop(child)) pushGlyph(child, bid)
           else walk(child)
         }
       }
@@ -300,42 +306,36 @@
   </g>
   {/if}
 
-  <!-- Bare-drop glyphs: rendered outside the box-layer, independent of root presence -->
+  <!-- Bare-drop glyphs: before tree layer; SVG clipPath confines the stem inside the box -->
+  <defs>
+    {#each bareDropGlyphs as g (g.stemId)}
+      {@const bx = g.cx - BARE_BOX_W / DROP_X_OFFSET_FRAC}
+      {@const by = g.nodeY + DROP_SPACER}
+      <clipPath id="bare-drop-clip-{g.edgeId}">
+        <rect x={bx} y={by} width={BARE_BOX_W} height={BARE_BOX_H} />
+      </clipPath>
+    {/each}
+  </defs>
   {#each bareDropGlyphs as g (g.stemId)}
-    {@const bx = g.cx - BARE_BOX_W / 2}
+    {@const bx = g.cx - BARE_BOX_W / DROP_X_OFFSET_FRAC}
     {@const by = g.nodeY + DROP_SPACER}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <g
       onmouseenter={() => { onhover?.(g.stemId); onnodehover?.(g.stemId) }}
       onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
     >
-      <!-- Left bond: vertical stem line from node down into the box -->
-      <line
-        x1={g.cx} y1={g.nodeY}
-        x2={g.cx} y2={by + BARE_BOX_H / 2}
-        class="corolla-link bare-drop-stem"
-        class:highlighted={g.stemId === highlight}
-      />
-      <!-- Left bond label alongside the stem -->
-      <text x={g.cx + 5} y={by + BARE_BOX_H / 2 - 4}
-        class="edge-label"
-        class:highlighted={g.stemId === highlight}
-      >{g.stemLabel}</text>
-      <!-- Right bond: the box -->
       <rect x={bx} y={by} width={BARE_BOX_W} height={BARE_BOX_H} rx="4" ry="4"
         class="box-rect leaf bare-drop-box"
-        class:highlighted={g.stemId === highlight || g.stemId === highlightNode}
+        class:highlighted={g.stemId === highlight || g.branchId === highlightNode}
       />
-      <!-- Horizontal crossing line, inset — does NOT extend outside the box -->
-      <line
-        x1={bx + 6} y1={by + BARE_BOX_H / 2}
-        x2={bx + BARE_BOX_W - 6} y2={by + BARE_BOX_H / 2}
-        class="drop-slash-box"
-      />
+      <text x={bx + BARE_BOX_W - 7} y={by + 18}
+        class="box-label"
+        class:highlighted={g.stemId === highlight || g.branchId === highlightNode}
+      >{g.stemLabel}</text>
     </g>
   {/each}
 
-  <!-- ── Tree layer ────────────────────────────────────────────────────────── -->
+  <!-- ── Tree layer — stem clipped inside bare-drop box ────────────────────── -->
   <g class="tree-layer">
     <!-- Leaf tip extensions: ensure every open branch tip reaches leafCeiling -->
     {#each nodes.filter((d: any) => !d.children && d.parent) as d (d.data.id)}
@@ -372,12 +372,14 @@
 
     {#each nodes.filter((d: any) => d.children || !d.parent) as d (d.data.id)}
       {@const { branches } = corollaElements(d, d.parent ? 0 : (hier as any)._stemLen)}
+      {@const clipId = bareDropEdgeIds.has(d.data.id) ? `bare-drop-clip-${d.data.id}` : null}
       {#each branches as branch (branch.id)}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <g
           onmouseenter={() => onhover?.(branch.id)}
           onmouseleave={() => onhover?.(null)}
+          {...(clipId ? {'clip-path': `url(#${clipId})`} : {})}
         >
           <path d={branch.path} class="corolla-link" class:highlighted={branch.id === highlight} class:selection-highlighted={selectionHighlightIds.has(branch.id)} />
           <path d={branch.path} class="corolla-hit" />
@@ -478,9 +480,6 @@
     text-anchor: end;
   }
   :global(.box-label.highlighted) { fill: #a02480; font-weight: bold; }
-  :global(.bare-drop-box) {
-    fill: rgba(243, 229, 245, 0.5);  /* light purple tint — visual cue for bijection */
-  }
 
   :global(.drop-slash-box) {
     stroke: #666;
