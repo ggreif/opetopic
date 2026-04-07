@@ -41,16 +41,8 @@
     return m
   })())
 
-  // Inverse: branch ID → lollipop cell ID (for bond hover from Focus drop box → Succ lollipop)
+  // Inverse: branch ID → lollipop cell ID (for bond hover from Focus drop box → Succ stem)
   const branchToLolliCell = $derived(new Map([...lolliCellToBranchId].map(([cellId, bid]) => [bid, cellId])))
-
-  // Succ highlightNode: only nullary nodes — map branch id → lollipop cell id,
-  // or pass through if succHoveredId is itself a lollipop cell id; else undefined.
-  const succHighlightNode = $derived(
-    succHoveredId
-      ? (branchToLolliCell.get(succHoveredId) ?? (lolliCellToBranchId.has(succHoveredId) ? succHoveredId : undefined))
-      : undefined
-  )
 
   $effect(() => { if (violation) console.log('[validateStack]', violation) })
 
@@ -152,7 +144,7 @@
       width={280}
       height={340}
       highlight={succHoveredId ? (branchToLolliCell.get(succHoveredId) ?? succHoveredId) : undefined}
-      highlightNode={succHighlightNode}
+      highlightNode={undefined}
       selected={new Set()}
       selectionHighlightIds={selectedIds}
       onhover={(id) => { succHoveredId = id }}

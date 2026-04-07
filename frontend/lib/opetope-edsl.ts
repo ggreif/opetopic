@@ -38,7 +38,7 @@ function freshLabel(): string {
 function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
   const innerNodes: Cell[] = []
   function collectInner(t: Tree) {
-    if (t.children !== null && t.children.length > 0) {
+    if (t.children !== null) {  // corolla node: inner (length>0) or lollipop (length===0)
       innerNodes.push(t.cell)
       for (const [, child] of t.children) collectInner(child)
     }

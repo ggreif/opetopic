@@ -15,12 +15,12 @@
     return i < _greek.length ? _greek[i] : `x${i - _greek.length}`
   }
 
-  // Build focus.root from the substrate: one leaf box per inner node (children !== null).
-  // Returns focus with root = null if substrate has no inner nodes (e.g. Point).
+  // Build focus.root from the substrate: one leaf box per corolla node (inner OR lollipop).
+  // Returns focus with root = null if substrate has no corolla nodes (e.g. Point).
   function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
     const innerNodes: ReturnType<typeof cell>[] = []
     function collectInner(t: Tree) {
-      if (t.children !== null && t.children.length > 0) {
+      if (t.children !== null) {  // corolla node: inner (length>0) or lollipop (length===0)
         innerNodes.push(t.cell)
         for (const [, child] of t.children) collectInner(child)
       }
