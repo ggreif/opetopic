@@ -148,7 +148,7 @@ export class Tape {
     } else {
       newRoot = { ...oldRoot, children: [...oldRoot.children, [freshId(), newLeafBox]] }
     }
-    this.diagrams[this.focusIdx] = { edgeRoot: newEdgeRoot, root: newRoot }
+    this.diagrams = [...this.diagrams.slice(0, this.focusIdx), { edgeRoot: newEdgeRoot, root: newRoot }]
     return this
   }
 
@@ -171,14 +171,14 @@ export class Tape {
     const branchId = freshId()
     const newFocus = dropInsert(focus, node.cell.id, newCell, branchId)
     if (newFocus.root) {
-      this.diagrams[this.focusIdx] = newFocus
+      this.diagrams = [...this.diagrams.slice(0, this.focusIdx), newFocus]
     } else {
       const frameCell = cell(freshLabel(), newFocus.edgeRoot.cell.dim + 1)
       const lollipop: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
-      this.diagrams[this.focusIdx] = {
+      this.diagrams = [...this.diagrams.slice(0, this.focusIdx), {
         ...newFocus,
         root: { cell: frameCell, away: new Set(), drops: [], children: [[branchId, lollipop]] }
-      }
+      }]
     }
     return this
   }
@@ -189,7 +189,7 @@ export class Tape {
     if (focus.root !== null) return this
     const newCell = cell(freshLabel(), focus.edgeRoot.cell.dim + 1)
     const lolliTree: Tree = { cell: newCell, away: new Set(), drops: [], children: [] }
-    this.diagrams[this.focusIdx] = { ...focus, root: lolliTree }
+    this.diagrams = [...this.diagrams.slice(0, this.focusIdx), { ...focus, root: lolliTree }]
     return this
   }
 

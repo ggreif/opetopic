@@ -403,6 +403,37 @@ describe('bareDrop example: hop(1) arrives with base box', () => {
   })
 })
 
+describe('Ypsilon: drop on source node + hop(1) — mixed lollipop/leaf siblings valid', () => {
+  // Recording 2026-04-07: start(ypsilon) · drop('1') · hop(1)
+  // Previously triggered rule 1.3 (edgeroot-no-lollipop — now removed):
+  // level-1 edgeRoot has node f with children a (leaf), b (leaf), γ (lollipop).
+  // Mixed siblings (open leaves + lollipop) must be valid — Succ renders fine.
+  const tape = new Tape().start('ypsilon').drop('1').hop(1)
+
+  test('tape is valid after drop + hop (rule 1.3 removed)', () => {
+    expect(tape.validate()).toBeNull()
+  })
+
+  test('level-1 edgeRoot (f) has 3 children', () => {
+    expect(tape.focus.edgeRoot.children).toHaveLength(3)
+  })
+
+  test('two children are open leaves, one is a lollipop', () => {
+    const children = tape.focus.edgeRoot.children!.map(([, c]) => c)
+    const leaves   = children.filter(c => c.children === null)
+    const lollipops = children.filter(c => c.children !== null && c.children.length === 0)
+    expect(leaves).toHaveLength(2)
+    expect(lollipops).toHaveLength(1)
+  })
+
+  test('level-1 DOM renders 4 edge-labels (f + a + b + γ)', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(4)
+  })
+})
+
 describe('Validation: Tape.validate()', () => {
   test('fresh boxtree is valid', () => {
     const tape = new Tape().start('boxtree')
