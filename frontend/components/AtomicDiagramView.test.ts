@@ -72,10 +72,6 @@ describe('Source extrude', () => {
 
 describe('Drop insertion', () => {
   test('after extrude + drop: one .box-rect.leaf drop box appears', () => {
-    const tape = new Tape().start('point').extrude('a')
-    // The extruded leaf is labelled 'a' (it becomes an inner node); new child is fresh label
-    // Drop on 'a' (the now-inner node)
-    const extrudedLabel = tape.focus.edgeRoot.children?.[0][1].cell.label ?? 'a'
     const tape2 = new Tape().start('point').extrude('a').drop('a')
     const { container } = render(AtomicDiagramView, {
       props: {
@@ -335,6 +331,33 @@ describe('Recorded sequence: point → bareDrop → 2×drop → hop(1) → hop(1
   })
 })
 
+describe('Recorded sequence: point → bareDrop → hop(1)', () => {
+  // Recording 2026-04-07: start(point) · bareDrop · hop(1)  [hop(-1) was spurious no-op]
+  // Focus invariant: there must always be a box in Focus after a hop.
+  // A lollipop edgeRoot needs a base box created on arrival.
+  const tape = new Tape().start('point').bareDrop().hop(1)
+
+  test('tape is valid (no advisory)', () => {
+    expect(tape.validate()).toBeNull()
+  })
+
+  test('level 1 edgeRoot is the bareDrop lollipop (0 children)', () => {
+    expect(tape.focus.edgeRoot.children).toEqual([])
+  })
+
+  test('level 1 root is a base box (not null) — invariant: Focus always has a box', () => {
+    expect(tape.focus.root).not.toBeNull()
+    expect(tape.focus.root!.children).toHaveLength(1)  // one substrate leaf for the lollipop
+  })
+
+  test('level 1 DOM renders 1 edge-label (the lollipop)', () => {
+    const { container } = render(AtomicDiagramView, {
+      props: { diagram: tape.focus, drops: collectDrops(tape.focus.edgeRoot) }
+    })
+    expect(edgeLabels(container)).toHaveLength(1)
+  })
+})
+
 describe('bareDrop example: Succ via store (no hop)', () => {
   // tape.succDiagram reads diagrams[focusIdx+1] directly, mirroring store.succDiagram.
   // The Succ of a bare lollipop is itself a lollipop — 1 node, 1 edge-label.
@@ -348,8 +371,8 @@ describe('bareDrop example: Succ via store (no hop)', () => {
     expect(tape.succDiagram!.edgeRoot.children).toEqual([])
   })
 
-  test('succDiagram root is null (no pre-created outer frame)', () => {
-    expect(tape.succDiagram!.root).toBeNull()
+  test('succDiagram root is a base box (stored with proper root; Succ pane strips it for preview)', () => {
+    expect(tape.succDiagram!.root).not.toBeNull()
   })
 
   test('Succ DOM renders 1 edge-label', () => {

@@ -11,20 +11,22 @@
     ondropinsert = undefined,
     onbaredropinsert = undefined,
     onencircle = undefined,
+    onhopright = undefined,
   }: {
     oncellclick?: (cellId: string) => void
     onsourceextrude?: (leafId: string) => void
     ondropinsert?: (cellId: string) => void
     onbaredropinsert?: (cellId: string) => void
     onencircle?: (cellIds: Set<string>) => void
+    onhopright?: () => void
   } = $props()
 
   let hoveredId     = $state<string | null>(null)
   let succHoveredId = $state<string | null>(null)
   let selectedIds   = $state<Set<string>>(new Set())
 
-  const violation     = $derived(validateStack(store.diagrams))
-  const hardViolation = $derived(violation && !violation.includes('ADVISORY') ? violation : null)
+  const violation     = $derived(validateStack(store.diagrams, store.focusIdx))
+  const hardViolation = $derived(violation ?? null)
   const drops         = $derived(collectDrops(store.focus.edgeRoot))
 
   // Map lollipop cell ID → its branch ID in focus.root (for bond hover via cell ID)
@@ -47,13 +49,15 @@
   $effect(() => { if (violation) console.log('[validateStack]', violation) })
 
   // Succ AtomicDiagram:
-  //   1. null                               → hide pane (no box tree)
-  //   2. store.succDiagram                  → next level already exists, show verbatim
-  //   3. { edgeRoot: computeSucc(root), root: null } → preview before first hop right
+  //   1. null                                      → hide pane (no box tree)
+  //   2. { edgeRoot: succDiagram.edgeRoot, root: null } → next level exists, show edgeRoot only
+  //   3. { edgeRoot: computeSucc(root), root: null }    → preview before first hop right
+  // root is always stripped: the base box belongs to Focus, not to the Succ preview.
   const succAtomicDiagram = $derived<AtomicDiagram | null>(
     !store.focus.root ? null
     : store.succDiagram
-      ?? { edgeRoot: computeSucc(store.focus.root), root: null }
+      ? { edgeRoot: store.succDiagram.edgeRoot, root: null }
+      : { edgeRoot: computeSucc(store.focus.root), root: null }
   )
 
   const canHopLeft  = $derived(store.focusIdx > 0)
@@ -85,7 +89,8 @@
 
   function onHopRight() {
     hoveredId = null; succHoveredId = null; selectedIds = new Set()
-    store.hopRight()
+    if (onhopright) onhopright()
+    else store.hopRight()
   }
 </script>
 

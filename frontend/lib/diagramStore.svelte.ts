@@ -33,6 +33,12 @@ class DiagramStore {
     }
   }
 
+  /** Hop right with a caller-supplied new level (root already computed, no transient null). */
+  hopRightWith(newLevel: AtomicDiagram) {
+    this.diagrams = [...this.diagrams, newLevel]
+    this.focusIdx++
+  }
+
   updateFocusDiagram(next: AtomicDiagram) {
     // Truncate higher levels — they depend on this level's root and must be rebuilt.
     this.diagrams = [...this.diagrams.slice(0, this.focusIdx), next]

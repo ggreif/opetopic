@@ -35,12 +35,12 @@ function freshLabel(): string {
   return i < _greek.length ? _greek[i] : `x${i - _greek.length}`
 }
 
-function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
+function withOuterFrame(diagram: AtomicDiagram, includeRootLollipop = false): AtomicDiagram {
   const innerNodes: Cell[] = []
   function collectInner(t: Tree, isEdgeRoot = false) {
     if (t.children !== null) {  // corolla node: inner (length>0) or lollipop (length===0)
-      // Include as substrate unless it's the edgeRoot itself being a bare lollipop.
-      if (!isEdgeRoot || t.children.length > 0) innerNodes.push(t.cell)
+      // Skip root-level lollipop unless caller explicitly requests it (e.g. on hop arrival).
+      if (!isEdgeRoot || t.children.length > 0 || includeRootLollipop) innerNodes.push(t.cell)
       for (const [, child] of t.children) collectInner(child)
     }
   }
@@ -112,7 +112,7 @@ export class Tape {
       return this
     }
     const diagrams: AtomicDiagram[] = trees.slice(0, -1).map((t, i) => ({ edgeRoot: t, root: trees[i + 1] }))
-    diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }))
+    diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }, true))
     this.diagrams = diagrams
     this.focusIdx = 0
     return this
@@ -202,7 +202,8 @@ export class Tape {
       if (!succDiagram) {
         // hop right into new level: computeSucc becomes the new edgeRoot
         const newEdgeRoot = computeSucc(focus.root)
-        this.diagrams.push(withOuterFrame({ edgeRoot: newEdgeRoot, root: null }))
+        // includeRootLollipop=true: landing on a lollipop edgeRoot must get a base box (Focus invariant).
+        this.diagrams.push(withOuterFrame({ edgeRoot: newEdgeRoot, root: null }, true))
       }
       this.focusIdx++
     } else {
@@ -240,7 +241,7 @@ export class Tape {
   // ── Validation guard ───────────────────────────────────────────────────────
 
   validate(): string | null {
-    return validateStack(this.diagrams) ?? null
+    return validateStack(this.diagrams, this.focusIdx) ?? null
   }
 
   // ── Serialisation ──────────────────────────────────────────────────────────

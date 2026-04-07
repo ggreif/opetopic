@@ -86,10 +86,10 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
   if (root === null && edgeRoot.cell.dim >= 2 && !(edgeRoot.children !== null && edgeRoot.children.length === 0))
     return `root-required-for-dim-gte-2: dim=${edgeRoot.cell.dim} diagram has no root box tree`
 
-  // 9.2 ADVISORY root-required-for-extrusion: if edgeRoot has inner nodes but root is null,
-  //     the base box is missing (auto-create in OpetopeBuilder should prevent this in practice)
+  // 9.2 root-required-for-extrusion: any diagram whose edgeRoot has a corolla node (inner or
+  //     lollipop) must have a root box tree. Only a bare leaf (Point/wire) is exempt.
   if (root === null && edgeRoot.children !== null)
-    return `ADVISORY root-required-for-extrusion: edgeRoot has inner nodes but root is null`
+    return `root-required-for-extrusion: edgeRoot has inner nodes but root is null`
 
   // ── Build shared data structures (single O(n) pass each) ───────────────────
 
@@ -452,8 +452,14 @@ function treeShapeEquals(a: Tree, b: Tree): string | null {
   return null
 }
 
-export function validateStack(diagrams: AtomicDiagram[]): string | null {
-  for (let i = 0; i < diagrams.length; i++) {
+/**
+ * Validate the diagram stack up to and including `focusIdx`.
+ * Levels beyond focusIdx are "template" levels not yet visited by the user
+ * and are only checked for bond consistency, not per-diagram invariants.
+ */
+export function validateStack(diagrams: AtomicDiagram[], focusIdx = diagrams.length - 1): string | null {
+  const activeCount = Math.min(focusIdx + 1, diagrams.length)
+  for (let i = 0; i < activeCount; i++) {
     const v = validateDiagram(diagrams[i])
     if (v) return `[level ${i}] ${v}`
   }

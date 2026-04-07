@@ -17,12 +17,12 @@
 
   // Build focus.root from the substrate: one leaf box per corolla node (inner OR lollipop).
   // Returns focus with root = null if substrate has no corolla nodes (e.g. Point).
-  function withOuterFrame(diagram: AtomicDiagram): AtomicDiagram {
+  function withOuterFrame(diagram: AtomicDiagram, includeRootLollipop = false): AtomicDiagram {
     const innerNodes: ReturnType<typeof cell>[] = []
     function collectInner(t: Tree, isEdgeRoot = false) {
       if (t.children !== null) {  // corolla node: inner (length>0) or lollipop (length===0)
-        // Include as substrate unless it's the edgeRoot itself being a bare lollipop.
-        if (!isEdgeRoot || t.children.length > 0) innerNodes.push(t.cell)
+        // Skip root-level lollipop unless caller explicitly requests it (e.g. on hop arrival).
+        if (!isEdgeRoot || t.children.length > 0 || includeRootLollipop) innerNodes.push(t.cell)
         for (const [, child] of t.children) collectInner(child)
       }
     }
@@ -72,7 +72,7 @@
   $effect(() => {
     const f = store.focus
     if (!f || f.root !== null) return
-    const framed = withOuterFrame(f)
+    const framed = withOuterFrame(f, true)  // includeRootLollipop: Focus invariant requires a base box
     if (framed.root !== null) store.updateFocusDiagram(framed)
   })
 
@@ -104,7 +104,7 @@
       // Multi-level: trees[i+1] serves as root for diagrams[i] AND as edgeRoot for diagrams[i+1].
       // Use trees[i+1] directly so factory-constructed ids (drops, branch bonds) are preserved.
       const diagrams: AtomicDiagram[] = trees.slice(0, -1).map((t, i) => ({ edgeRoot: t, root: trees[i + 1] }))
-      diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }))
+      diagrams.push(withOuterFrame({ edgeRoot: trees[trees.length - 1], root: null }, true))
       store.resetToStack(diagrams, 0)
     }
     if (name) {
@@ -225,6 +225,17 @@
     _recordStep(step)
   }
 
+  function handleHopRight() {
+    if (!store.focus?.root) return
+    if (store.focusIdx + 1 < store.diagrams.length) {
+      store.hopRight()  // existing level already has a proper root
+      return
+    }
+    const newEdgeRoot = computeSucc(store.focus.root)
+    const newLevel = withOuterFrame({ edgeRoot: newEdgeRoot, root: null }, true)
+    store.hopRightWith(newLevel)
+  }
+
   // ── Recording ────────────────────────────────────────────────────────────────
   let recording = $state(false)
   let _recordSteps: TapeStep[] = []
@@ -309,7 +320,7 @@
     </button>
   </div>
 
-  <OpetopeEditor onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onbaredropinsert={handleBareDropInsert} onencircle={handleEncircle} />
+  <OpetopeEditor onsourceextrude={handleSourceExtrude} ondropinsert={handleDropInsert} onbaredropinsert={handleBareDropInsert} onencircle={handleEncircle} onhopright={handleHopRight} />
 </section>
 
 <style>
