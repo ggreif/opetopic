@@ -232,7 +232,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <svg {width} {height} class="atomic-diagram" onclick={() => onselect?.(null)}>
   <!-- ── Box layer — outer frame positioned in tree coordinates ───────────── -->
-  {#if diagram.root}
+  {#if diagram.root && !isBareDrop(diagram.root)}
   <g class="box-layer">
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <g
@@ -297,42 +297,43 @@
         />
       </g>
     {/each}
-    <!-- Bare-drop glyphs: left-bond stem line + right-bond box -->
-    {#each bareDropGlyphs as g (g.stemId)}
-      {@const bx = g.cx - BARE_BOX_W / 2}
-      {@const by = g.nodeY + DROP_SPACER}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <g
-        onmouseenter={() => { onhover?.(g.stemId); onnodehover?.(g.stemId) }}
-        onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
-      >
-        <!-- Left bond: vertical stem line from node down into the box -->
-        <line
-          x1={g.cx} y1={g.nodeY}
-          x2={g.cx} y2={by + BARE_BOX_H / 2}
-          class="corolla-link bare-drop-stem"
-          class:highlighted={g.stemId === highlight}
-        />
-        <!-- Left bond label alongside the stem -->
-        <text x={g.cx + 5} y={by + BARE_BOX_H / 2 - 4}
-          class="edge-label"
-          class:highlighted={g.stemId === highlight}
-        >{g.stemLabel}</text>
-        <!-- Right bond: the box (freestanding corolla / Succ lollipop) -->
-        <rect x={bx} y={by} width={BARE_BOX_W} height={BARE_BOX_H} rx="4" ry="4"
-          class="box-rect leaf bare-drop-box"
-          class:highlighted={g.stemId === highlight || g.stemId === highlightNode}
-        />
-        <!-- Horizontal crossing line, inset — does NOT extend outside the box -->
-        <line
-          x1={bx + 6} y1={by + BARE_BOX_H / 2}
-          x2={bx + BARE_BOX_W - 6} y2={by + BARE_BOX_H / 2}
-          class="drop-slash-box"
-        />
-      </g>
-    {/each}
   </g>
   {/if}
+
+  <!-- Bare-drop glyphs: rendered outside the box-layer, independent of root presence -->
+  {#each bareDropGlyphs as g (g.stemId)}
+    {@const bx = g.cx - BARE_BOX_W / 2}
+    {@const by = g.nodeY + DROP_SPACER}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <g
+      onmouseenter={() => { onhover?.(g.stemId); onnodehover?.(g.stemId) }}
+      onmouseleave={() => { onhover?.(null); onnodehover?.(null) }}
+    >
+      <!-- Left bond: vertical stem line from node down into the box -->
+      <line
+        x1={g.cx} y1={g.nodeY}
+        x2={g.cx} y2={by + BARE_BOX_H / 2}
+        class="corolla-link bare-drop-stem"
+        class:highlighted={g.stemId === highlight}
+      />
+      <!-- Left bond label alongside the stem -->
+      <text x={g.cx + 5} y={by + BARE_BOX_H / 2 - 4}
+        class="edge-label"
+        class:highlighted={g.stemId === highlight}
+      >{g.stemLabel}</text>
+      <!-- Right bond: the box -->
+      <rect x={bx} y={by} width={BARE_BOX_W} height={BARE_BOX_H} rx="4" ry="4"
+        class="box-rect leaf bare-drop-box"
+        class:highlighted={g.stemId === highlight || g.stemId === highlightNode}
+      />
+      <!-- Horizontal crossing line, inset — does NOT extend outside the box -->
+      <line
+        x1={bx + 6} y1={by + BARE_BOX_H / 2}
+        x2={bx + BARE_BOX_W - 6} y2={by + BARE_BOX_H / 2}
+        class="drop-slash-box"
+      />
+    </g>
+  {/each}
 
   <!-- ── Tree layer ────────────────────────────────────────────────────────── -->
   <g class="tree-layer">

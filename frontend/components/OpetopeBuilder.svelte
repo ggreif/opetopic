@@ -170,9 +170,9 @@
 
   function fmtTree(t: Tree, indent = ''): string {
     const id = `@${t.cell.id}`
-    const drops = Array.isArray(t.drops)
-      ? (t.drops.length ? ` drops=[${t.drops.map(d => d.dropId).join(',')}]` : '')
-      : ` bare-drop[${t.drops.dropId}]`
+    const drops = t.drops === null
+      ? ` bare-drop`
+      : (t.drops.length ? ` drops=[${t.drops.map(d => d.dropId).join(',')}]` : '')
     if (t.children === null) return `${indent}leaf(${t.cell.label}${id}:${t.cell.dim})${drops}`
     if (t.children.length === 0) return `${indent}node(${t.cell.label}${id}:${t.cell.dim})${drops}`
     const kids = t.children.map(([bid, child]) => fmtTree(child, indent + '  ') + ` @${bid}`).join('\n')

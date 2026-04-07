@@ -203,7 +203,6 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
   // 8.3 drop-branch-ids-distinct within each node
   for (const n of edgeNodes) {
-    if (!Array.isArray(n.drops)) continue  // bare-drop stem: singular, validated separately
     const seen = new Set<string>()
     for (const d of n.drops) {
       if (seen.has(d.dropId)) return `drop-branch-ids-distinct: dropId "${d.dropId}" appears twice on node "${n.cell.label}"`
@@ -344,7 +343,7 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
       const dropOwnerToRootId = new Map<string, string>()
       for (const d of allDrops) {
         for (const n of edgeNodes) {
-          if (Array.isArray(n.drops) && n.drops.some((dr: import('./opetope').Drop) => dr.dropId === d.rootId)) {
+          if (n.drops.some((dr: import('./opetope').Drop) => dr.dropId === d.rootId)) {
             dropOwnerToRootId.set(n.cell.id, d.rootId)
             break
           }
@@ -387,13 +386,7 @@ export function validateDiagram(diagram: AtomicDiagram): string | null {
 
   // ── Bare-drop stem rules ──────────────────────────────────────────────────────
 
-  // BD.1: if root itself is a bare-drop stem, check secondary structure.
-  // isBareDrop guarantees children === null (singular drops form), so no need to recheck.
-  if (root && isBareDrop(root)) {
-    // TODO: validate cell dimensions once dim semantics for bare-drop stems are settled
-    if (root.away.size !== 0)
-      return `bare-drop-stem-structure: bare-drop stem "${root.cell.label}" must have empty away set`
-  }
+  // BD.1: bare-drop stem is a lollipop (children: []) in focus.root — no special structure needed.
 
   // 3.1 unique-labels-within-edgeRoot
   {

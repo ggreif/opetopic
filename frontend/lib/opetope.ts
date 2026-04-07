@@ -45,24 +45,20 @@ export type Drop = {
  *            branch leading up to the parent for all other nodes). Every node
  *            has exactly one outgoing edge, so drops sit directly on the node.
  *            Drop[]  = ordinary drops (array, possibly empty).
- *            Drop    = singular form: marks this node as a bare-drop stem in
- *                      focus.root. The dropId bonds to the Succ lollipop branch
- *                      (dim 2), just like ordinary drops. A bare-drop stem must
- *                      satisfy: children === null, cell.dim === 1, away empty.
  * children — [branchId, innerDisk]
  *            null  = open leaf (can be extended via source extrusion)
- *            []    = nullary corolla (lollipop)
+ *            []    = nullary corolla (lollipop); in focus.root = bare-drop stem
  */
 export type Tree = {
   cell:     Cell
   away:     Set<string>
-  drops:    Drop | Drop[]
+  drops:    Drop[]
   children: [string, Tree][] | null
 }
 
-/** True when a Tree node is a bare-drop stem (singular Drop in focus.root). */
-export function isBareDrop(node: Tree): node is Tree & { drops: Drop } {
-  return !Array.isArray(node.drops)
+/** True when a Tree node is a bare-drop stem (lollipop in focus.root). */
+export function isBareDrop(node: Tree): boolean {
+  return node.children !== null && node.children.length === 0
 }
 
 /**
@@ -89,12 +85,9 @@ export type DropInfo = { edgeId: string; rootId: string }
 export function collectDrops(t: Tree): DropInfo[] {
   const result: DropInfo[] = []
   function traverse(node: Tree) {
-    if (Array.isArray(node.drops)) {
-      for (const d of node.drops) {
-        result.push({ edgeId: node.cell.id, rootId: d.dropId })
-      }
+    for (const d of node.drops) {
+      result.push({ edgeId: node.cell.id, rootId: d.dropId })
     }
-    // singular Drop = bare-drop stem in focus.root; not included in ordinary DropInfo[]
     if (node.children) for (const [, child] of node.children) traverse(child)
   }
   traverse(t)
@@ -108,6 +101,8 @@ export function collectDrops(t: Tree): DropInfo[] {
  */
 export function computeSucc(root: Tree): Tree {
   if (root.children === null) {
+    if (root.drops === null)
+      return { cell: root.cell, away: new Set(), drops: [], children: [] }  // bare-drop → lollipop
     return { cell: root.cell, away: new Set(), drops: [], children: null }  // open branch
   }
   if (root.children.length === 0) {
@@ -309,8 +304,7 @@ export function dropInsert(diagram: AtomicDiagram, edgeCellId: string, newCell: 
   // That node's outgoing branch is where the drop attaches.
   function addDropToEdgeRoot(t: Tree): Tree {
     if (t.cell.id === edgeCellId) {
-      const existing = Array.isArray(t.drops) ? t.drops : [t.drops]
-      return { ...t, drops: [...existing, newDrop] }
+      return { ...t, drops: [...t.drops, newDrop] }
     }
     if (!t.children) return t
     return { ...t, children: t.children.map(([bid, child]) => [bid, addDropToEdgeRoot(child)] as [string, Tree]) }
@@ -432,7 +426,7 @@ export function encircle(diagram: AtomicDiagram, cellId: string, newCell: Cell):
 // ── Example diagrams ─────────────────────────────────────────────────────────
 
 export function cell(label: string, dim: number): Cell { return { id: freshId(), label, dim } }
-function leaf(c: Cell, drops: Drop | Drop[] = []): Tree { return { cell: c, away: new Set(), drops, children: null } }
+function leaf(c: Cell, drops: Drop[] = []): Tree { return { cell: c, away: new Set(), drops, children: null } }
 function lollipop(c: Cell): Tree { return { cell: c, away: new Set(), drops: [], children: [] } }
 function drop(branchId: string): Drop { return { dropId: branchId } }
 export function substrate(label: string, c: Cell): Cell { return { ...c, label } }
@@ -456,19 +450,13 @@ export function point(label = 'a'): Opetope {
  */
 export function bareDrop(pointLabel = 'a', dropLabel = 'f'): Opetope {
   const a         = cell(pointLabel, 0)
-  const f         = cell(dropLabel, 1)
-  const l         = cell(dropLabel,  2)
-  const lolliId   = l.id  // branch ID of the lollipop in diagrams[1].root (Succ), bonding left to the bare drop
   const dim0: Tree = leaf(a)
 
-  // Bare-drop stem: open, dim 1, singular Drop → bonds to Succ's lollipop
-  //const dim1: Tree = { cell: f, away: new Set(), drops: drop(lolliId), children: null }
-  const dim1: Tree = leaf(f, drop(lolliId))
+  // Bare-drop: lollipop in focus.root — computeSucc produces a lollipop for it.
+  const d         = cell(dropLabel, 1)
+  const dim1: Tree = lollipop(d)
 
-  // The non-child lolli that bonds to the bare drop
-  const dim2: Tree = lollipop(l)
-
-  return [dim0, dim1, dim2]
+  return [dim0, dim1]
 }
 
 /**

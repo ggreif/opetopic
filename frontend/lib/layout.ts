@@ -93,7 +93,7 @@ export function measureDropOffsets(boxRoot: Tree | null, edgeRoot: Tree | null =
   const dropOwner = new Map<string, string>()
   if (edgeRoot) {
     function collectDropOwners(t: Tree) {
-      if (Array.isArray(t.drops)) for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
+      for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
       if (t.children) for (const [, c] of t.children) collectDropOwners(c)
     }
     collectDropOwners(edgeRoot)
@@ -167,7 +167,7 @@ export function computeClearances(
 
   if (edgeRoot) {
     function collectDropOwners(t: Tree) {
-      if (Array.isArray(t.drops)) for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
+      for (const d of t.drops) dropOwner.set(d.dropId, t.cell.id)
       if (t.children) for (const [, c] of t.children) collectDropOwners(c)
     }
     collectDropOwners(edgeRoot)
